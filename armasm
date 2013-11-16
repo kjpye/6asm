@@ -1,0 +1,721 @@
+#!mono /media/Elements/src/niecza/run/Niecza
+
+my $pc = 0;
+my $ramptr = 0x60; # probably should start somewhere else
+my %symbols = ();
+my %regdefs = ('xl' => 26,
+               'xh' => 27,
+	       'yl' => 28,
+	       'yh' => 29,
+	       'zl' => 30,
+	       'zh' => 31);
+my $line;
+my $pass;
+my $finalpass = 2;
+my $s1file = '';
+my @files = ();
+my %params = (
+	       'eepromtop' => 0x200,
+               'ldslength' => 16,
+	       'rambottom' => 0x60,
+	       'ramtop'    => 0x260,
+	       'romtop'    => 0x2000,
+             );
+
+my @labelcount = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+my @labels = ([-1], [-1], [-1], [-1], [-1], [-1], [-1], [-1], [-1], [-1]);
+
+my $ifdepth = 0;
+my $truedepth = 0;
+
+my %words;
+
+sub putword($addr, $word) {
+  %words{$addr} = $word;
+}
+
+my $s1outaddr = -2; # don't use -1
+my $s1outcount = 0;
+my $s1outstring = '';
+my $s1checksum = 0;
+my $s1_header = '';
+
+sub hexbyte($byte) {
+  my $nybble1 = (($byte +> 4) +& 0x0f) + 0x30;
+  $nybble1 += 7 if $nybble1 >= 0x3a;
+  my $nybble2 = (($byte +> 0) +& 0x0f) + 0x30;
+  $nybble2 += 7 if $nybble2 >= 0x3a;
+#  say "hexbyte($byte): $nybble1 $nybble2";
+  my $string =  sprintf "%c%c", $nybble1, $nybble2;
+#  say $string;
+  return $string;
+}
+
+sub put_bytes($header, $count, $string, $checksum) {
+  print $header;
+  print hexbyte($count);
+  print $string;
+  print hexbyte($checksum);
+  print "\n";
+}
+
+sub write_s1_record() {
+  if ($s1outaddr >= 0) {
+    $s1checksum += $s1outcount;
+    put_bytes($s1_header, $s1outcount, $s1outstring, +^$s1checksum);
+    $s1outaddr = -2;
+    $s1outcount = 0;
+  }
+}
+
+sub write_s1byte($addr, $byte) {
+  my $value = $byte +& 0xff;
+  #say sprintf "S1: %04.4x %02.2x", $addr, $value;
+  if ($addr != ($s1outaddr + 1)) {
+    write_s1_record();
+  }
+  if ($s1outcount == 0) {
+    if ($addr < 0x10000) {
+      $s1_header = 'S1';
+      $s1outstring = hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 8) + $addr;
+      $s1outcount = 2;
+    } elsif ($addr < 0x1000000) {
+      $s1_header = 'S2';
+      $s1outstring = hexbyte($addr +> 16) ~ hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 16) + ($addr +> 8) + $addr;
+      $s1outcount = 3;
+    } else {
+      $s1_header = 'S3';
+      $s1outstring = hexbyte($addr +> 24) ~ hexbyte($addr +> 16) ~ hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 24) + ($addr +> 16) + ($addr +> 8) + $addr;
+      $s1outcount = 4;
+    }
+  }
+  $s1outstring ~= hexbyte($byte);
+  $s1checksum += $byte;
+  ++$s1outcount;
+  $s1outaddr = $addr;
+  if ($s1outcount >= 20) {
+    write_s1_record();
+  }
+}
+
+sub write_s1word($addr, $word) {
+  write_s1byte($addr*2, $word +> 8);
+  write_s1byte($addr*2+1, $word);
+}
+
+sub write_s1($file) {
+  my $*OUT = open($file, :w);
+  for sort {$^a <=> $^b}, %words.keys -> $addr {
+    write_s1word(+$addr, %words{$addr});
+  }
+  write_s1_record();
+  say "S9030000FC";
+}
+
+sub output_instruction($opcode, $line) {
+  if ($pass == $finalpass) {
+    if ($truedepth == $ifdepth) {
+      say sprintf "%06.6x %04.4x     %s", $pc, $opcode, $line;
+      putword($pc, $opcode);
+    } else {
+      say "                " ~ $line;
+    }
+  }
+  if ($truedepth == $ifdepth) {
+    ++$pc;
+  }
+}
+
+sub output_instruction2($opcode, $opcode2, $line) {
+  if ($pass == $finalpass) {
+    if ($truedepth == $ifdepth) {
+      say sprintf "%06.6x %04.4x%04.4x %s", $pc, $opcode, $opcode2, $line;
+      putword($pc, $opcode);
+      putword($pc+1, $opcode2);
+    } else {
+      say "                " ~ $line;
+    }
+  }
+  if ($truedepth == $ifdepth) {
+    $pc += 2;
+  }
+}
+
+sub sayline() {
+  if ($pass == $finalpass) {
+    say "                " ~ $line;
+  }
+}
+
+sub print_symbols () {
+  say "";
+  say "Symbol Table:";
+  say "=============";
+  for (sort keys %symbols) -> $symbol {
+    if ($symbol ~~ /^_/) {
+      # ignore symbols starting with _
+    } else {
+      say sprintf "%06.6x %s", %symbols{$symbol}, $symbol;
+    }
+  }
+}
+
+sub regnum ($regname) {
+  if (defined %regdefs{lc $regname}) {return %regdefs{lc $regname}};
+  $regname ~~ m/<[rR]>(\d+)/;
+  return +$/[0];
+}
+
+my %reg2reg = ( 'add'    => 0x0c00,
+                'adc'    => 0x1c00,
+                'sub'    => 0x1800,
+                'sbc'    => 0x0800,
+                'and'    => 0x2000,
+                'or'     => 0x2800,
+                'eor'    => 0x2400,
+                'mul'    => 0x9c00,
+                'cpse'   => 0x1000,
+                'cp'     => 0x1400,
+                'cpc'    => 0x0400,
+                'mov'    => 0x2c00,
+              );
+my @reg2reg = keys %reg2reg;
+
+my %reg16_31 = (
+                 'muls'  => 0x0200,
+               );
+my @reg16_31 = keys %reg16_31;
+
+my %reg16_23 = (
+                 'fmul'   => 0x0308,
+                 'fmuls'  => 0x0380,
+                 'fmulsu' => 0x0388,
+                 'mulsu'  => 0x0300,
+               );
+my @reg16_23 = keys %reg16_23;
+
+my %reg = (
+                 'asr'   => 0x9405,
+                 'com'   => 0x9400,
+                 'dec'   => 0x940a,
+                 'inc'   => 0x9403,
+                 'lsr'   => 0x9406,
+                 'neg'   => 0x9401,
+                 'pop'   => 0x900f,
+                 'push'  => 0x920f,
+                 'ror'   => 0x9407,
+                 'swap'  => 0x9402,
+               );
+my @reg = keys %reg;
+
+my %regbit =   (
+                 'bld'    => 0xf800,
+                 'bst'    => 0xfa00,
+               );
+my @regbit = keys %regbit;
+
+my %scbranch = (
+                 'brbc'   => 0xf400,
+		 'brbs'   => 0xf000,
+	       );
+my @scbranch = keys %scbranch;
+
+my %cbranch  = (
+                 'brcc'   => 0xf400,
+                 'brcs'   => 0xf000,
+		 'breq'   => 0xf001,
+		 'brge'   => 0xf404,
+		 'brhc'   => 0xf405,
+		 'brhs'   => 0xf005,
+		 'brid'   => 0xf407,
+		 'brie'   => 0xf007,
+		 'brlo'   => 0xf000,
+		 'brlt'   => 0xf004,
+		 'brmi'   => 0xf002,
+		 'brne'   => 0xf401,
+		 'brpl'   => 0xf402,
+		 'brsh'   => 0xf400,
+		 'brtc'   => 0xf406,
+		 'brts'   => 0xf006,
+		 'brvc'   => 0xf403,
+		 'brvs'   => 0xf003,
+	       );
+my @cbranch = keys %cbranch;
+
+my %inherent = (
+                 'break'  => 0x9598,
+                 'clc'    => 0x9488,
+                 'clh'    => 0x94d8,
+                 'cli'    => 0x94f8,
+                 'cln'    => 0x94a8,
+                 'cls'    => 0x94c8,
+                 'clt'    => 0x94e8,
+                 'clv'    => 0x94b8,
+                 'clz'    => 0x9498,
+                 'eicall' => 0x9519,
+                 'eijmp'  => 0x9419,
+                 'elpm'   => 0x95d8,
+                 'icall'  => 0x9509,
+                 'ijmp'   => 0x9409,
+                 'nop'    => 0x0000,
+                 'ret'    => 0x9508,
+                 'reti'   => 0x9518,
+                 'sec'    => 0x9408,
+                 'seh'    => 0x9458,
+                 'sei'    => 0x9478,
+                 'sen'    => 0x9428,
+                 'ses'    => 0x9448,
+                 'set'    => 0x9468,
+                 'sev'    => 0x9438,
+                 'sez'    => 0x9418,
+                 'sleep'  => 0x9588,
+                 'wdr'    => 0x95a8,
+               );
+my @inherent = keys %inherent;
+
+my %sreg = (
+                 'bclr'  => 0x9488,
+	         'bset'  => 0x9408
+           );
+my @sreg = keys %sreg;
+
+my %regimm = (
+                 'andi'  => 0x7000,
+                 'cpi'   => 0x3000,
+                 'ldi'   => 0xe000,
+                 'ori'   => 0x6000,
+                 'sbci'  => 0x4000,
+                 'sbr'   => 0x6000,
+                 'subi'  => 0x5000,
+               );
+my @regimm = keys %regimm;
+
+my %regimmw = (
+                 'adiw'  => 0x9600,
+		 'sbiw'  => 0x9700,
+               );
+my @regimmw = keys %regimmw;
+
+my %longjump = (
+                 'call'  => 0x940e,
+                 'jmp'   => 0x940c,
+               );
+my @longjump = keys %longjump;
+
+my %bitio    = (
+                 'cbi'   => 0x9800,
+		 'sbi'   => 0x9a00,
+		 'sbic'  => 0x9900,
+		 'sbis'  => 0x9b00,
+		 'sbrc'  => 0xfc00,
+		 'sbrs'  => 0xfe00,
+               );
+my @bitio = keys %bitio;
+
+my %io       = (
+                 'in'    => 0xb000,
+		 'out'   => 0xb800,
+	       );
+my @io = keys %io;
+
+my %zr       = (
+                 'lac'   => 0x9206,
+		 'las'   => 0x9205,
+		 'lat'   => 0x9207,
+	       );
+my @zr = keys %zr;
+
+my %ld    = (
+                 'ld'    => 0x900c,
+	       );
+my @ld = keys %ld;
+
+my %st    = (
+		 'st'    => 0x920c,
+	       );
+my @st = keys %st;
+
+my %ldq   = (
+                 'ld'    => 0x8008,
+	       );
+my @ldq = keys %ldq;
+
+my %stq   = (
+		 'st'    => 0x8208,
+	       );
+my @stq = keys %stq;
+
+my %cbr = (
+                 'cbr'   => 0x7000,
+           );
+my @cbr = keys %cbr;
+
+my %clr = (
+                 'clr'   => 0x2400,
+                 'lsl'   => 0x0c00,
+		 'rol'   => 0x1c00,
+		 'tst'   => 0x2000,
+   );
+my @clr = keys %clr;
+
+my %des = (
+                 'des'   => 0x940b,
+           );
+my @des = keys %des;
+
+my %elpm = (
+                 'elpm'   => 0x9006,
+           );
+my @elpm = keys %elpm;
+
+my %rjmp = (
+                 'rcall'  => 0xd000,
+                 'rjmp'   => 0xc000,
+           );
+my @rjmp = keys %rjmp;
+
+grammar Asm {
+#  token ws        { [ \s+ [ '#' .* ] ? ]
+#                    | [ '#' .* ] ? }
+  regex identifier {
+    [ [ <[a..z]> | <[A..Z]> ] | '_' ]
+    [
+      [ [ <[a..z]> | <[A..Z]> ] | <[0..9]> | '_' | ':' ]*
+      [ [ <[a..z]> | <[A..Z]> ] | <[0..9]> | '_' ]
+    ]?
+  }
+  token string {
+    '"' (<-[\"]>*) '"'
+  }
+  token number {
+    | '0' 'b' <[0..1]>+
+    | '0o' <[0..7]>+
+    | '0d' <digit>+
+    | ['0x'|'$'] <xdigit>+
+    | <digit>+
+  }
+  token label {
+    <identifier>
+  }
+  token locallabel {
+    <digit> ('f'|'b') <wb>
+  }
+  token dot {
+    '.'
+  }
+  rule highfunc {
+    'high' '(' <expression> ')'
+  }
+  rule lowfunc {
+    'low' '(' <expression> ')'
+  }
+  token term {
+    | <locallabel>
+    | <number>
+    | <label>
+    | <dot>
+    | <highfunc>
+    | <lowfunc>
+  }
+  rule mulexpr {
+    <term> ( ('*'|'/'|'&'|'<<'|'>>') <term> ) *
+  }
+  rule addexpr {
+    <mulexpr> (('+'|'-'|'|') <mulexpr> ) *
+  }
+  rule expression {
+    <addexpr>
+  }
+  rule labeldefident {
+    ^ <identifier>\:?
+  }
+  rule labeldefdigit {
+    ^ <digit>\:?
+  }
+  rule labeldef {
+      <labeldefident>
+    | <labeldefdigit>
+  }
+  rule optcomment { \N* }
+  token reg       {
+      [ [r|R] (\d**1..2) ]
+#    | %regdefs
+  }
+  rule ldinstr {
+    $<mnemonic>=(<[lL]><[dD]><[rR]><[bBhH]>?<optcc><optsize>) <ws> <rt=reg> ',' <expression>
+    |
+    $<mnemonic>=(<[lL]><[dD]><[rR]><[bBhH]>?<optcc><optsize> <ws> <rt=reg>) ',' '[' <rn=reg> (',' '#' <expression> )? ']'
+    |
+    $<mnemonic>=(<[lL]><[dD]><[rR]><[bBhH]>?<optcc><optsize> <ws> <rt=reg>) ',' '[' <rn=reg> ',' '#' <expression>  ']' '!'
+    |
+    $<mnemonic>=(<[lL]><[dD]><[rR]><[bBhH]>?<optcc><optsize> <ws> <rt=reg>) ',' '[' <rn=reg> ']' ',' '#' <expression>
+  }
+
+  rule directive { }
+  rule instruction { ldinstr }
+  rule blankline { ^ <ws> $ }
+  rule linecomment { ^ <[\#;]> }
+  rule labelonly { <labeldef> [['#'|';'] .*]? }
+  rule TOP { <directive> | <instruction> | <linecomment> | <blankline> | <labelonly> }
+}
+
+class Asm::Actions {
+  method labeldefdigit($/) {
+    if ($ifdepth == $truedepth) {
+      @labels[+$/<digit>][@labelcount[+$/<digit>]++] = $pc;
+    }
+  }
+  method labeldefident($/) {
+    if ($ifdepth == $truedepth) {
+      if ($pass == 1) {
+        %symbols{~$/<identifier>} = $pc;
+      } else {
+        if (%symbols{~$/<identifier>} != $pc) {
+          say "ERROR: label mismatch; $pc should be %symbols{~$/<identifier>}";
+        }
+      }
+    }
+  }
+  method ldinstr($/) {
+    my $opcode = %reg2reg{~$/<mnemonic>};
+    my $regnum1 = regnum($/<r1>);
+    my $regnum2 = regnum($/<r2>);
+    $opcode +|= $regnum2 +& 0x0f;
+    $opcode +|= ($regnum2 +& 0x10) +< 5;
+    $opcode +|= ($regnum1 +& 0x1f) +< 4;
+    output_instruction($opcode, $line);
+  }
+  method ifdir($/) {
+#  say $/<expression>.perl;
+    if ($/<expression>.ast) {
+      if ($truedepth == $ifdepth) {
+        ++$truedepth;
+      }
+    }
+    ++$ifdepth;
+    sayline();
+  }
+  method elsedir($/) {
+    if ($truedepth == $ifdepth) {
+      --$truedepth;
+    } else {
+      if ($truedepth == ($ifdepth -1)) {
+        ++$truedepth;
+      }
+    }
+    sayline();
+  }
+  method endifdir($/) {
+    --$ifdepth;
+    if ($truedepth > $ifdepth) {
+      $truedepth = $ifdepth;
+    }
+    sayline();
+  }
+  method paramdir($/) {
+    if ($truedepth == $ifdepth) {
+      %params{$/<identifier>} = +$/<expression>;
+      say "defining $/<identifier> as +$/<expression>";
+    }
+    sayline();
+  }
+  method bytedir($/) {
+    if ($truedepth == $ifdepth) {
+      if ($pass == $finalpass) {
+        say sprintf("%04.4x            %s", $ramptr, $line);
+	$ramptr += +$/<expression>;
+      } else {
+        if (~$/<identifier>) {
+	  %symbols{~$/<identifier>} = $ramptr;
+        }
+        $ramptr += +$/<expression>;
+      }
+    }
+  }
+  method dwdir($/) {
+    if ($truedepth == $ifdepth) {
+      output_instruction(+$/<expression>, $line);
+    }
+  }
+  method includedir($/) {
+    sayline();
+    my $includeline = $line;
+    my $INPUT = open $/<string>[0], :r;
+    for $INPUT.lines() -> $line {
+      chomp $line;
+      parse_line($line);
+    }
+    $INPUT.close();
+    $includeline ~~ s/\.include/.endinclude/;
+    $line = $includeline;
+    sayline();
+  }
+  method macrodir($/) {
+    sayline();
+  }
+  method linecomment($/) { sayline(); }
+  method blankline($/) { if ($pass == $finalpass) {say "";} }
+  method expression($/) {
+    make $<addexpr>.ast;
+  #  say $/.perl;
+  }
+  method addexpr($/) {
+    my $val = $<mulexpr>.ast;
+    for $0.list -> $m {
+      if (~$m[0] eq '+') {
+        $val += $m<mulexpr>.ast;
+        my $incr = $m<mulexpr>.ast;
+      }
+      if (~$m[0] eq '-') {
+        $val -= $m<mulexpr>.ast;
+      }
+      if (~$m[0] eq '|') {
+        $val +|= $m<mulexpr>.ast;
+      }
+      if (~$m[0] eq '>>') {
+        $val = $val +> $m<mulexpr>.ast;
+      }
+      if (~$m[0] eq '<<') {
+        $val = $val +< $m<mulexpr>.ast;
+      }
+    }
+    make $val;
+ #   say $/.perl;
+  }
+  method mulexpr($/) {
+    my $val = $<term>.ast;
+    for $0.list -> $m {
+      if (~$m[0] eq '*') {
+        $val *= $m<term>.ast;
+      }
+      if (~$m[0] eq '/') {
+        $val = ($val / $m<term>.ast); # should be int(...)
+      }
+      if (~$m[0] eq '&') {
+        $val +&= $m<term>.ast;
+      }
+    }
+    make $val;
+    #say $/.perl;
+  }
+  method term($/) { # there has to be a better way to do this
+    if (defined $/<label>) {
+      make $/<label>.ast;
+    }
+    if (defined $/<number>) {
+      make $/<number>.ast;
+    }
+    if (defined $/<locallabel>) {
+      make $/<locallabel>.ast;
+    }
+    if (defined $/<dot>) {
+      make $/<dot>.ast;
+    }
+    if (defined $/<highfunc>) {
+      make $/<highfunc>.ast;
+    }
+    if (defined $/<lowfunc>) {
+      make $/<lowfunc>.ast;
+    }
+    #say $/.perl;
+  }
+  method highfunc($/) {
+    make ($/<expression>.ast +> 8) +& 0xff;
+  }
+  method lowfunc($/) {
+    make $/<expression>.ast +& 0xff;
+  }
+  method dot($/) {
+    make $pc;
+    #say $/.perl;
+  }
+  method number($/) {
+#    say $/.perl;
+    make +$/;
+#    say $/.perl;
+  }
+  method label($/) {
+    make %symbols{~$/};
+  }
+  method locallabel($/) {
+    if ($/[0] eq 'f') {
+      make @labels[+$/<digit>][@labelcount[+$/<digit>]];
+    } else {
+      make @labels[+$/<digit>][@labelcount[+$/<digit>]-1];
+    }
+  }
+}
+
+sub parse_line(Str $input_line) {
+  $line = $input_line;
+  my $wline = $line;
+  $wline ~~ s/^\s+//;
+  if ($wline ~~  /^<[\#;]>/) {
+    sayline();
+    return;
+  }
+  if ($wline ~~  /^$/) {
+    sayline();
+    return;
+  }
+  $wline = $input_line;
+# Shouldn't be necessary -- substitute register names for defs
+# Remove because it's really too slow.
+#  if ( $wline !~~ /\.def/ ) {
+#    for keys %regdefs -> $reg {
+#      my $regnum = %regdefs{$reg};
+#      my $cmd = "$wline ~~ s:g:i/\b$reg\b/r{$regnum}/";
+#      eval $cmd;
+#    }
+# }
+  my $m = Asm.parse($wline, :actions(Asm::Actions));
+  if ($pass == $finalpass) {
+#    say $m.perl;
+    if (!?$m) {
+      say("****** ****     " ~ $input_line);
+    }
+  }
+}
+
+sub setup (Int $nextpass) {
+  $pass = $nextpass;
+  $pc = 0;
+  $ramptr = 0x60;
+  for 0...9 -> $index {
+    @labelcount[$index] = 1;
+  }
+}
+
+sub do_pass (Int $pass) {
+  setup($pass);
+  for @files -> $filename {
+    my $INPUT = open $filename, :r;
+    for $INPUT.lines() -> $line {
+      chomp $line;
+      parse_line($line);
+    }
+    $INPUT.close();
+  }
+}
+
+# START HERE
+
+for @*ARGS -> $arg {
+  if ($arg ~~ /^\-s(.*)/) {
+    $s1file = $0;
+    next;
+  }
+  push @files, $arg;
+}
+
+do_pass(1);
+do_pass(2);
+
+print_symbols();
+
+if ($s1file) {
+  write_s1($s1file);
+}

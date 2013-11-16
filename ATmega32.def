@@ -1,0 +1,115 @@
+;	.nolist
+; Definitions for the ATMEGA328 processor
+
+        .param pcwidth = 6
+
+	.pushmem flash
+	.defmem bottom = 0
+	.defmem top = 0x3fff ; 32k bytes addressed as 16k words
+	.defmem width = 16
+	.defmem executable = 1
+	.defmem writeable = 0
+	.defmem readable = 0
+	.defmem init = 1
+	.defmem label = 'C'
+	.defmem pcwidth = 6
+
+	.pushmem ram
+	.defmem bottom = 0x100
+	.defmem top = 0x8ff
+	.defmem width = 8
+	.defmem executable = 0
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 0
+	.defmem label = 'R'
+	.defmem pcwidth = 4
+	.popmem
+	
+	.pushmem eeprom
+	.defmem bottom = 0
+	.defmem top = 0x3ff
+	.defmem width = 8
+	.defmem executable = 0
+	.defmem writeable = 0
+	.defmem readable = 0
+	.defmem init = 0
+	.defmem label = 'E'
+	.defmem pcwidth = 3
+	.popmem
+	
+	.macro .flash
+	.pushmem flash
+	.endm
+
+	.macro .cseg
+	.pushmem flash
+	.endm
+
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+	.macro .eeprom
+	.pushmem eeprom
+	.endm
+
+	.macro .eseg
+	.pushmem eeprom
+	.endm
+
+; instruction definitions
+        .include avr.def
+; IO register definitions
+
+;;        .set    portb ;; page 93 in data sheet
+        .set    pcifr	= 0x1b
+	.set	pcifr.m	= 0x3b
+        .set    eifr	= 0x1c
+	.set	eifr.m	= 0x3c
+        .set    eimsk	= 0x1d
+	.set	eimsk.m	= 0x3d
+        .set    gpior0	= 0x1e
+	.set	gpior0.m = 0x3e
+	.set	eecr	= 0x1f
+	.set	eecr.m	= 0x3f
+	.set	eere		= 0
+	.set	eewe		= 1
+	.set	eemwe		= 2
+	.set	eedr	= 0x20
+	.set	eedr.m	= 0x40
+	.set	eearl	= 0x21
+	.set	eearl.m	= 0x41
+	.set	eearh	= 0x22
+	.set	eearh.m	= 0x42
+	.set	gpior1	= 0x2a
+	.set	gpior1.m = 0x4a
+	.set	gpior2	= 0x2b
+	.set	gpior2.m = 0x4b
+	.set	smcr	 = 0x33
+ 	.set	smcr.m	 = 0x53
+	.set	mcusr	 = 0x34
+	.set	mcusr.m	 = 0x54
+	.set	mcucr	 = 0x35
+	.set	mcucr.m	 = 0x55
+	.set	spl	= 0x3d
+	.set	spl.m	= 0x5d
+	.set	sph	= 0x3e
+	.set	sph.m	= 0x5e
+	.set	sreg	= 0x3f
+	.set	sreg.m	= 0x5f
+	.set	wdtcsr.m  = 0x60
+	.set	clkpr.m	= 0x61
+	.set	prr.m	= 0x64
+	.set	osccal.m = 0x66
+	.set	pcicr.m	 = 0x68
+	.set	eicra.m	 = 0x69
+	.set	pcmsk0.m = 0x6b
+	.set	pcmsk1.m = 0x6c
+	.set	pcmsk2.m = 0x6d
+
+;	.list

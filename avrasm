@@ -1,0 +1,1618 @@
+#!/home/kevin/bin/perl6
+
+use v6;
+use MONKEY_TYPING;
+my %param = ();
+%param<pcwidth> = 8;
+
+my %directive = ();
+
+my @local_pointer = ();
+my @local_symbol = ();
+
+my %memspace;
+my Int $pc;
+my @memspace = ({'pc' => 0.Int});
+
+
+sub setup_local_pointer() {
+    for 0..99 -> $index {
+	@local_pointer[$index] = -1;
+    }
+}
+
+sub setup_local() {
+    for 0..99 -> $index {
+	@local_symbol[$index] = [];
+    }
+    # setup_local_pointer() is called in do_pass
+}
+
+setup_local();
+
+my %symbol = ();
+
+# basic rules for expressions
+
+grammar Assembler {
+    token identifier { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
+    token localref { (\d\d?) ( <[fb]> ) }
+    proto token number { <*> }
+    token number:sym<decimal> { '-'? <[0..9]>+ }
+    token number:sym<binary>  { '0' <[bB]> <[01]>+ }
+    token number:sym<octal>   { '0' <[oO]> <[0..7]>+ }
+    token number:sym<hex>     { '0' <[Xx]> <[0..9 a..f A..F]>+ }
+    token number:sym<hex2>    {     '$'   (<[0..9 a..f A..F]>+) }
+    proto rule term { <*> }
+    rule term:sym<localref>   { <localref> }
+    rule term:sym<number>     { <number> }
+    rule term:sym<funcall>    { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')' }
+    rule term:sym<identifier> { <identifier> }
+    rule term:sym<pexpr>      {'(' <expression> ')' }
+    token addoper { '+' | '-' }
+    token muloper { '*' | '/' | '%' | '<<' | '>>' }
+    rule mulexpr { <term> [ <muloper> <term> ]* }
+    rule expression { [ <mulexpr> [ <addoper> <mulexpr> ]* ] }
+    proto token string { <*> }
+    token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \' } # FIXME
+    rule stringexpression { <string> }
+    proto rule instruction { <*> }
+}
+
+class Assembler::Actions {
+  method localref($/) {
+    my $value;
+    if ~$/[1] eq 'f' {
+      $value = @local_symbol[+$/[0]+1];
+    } else {
+      $value = @local_symbol[+$/[0]];
+    }
+    make $value;
+  }
+  method number:sym<binary>($/)   { make :2(~$/); }
+  method number:sym<octal>($/)    { make :8(~$/); }
+  method number:sym<hex>($/)      { make :16(~$/); }
+  method number:sym<hex2>($/)     { make :16(~$/[0]); }
+  method number:sym<decimal>($/)  { make :10(~$/); }
+  method term:sym<identifier>($/)           {
+    my $sym = ~$/<identifier>;
+    my $lcsym = $sym.lc;
+    if %symbol{$lcsym}.defined {
+      my $val = %symbol{$sym.lc}<value>;
+      make $val;
+    } else {
+      error_listing "*** Undefined symbol \"$sym\"";
+      make 0;
+    }
+  }
+  method term:sym<number>($/)     { make $/<number>.ast; }
+  method term:sym<expression>($/) { make $/<expression>.ast; }
+  method term:sym<localref>($/)   { make $/<localref>.ast; }
+  method term:sym<pexpr>($/)      { make $/<expression>.ast; }
+  method term:sym<funcall>($/)    {
+    if $/<identifier>.lc eq 'low' {
+      make ($/<expression>.ast) +& 0xff;
+    }
+    if $/<identifier>.lc eq 'high' {
+      make (($/<expression>.ast) +> 8) +& 0xff;
+    }
+  }
+  method expression($/) {
+    my $value = $/<mulexpr>[0].ast;
+    if ?$/<addoper> {
+      for 0 .. (+$<addoper> - 1) -> $index {
+	my $oper = ~$/<addoper>[$index];
+	if $oper ~~ '+' {
+	  $value += $/<mulexpr>[$index + 1].ast;
+	} else {
+	  $value -= $/<mulexpr>[$index + 1].ast;
+	}
+      }
+    }
+    make $value;
+  }
+  method mulexpr($/) {
+    my $value = +$/<term>[0].ast;
+    if ?$/<muloper> {
+      for 0 .. (+$/<muloper> - 1) -> $index {
+	my $oper = ~$/<muloper>[$index];
+	if $oper ~~ '*' {
+	  $value *= $/<term>[$index + 1].ast;
+	} elsif $oper ~~ '/' {
+	  $value /= $/<term>[$index + 1].ast;
+	} elsif $oper ~~ '%' {
+	  $value %= $/<term>[$index + 1].ast;
+	} elsif $oper ~~ '<<' {
+	  $value +<= $/<term>[$index + 1].ast;
+	} elsif $oper ~~ '>>' {
+	  $value +>= $/<term>[$index + 1].ast;
+	} else {
+	  error_listing "Illegal operator";
+	}
+      }
+    }
+    make $value;
+  }
+  method string:sym<singlequote>($/) { make ~$/[0]; };
+  method stringexpression($/) { make ~$/<string>.ast; };
+}
+
+# Input routines
+
+my $input_line = sub { return Str; };
+my $line_number = 0;
+
+sub
+include_file(Str $filename) {
+  my $HANDLE = open $filename, :r;
+  my $old_input_line = $input_line;
+  my $old_line_number = $line_number;
+  $line_number = 0;
+  $input_line = sub {
+    my $line = $HANDLE.get;
+    if ! $line.defined {
+      $input_line = $old_input_line;
+      $line_number = $old_line_number;
+      if $input_line.defined {
+	return $input_line();
+      } else {
+	return Str;
+      }
+    }
+    ++$line_number;
+    return $line;
+  };
+}
+
+my %macro = ();
+my $current_macro_def = '';
+my $ifdepth = 0;
+my $truedepth = 0;
+my %define = ();
+
+sub
+expand_macro(Str $label, Str $opcode, Str $rest) {
+  my $old_input_line = $input_line;
+  my $old_line_number = $line_number;
+  $line_number = 0;
+  my $macro_name = $opcode;
+  my $index = 0;
+  my @args = $rest.comb(/
+			<?after \"> <-[\"]>+ <?before \"> # stuff in quotes
+			| \w+                                # or words
+			/);
+  $index = 0;
+  $input_line = sub {
+    my $line = %macro{$macro_name}[$index++];
+    if ! $line.defined {
+      $input_line = $old_input_line;
+      $line_number = $old_line_number;
+      if $input_line.defined {
+	return $input_line();
+      } else {
+	return Str;
+      }
+    }
+    # interpolate the arguments
+#    say "Interpolating arguments ", @args.perl, " into $line\n";
+    while ($line ~~ m/\@(<digit>)/) {
+      my $value = @args[$/[0]];
+      $line ~~ s/\@<digit>/{$value}/;
+    }
+    ++$line_number;
+    return $line;
+  };
+}
+
+sub
+parse_line(Str $line) {
+  my $tline = $line;
+  my Str $label = '';
+  my Str $opcode = '';
+  my Str $rest = '';
+  if $tline ~~ /^\S/ { # we have a label
+        $tline ~~ s/^(\S+)//;
+       $label = ~$0;
+  } else {
+    #say "no label";
+  }
+  $tline ~~ s/^\s+//;
+  if $tline ~~ /^[\w|\.]/ {
+    $tline ~~ s/^(\S+)//;
+    $opcode = ~$0;
+  }
+  $tline ~~ s/^\s+//;
+  $rest = $tline;
+  my $orig_rest = $rest;
+  if %macro{$opcode.lc}.defined {
+    format_listing(-1, '', $label, $opcode, $rest);
+    expand_macro($label, $opcode.lc, $rest);
+    next;
+  }
+  $rest ~~ s:g/ <wb>(\w+)<wb> /{
+				my $word = $0;
+				if %define{$word}.defined {
+				  %define{$word}
+				} else {
+				  $word
+				}
+			       }/;
+  return ($label, $opcode, $orig_rest, $rest);
+}
+
+sub
+get_next_line {
+  loop {
+    if ! $input_line.defined {
+      return (Str, Str, Str, Str);
+    }
+    my Str $line = $input_line();
+    if ! $line.defined {
+      return (Str, Str, Str, Str);
+    }
+    if $current_macro_def {
+      if $line ~~ m/^<ws>\.endm<wb>/ {
+	$current_macro_def = '';
+      } else {
+	%macro{$current_macro_def}.push($line);
+      }
+      simple_listing($line);
+      next;
+    }
+    if $line ~~ m/^<ws>?[<[\#;]>.*]?$/ { # comments
+      simple_listing($line);
+      next;
+    }
+    if $line ~~ m/^<ws>\.macro<ws>(\S+)/ {
+      simple_listing($line);
+      $current_macro_def = ~$/[0];
+      %macro{$current_macro_def} = [];
+      next;
+    }
+    if $line ~~ m/^<ws>\.include<ws>(\S+)/ {
+      simple_listing($line);
+      include_file(~$/[0]);
+      next;
+    }
+    if $line ~~ m/^<ws>  \.if <ws> / {
+      if $ifdepth == $truedepth {
+	# only in this case do we care about the value of the expression
+	my $expr = $line;
+	$expr ~~ s/^<ws> '.if' <ws>//;
+	my $m = Assembler.parse($expr,
+				:actions(Assembler::Actions),
+				:rule(<expression>));
+	if ?+$m.ast {
+	  ++$truedepth;
+	}
+      }
+      ++$ifdepth;
+      next;
+    }
+    if $line ~~ m/^<ws>\.else<wb>/ {
+      if $ifdepth == $truedepth {
+	--$truedepth;
+      } else {
+	if $ifdepth == $truedepth + 1 {
+	  ++$truedepth;
+	}
+      }
+      next;
+    }
+    if $line ~~ m/^<ws>\.endif<wb>/ {
+      --$ifdepth;
+      if $ifdepth < $truedepth {
+	$truedepth = $ifdepth;
+      }
+      next;
+    }
+    if ($truedepth == $ifdepth) {
+      my ($label, $opcode, $orig_rest, $rest) = parse_line($line);
+      return ($line, $label, $opcode, $orig_rest, $rest);
+    }
+    else {
+        simple_listing $line;
+    }
+  }
+}
+
+# Output
+
+my $suppress_output = 1;
+my $nolist = 0;
+
+# listing
+
+sub simple_listing(Str $line) {
+  return if $suppress_output; # some variables below don't exist on earlier passes
+  return if $nolist;
+  printf "%4d                 %s\n", $line_number, $line;
+}
+
+sub error_listing(Str $msg) {
+  return if $suppress_output; # some variables below don't exist on earlier passes
+  return if $nolist;
+  printf "                    %s\n", $msg;
+}
+
+sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
+  return if $suppress_output; # some variables below don't exist on earlier passes
+  return if $nolist;
+  my $code_str = $code;
+  if $code.chars > 9 {
+    $code_str = substr($code, 0, 9) ~ '>';
+  }
+  my $pcformat = '';
+  my $pc_str;
+  if $pc >= 0 {
+    $pcformat = ' ' x %param<pcwidth>
+      - +@memspace[0]<pcwidth> ~
+	'%0'
+	  ~ sprintf('%d.%dx ', +@memspace[0]<pcwidth>, +@memspace[0]<pcwidth>)
+	    ~ @memspace[0]<label>;
+    $pc_str = (($pc < 0) ?? (' ' x (%param<pcwidth> + 2)) !! sprintf($pcformat, $pc));
+  } else {
+    $pc_str = ' ' x (%param<pcwidth> + 2);
+  }
+  printf "%4d %s %-10s %8s %8s %s\n", $line_number, $pc_str, $code_str, $label, $opcode, $rest;
+}
+
+# S1 output
+
+my %bytes;
+
+my $s1outaddr = -2; # don't use -1
+my $s1outcount = 0;
+my $s1outstring = '';
+my $s1checksum = 0;
+my $s1_header = '';
+
+my Str $s1file = '';
+
+# Code to handle S1 format output files
+
+sub putword($addr, $word) {
+  %bytes{$addr} = $word +& 0x00ff;
+  %bytes{$addr+1} = ($word +> 8) +& 0x00ff;
+}
+
+sub hexbyte($byte) {
+  my $nybble2 = (($byte     ) +& 0x0f) + 0x30;
+  $nybble2 += 7 if $nybble2 >= 0x3a;
+  my $nybble1 = (($byte +> 4) +& 0x0f) + 0x30;
+  $nybble1 += 7 if $nybble1 >= 0x3a;
+  my $c1 = $nybble1.chr;
+  my $c2 = $nybble2.chr;
+  my $string = $c1 ~ $c2;
+  return $string;
+}
+
+sub put_bytes($header, $count, $string, $checksum) {
+  print $header;
+  print hexbyte($count);
+  print $string;
+  my $tchecksum = $checksum +& 0x0ff;
+  print hexbyte($tchecksum);
+  print "\n";
+}
+
+sub write_s1_record() {
+  if ($s1outaddr >= 0) {
+    $s1checksum += $s1outcount;
+    put_bytes($s1_header, $s1outcount+1, $s1outstring, +^$s1checksum);
+    $s1outaddr = -2;
+    $s1outcount = 0;
+  }
+}
+
+sub write_s1byte($addr, $byte) {
+  my $value = $byte +& 0xff;
+  if ($addr != ($s1outaddr + 1)) {
+    write_s1_record();
+  }
+  if ($s1outcount == 0) {
+    if ($addr < 0x10000) {
+      $s1_header = 'S1';
+      $s1outstring = hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 8) + $addr;
+      $s1outcount = 2;
+    } elsif ($addr < 0x1000000) {
+      $s1_header = 'S2';
+      $s1outstring = hexbyte($addr +> 16) ~ hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 16) + ($addr +> 8) + $addr;
+      $s1outcount = 3;
+    } else {
+      $s1_header = 'S3';
+      $s1outstring = hexbyte($addr +> 24) ~ hexbyte($addr +> 16) ~ hexbyte($addr +> 8) ~ hexbyte($addr);
+      $s1checksum = ($addr +> 24) + ($addr +> 16) + ($addr +> 8) + $addr;
+      $s1outcount = 4;
+    }
+  }
+  $s1outstring ~= hexbyte($byte);
+  $s1checksum += $byte;
+  ++$s1outcount;
+  $s1outaddr = $addr;
+  if ($s1outcount >= 18) {
+    write_s1_record();
+  }
+}
+
+sub write_s1($file) {
+  my $*OUT = open($file, :w);
+  for sort {$^a <=> $^b}, %bytes.keys -> $addr {
+    write_s1byte(+$addr, %bytes{$addr});
+  }
+  write_s1_record(); # flush any remaining buffer
+  say "S9030000FC";
+}
+
+sub assign_symbol(Str $labelfield, $value, $pass) {
+  my $label = $labelfield.lc;
+  $label ~~ s/\:$//;
+  if ($label ~~ /^(\d\d?)$/ ) {
+    if ($pass == 1) {
+      @local_symbol[$0] = [] unless @local_symbol[$0].defined;
+      @local_symbol[$0].push($pc);
+    }
+    ++@local_pointer[$0];
+  } else {
+    %symbol{$label} = {} unless %symbol{$label}.defined;
+    %symbol{$label}<value> = +$value;
+    %symbol{$label}<memspace> = @memspace[0]<id>;
+  }
+}
+
+my %constantsize = '.db' => 1,
+                   '.dw' => 2,
+		   '.dl' => 4;
+
+%directive<.byte> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing($pc, '', $label, $opcode, $rest);
+  assign_symbol($label, +$pc, $pass) if $label; ++$pc;
+};
+%directive<.word> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing($pc, '', $label, $opcode, $rest);
+  assign_symbol($label, +$pc, $pass) if $label;
+  $pc += 2;
+};
+%directive<.long> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing($pc, '', $label, $opcode, $rest);
+  assign_symbol($label, +$pc, $pass) if $label;
+  $pc += 4;
+};
+%directive<.list> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing(-1, '', $label, $opcode, $rest);
+  $nolist--;
+  $nolist = 0 if $nolist < 0;
+};
+%directive<.nolist> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing(-1, '', $label, $opcode, $rest);
+  ++$nolist;
+};
+%directive<.device> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing(-1, '', $label, $opcode, $rest);
+};
+%directive<.listmac> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  format_listing(-1, '', $label, $opcode, $rest);
+};
+%directive<.set> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $args = $rest;
+  my $m = Assembler.parse($args,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $symbol = ~$m[0];
+  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  $m = Assembler.parse($args,
+		       :actions(Assembler::Actions),
+		       :rule(<expression>));
+  my $value = +$m.ast;
+  format_listing(-1, '', $label, $opcode, $rest);
+  assign_symbol($symbol, +$m.ast, $pass);
+};
+%directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $args = $rest;
+  chomp $args;
+  my $m = Assembler.parse($args,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $symbol = ~$m[0];
+  $args = $args.substr(+$m.to); # remove identifier
+  $args ~~ s/ ^ <ws> \= <ws> //;
+  $m = Assembler.parse($args,
+		       :actions(Assembler::Actions),
+		       :rule(<identifier>));
+  my $value = ~$m[0];
+  simple_listing ".def $symbol = $value";
+  %define{$symbol} = $value;
+};
+%directive<.param> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $args = $rest;
+  my $m = Assembler.parse($args,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $param = ~$m[0];
+  $args = $args.substr(+$m.to); # remove identifier
+  $args ~~ s/ ^ <ws>? \= <ws>? //;
+  $m = Assembler.parse($args,
+		       :actions(Assembler::Actions),
+		       :rule(<expression>));
+  my $value = +$m.ast;
+  simple_listing ".param $param = $value";
+  %param{$param} = $value;
+};
+%directive<.equ> = %directive<.set>;
+%directive<.db> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $size = %constantsize{$opcode};
+  my $format = sprintf("\%\%0\%dx", $size*2);
+  my $args = $rest;
+  loop {
+    my $m = Assembler.parse($args,
+			    :actions(Assembler::Actions),
+			    :rule(<expression>));
+    if ?$m {
+      my $value = $m.ast;
+      format_listing($pc, sprintf($format, +$value), $label, $opcode, $rest);
+      putword($pc*2, $value); # FIX
+      if ($size == 4) {
+        putword($pc*2 + 2, $value +> 16);
+      }
+      $pc += $size div 2;
+      $args = $args.substr(+$m.to);
+      $m = $args ~~ m/ ',' /;
+      last unless ?$m;
+      $args = $args.substr(+$m.to); 
+    } else {
+      error_listing '*** unknown value';
+      format_listing($pc, '', $label, $opcode, $rest);
+      last;
+    }
+  }
+};
+%directive<.dw> = %directive<.db>;
+%directive<.dl> = %directive<.db>;
+%directive<.end> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  say ".end" unless $nolist;
+};
+%directive<.exit> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  simple_listing ".exit";
+};
+%directive<.org> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  say ".org" unless $nolist;
+  my $m = Assembler.parse($rest,
+			  :actions(Assembler::Actions),
+			  :rule(<expression>));
+  $pc = +$m.ast;
+};
+%directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $m = Assembler.parse($rest,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $arg = ~$m[0];
+  if ! %memspace{$arg}.defined {
+    %memspace{$arg} = {};
+    %memspace{$arg}<pc> = 0.Int;
+    %memspace{$arg}<id> = $arg;
+  }
+  @memspace.unshift(%memspace{$arg});
+  $pc := @memspace[0]<pc>;
+};
+%directive<.popmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  shift @memspace;
+  $pc := @memspace[0]<pc>;
+};
+%directive<.defmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $args = $rest;
+  my $m = Assembler.parse($args,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $symbol = ~$m[0];
+  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  $m = Assembler.parse($args,
+		       :actions(Assembler::Actions),
+		       :rule(<expression>));
+  if ?$m {
+    my $value = +$m.ast;
+    format_listing(-1, '', $label, $opcode, $rest);
+    @memspace[0]{$symbol} = $value;
+  } else {
+    $m = Assembler.parse($args,
+  		       :actions(Assembler::Actions),
+  		       :rule(<stringexpression>));
+    if ?$m {
+      my $value = ~$m.ast;
+      format_listing -1, '', $label, $opcode, $rest;
+      @memspace[0]{$symbol} = $value;
+    } else {
+      simple_listing 'Unrecognised value field';
+      format_listing -1, '', $label, $opcode, $rest;
+    }
+  }
+};
+%directive<.dump> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $args = $rest;
+  my @args = $rest.split(',');
+  for @args -> $arg {
+    if $arg eq 'symbols' {
+      print_symbols();
+    }
+  }
+};
+
+sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
+  my $words = ();
+  my $code = '';
+  my $instruction_length = 0;
+  if $opcode {
+    my $m = Assembler.parse("$opcode $rest ",
+			    :actions(Assembler::Actions),
+			    :rule(<instruction>));
+    if $m {
+      $words = $m.ast;
+      my $nybbles = ((@memspace[0]<width> + 3) / 4);
+      my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
+      for 0 .. (+$words - 1) -> $index {
+        $code ~= sprintf($format, $words[$index]);
+	putword(($pc+$instruction_length)*2, $words[$index]);
+	$instruction_length++;
+      }
+      $code ~~ s/ ' ' $//; # delete trailing space
+    } else {
+      error_listing "*** Unrecognised instruction format";
+    }
+  }
+  format_listing($pc, $code, $label, $opcode, $orig_rest);
+  $pc += $instruction_length;
+}
+
+my @files = ();
+
+sub do_pass(Int $pass_number) {
+  $suppress_output = ($pass_number == 2) ?? 0 !! 1;
+  $suppress_output = 0;
+  $ifdepth = 0;
+  $truedepth = 0;
+  $current_macro_def = '';
+  setup_local_pointer();
+# reset program counters
+  for %memspace.keys -> $space {
+    %memspace{$space}<pc> = 0;
+  }
+  @memspace = ({'pc' => 0.Int});
+  $pc := @memspace[0]{'pc'};
+
+# include the filenames in reverse order so the first gets opened first
+# and then chains through to the second and so on
+  for 0 .. +@files-1 ->$fileindex {
+      include_file(@files[$fileindex]);
+  }
+  loop {
+    my (Str $line, Str $label, Str $opcode, Str $orig_rest, Str $rest) = get_next_line();
+    if ($line.defined) {
+      if $opcode.defined {
+        $rest = '' unless $rest.defined;
+        $opcode = '' unless $opcode.defined;
+        $opcode = $opcode.lc;
+        if %directive{$opcode}.defined {
+	  %directive{$opcode}($label, $opcode, $rest, $pass_number);
+        } else {
+	  assign_symbol($label, +$pc, $pass_number) if $label;
+	  assemble_instruction($label, $opcode, $orig_rest, ~$rest);
+        }
+      } else {
+        assign_symbol($label, $pc, $pass_number) if $label;
+        format_listing($pc, '', $label, '', '');
+      }
+    } else {
+      return(0);
+    }
+  }
+}
+
+sub print_symbols () {
+  say "";
+  say "Symbol Table:";
+  say "=============";
+  for (sort keys %symbol) -> $symbol {
+    if $symbol ~~ /^_/ {
+      # ignore symbols starting with _
+    } else {
+      my $pcformat = '';
+      my $pc_str;
+      my $pc = %symbol{$symbol}<value>;
+      my $memspace = %symbol{$symbol}<memspace>;
+      $pcformat = ' ' x %param<pcwidth>
+	- +%memspace{$memspace}<pcwidth> ~
+	  '%0'
+	    ~ sprintf('%d.%dx ', +%memspace{$memspace}<pcwidth>, +%memspace{$memspace}<pcwidth>)
+	      ~ %memspace{$memspace}<label>;
+      $pc_str = sprintf($pcformat, $pc);
+      say sprintf "%s %s", $pc_str, $symbol;
+    }
+  }
+}
+
+#######
+#
+# Here's where we put the machine specific stuff
+#
+#######
+
+my %instr_inh = {
+  'break'  => 0x9598,
+  'clc'    => 0x9488,
+  'clh'    => 0x94d8,
+  'cli'    => 0x94f8,
+  'cln'    => 0x94a8,
+  'cls'    => 0x94c8,
+  'clt'    => 0x94d8,
+  'clv'    => 0x94b8,
+  'clz'    => 0x9498,
+  'eicall' => 0x9518,
+  'eijmp'  => 0x9419,
+  'icall'  => 0x9509,
+  'ijmp'   => 0x9409,
+  'nop'    => 0x0000,
+  'ret'    => 0x9508,
+  'reti'   => 0x9518,
+  'sec'    => 0x9408,
+  'seh'    => 0x9458,
+  'sei'    => 0x9478,
+  'sen'    => 0x9428,
+  'ses'    => 0x9448,
+  'set'    => 0x9464,
+  'sev'    => 0x9438,
+  'sez'    => 0x9418,
+  'sleep'  => 0x9588,
+  'wdr'    => 0x95a8,
+};
+my @instr_inh = %instr_inh.keys;
+
+my %instr_rr = {
+  'adc'  => 0x1c00,
+  'add'  => 0x0c00,
+  'and'  => 0x2000,
+  'cp'   => 0x1400,
+  'cpc'  => 0x0400,
+  'cpse' => 0x1000,
+  'eor'  => 0x2400,
+  'mov'  => 0x2c00,
+  'mul'  => 0x9c00,
+  'or'   => 0x2800,
+  'sbc'  => 0x0800,
+  'sub'  => 0x1800,
+};
+my @instr_rr = %instr_rr.keys;
+
+my %instr_ww = {
+  'movw' => 0x0100,
+};
+my @instr_ww = %instr_ww.keys;
+
+my %instr_rr3 = {
+  'fmul'   => 0x0308,
+  'fmuls'  => 0x0380,
+  'fmulsu' => 0x0388,
+  'mulsu'  => 0x0300,
+};
+my @instr_rr3 = %instr_rr3.keys;
+
+my %instr_rr4 = {
+  'muls'  => 0x0200,
+};
+my @instr_rr4 = %instr_rr4.keys;
+
+my %instr_r2 = {
+  'clr' => 0x2400,
+  'lsl' => 0x0c00,
+  'rol' => 0x1c00,
+  'tst' => 0x2000,
+};
+my @instr_r2 = %instr_r2.keys;
+
+my %instr_r = {
+  'asr'  => 0x9405,
+  'com'  => 0x9400,
+  'dec'  => 0x940a,
+  'inc'  => 0x9403,
+  'lsr'  => 0x9406,
+  'neg'  => 0x9401,
+  'pop'  => 0x900f,
+  'push' => 0x920f,
+  'ror'  => 0x9407,
+  'ser'  => 0xef0f,
+  'swap' => 0x9402,
+  'xch'  => 0x9204,
+};
+my @instr_r = %instr_r.keys;
+
+my %instr_r_reg = {
+  'asr'  => 0xffff,
+  'com'  => 0xffff,
+  'dec'  => 0xffff,
+  'inc'  => 0xffff,
+  'lsr'  => 0xffff,
+  'neg'  => 0xffff,
+  'pop'  => 0xffff,
+  'push' => 0xffff,
+  'ror'  => 0xffff,
+  'ser'  => 0xff00,
+  'swap' => 0xffff,
+  'xch'  => 0xffff, # FIXME -- this doesn't give the correct syntax
+};
+my @instr_r_reg = %instr_r_reg.keys;
+
+my %instr_iw = {
+   'adiw' => 0x9600,
+   'sbiw' => 0x9700,
+};
+my @instr_iw = %instr_iw.keys;
+
+my %instr_ir = {
+   'andi' => 0x7000,
+   'cpi'  => 0x3000,
+#   'ldi'  => 0xe000,
+   'ori'  => 0x6000,
+   'sbci' => 0x4000,
+   'sbr'  => 0x6000, # synonym for ori
+   'subi' => 0x5000,
+};
+my @instr_ir = %instr_ir.keys;
+
+my %instr_i6r = {
+   'in'  => 0x3000,
+};
+my @instr_i6r = %instr_i6r.keys;
+
+my %instr_out = {
+   'out' => 0xb800,
+};
+my @instr_out = %instr_out.keys;
+
+my %instr_irc = {
+   'cbr' => 0x7000,
+};
+my @instr_irc = %instr_irc.keys;
+
+my %instr_sreg = {
+  'bclr' => 0x9488,
+  'bset' => 0x9408,
+};
+my @instr_sreg = %instr_sreg.keys;
+
+my %instr_tbit = {
+  'bld'  => 0xf800,
+  'bst'  => 0xfa00,
+  'sbrc' => 0xfc00,
+  'sbrs' => 0xfe00,
+};
+my @instr_tbit = %instr_tbit.keys;
+
+my %instr_brb = {
+  'brbc' => 0xf400,
+  'brbs' => 0xf000,
+};
+my @instr_brb = %instr_brb.keys;
+
+my %instr_branch = {
+  'brcc' => 0xf400,
+  'brcs' => 0xf000,
+  'breq' => 0xf001,
+  'brge' => 0xf404,
+  'brhc' => 0xf405,
+  'brhs' => 0xf005,
+  'brid' => 0xf407,
+  'brie' => 0xf007,
+  'brlo' => 0xf000,
+  'brlt' => 0xf004,
+  'brmi' => 0xf002,
+  'brne' => 0xf401,
+  'brpl' => 0xf402,
+  'brsh' => 0xf400,
+  'brtc' => 0xf406,
+  'brts' => 0xf006,
+  'brvc' => 0xf403,
+  'brvs' => 0xf003,
+};
+my @instr_branch = %instr_branch.keys;
+
+my %instr_lbranch = {
+  'rcall' => 0xd000,
+  'rjmp'  => 0xc000,
+};
+my @instr_lbranch = %instr_lbranch.keys;
+
+my %instr_long = {
+  'call' => 0x940e,
+  'jmp'  => 0x940c,
+};
+my @instr_long = %instr_long.keys;
+
+my %instr_lds = {
+  'lds' => 0x9000,
+};
+my @instr_lds = %instr_lds.keys;
+
+my %instr_sts = {
+#  'sts' => 0x9200,
+   'dummysts' => 0x9200,
+};
+my @instr_sts = %instr_sts.keys;
+
+my %instr_bio = {
+  'cbi'  => 0x9800,
+  'sbi'  => 0x9a00,
+  'sbic' => 0x9900,
+  'sbis' => 0x9b00,
+};
+my @instr_bio = %instr_bio.keys;
+
+my %instr_i4 = {
+  'des' => 0x940b,
+};
+my @instr_i4 = %instr_i4.keys;
+
+my %instr_rx = {
+  'ld' => 0x900c,
+};
+my @instr_rx = %instr_rx.keys;
+
+my %instr_xr = {
+  'st' => 0x920c,
+};
+my @instr_xr = %instr_xr.keys;
+
+my %instr_rxplus = {
+  'ld' => 0x900d,
+};
+my @instr_rxplus = %instr_rxplus.keys;
+
+my %instr_xrplus = {
+  'st' => 0x920d,
+};
+my @instr_xrplus = %instr_xrplus.keys;
+
+my %instr_rxminus = {
+  'ld' => 0x900e,
+};
+my @instr_rxminus = %instr_rxminus.keys;
+
+my %instr_xrminus = {
+  'st' => 0x920e,
+};
+my @instr_xrminus = %instr_xrminus.keys;
+
+my %instr_ry = {
+  'ld' => 0x8008,
+};
+my @instr_ry = %instr_ry.keys;
+
+my %instr_yr = {
+  'st' => 0x8208,
+};
+my @instr_yr = %instr_yr.keys;
+
+my %instr_ryplus = {
+  'ld' => 0x9009,
+};
+my @instr_ryplus = %instr_ryplus.keys;
+
+my %instr_yrplus = {
+  'st' => 0x9209,
+};
+my @instr_yrplus = %instr_yrplus.keys;
+
+my %instr_ryminus = {
+  'ld' => 0x900a,
+};
+my @instr_ryminus = %instr_ryminus.keys;
+
+my %instr_yrminus = {
+  'st' => 0x920a,
+};
+my @instr_yrminus = %instr_yrminus.keys;
+
+my %instr_ryq = {
+  'ldd' => 0x8008,
+};
+my @instr_ryq = %instr_ryq.keys;
+
+my %instr_yrq = {
+  'std' => 0x8208,
+};
+my @instr_yrq = %instr_yrq.keys;
+
+my %instr_rz = {
+  'ld' => 0x8000,
+};
+my @instr_rz = %instr_rz.keys;
+
+my %instr_stzr = {
+  'st' => 0x8200,
+};
+my @instr_stzr = %instr_stzr.keys;
+
+my %instr_rzplus = {
+  'ld'  => 0x9001,
+};
+my @instr_rzplus = %instr_rzplus.keys;
+
+my %instr_zrplus = {
+  'ld'  => 0x9201,
+};
+my @instr_zrplus = %instr_zrplus.keys;
+
+my %instr_rzminus = {
+  'ld' => 0x9002,
+};
+my @instr_rzminus = %instr_rzminus.keys;
+
+my %instr_zrminus = {
+  'ld' => 0x9202,
+};
+my @instr_zrminus = %instr_zrminus.keys;
+
+my %instr_rzq = {
+  'ldd' => 0x8000,
+};
+my @instr_rzq = %instr_rzq.keys;
+
+my %instr_zrq = {
+  'std' => 0x8200,
+};
+my @instr_zrq = %instr_zrq.keys;
+
+my %instr_z = {
+  'elpm' => 0x9006,
+  'lpm'  => 0x9004,
+  'spm'  => 0x95e8,
+};
+my @instr_z = %instr_z.keys;
+
+my %instr_zr = {
+  'lac' => 0x9206,
+  'las' => 0x9205,
+  'lat' => 0x9207,
+};
+my @instr_zr = %instr_zr.keys;
+
+my %instr_zplus = {
+  'elpm' => 0x9007,
+  'lpm'  => 0x9005,
+  'spm'  => 0x95f8, # TODO Check options on different cpus
+};
+my @instr_zplus = %instr_zplus.keys;
+
+my %instr_noz = {
+  'elpm' => 0x95d8,
+  'lpm'  => 0x95a8,
+  'spm'  => 0x95e8,
+};
+my @instr_noz = %instr_noz.keys;
+
+augment grammar Assembler {
+  rule bit                      { <expression>                                                                     }
+  token reg                     { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                    }
+  token regpair                 { <[rR]> ( \d+ ) ':' <[rR]> ( \d+ )                                                }
+  rule instruction:sym<rr>      { $<mnemonic>=@instr_rr      <reg> ',' <reg> <ws>                                  }
+  rule instruction:sym<ww1>     { $<mnemonic>=@instr_ww      <regpair> ',' <regpair> <ws>                          }
+  rule instruction:sym<ww2>     { $<mnemonic>=@instr_ww      <reg> ',' <reg> <ws>                                  }
+  rule instruction:sym<rr3>     { $<mnemonic>=@instr_rr3     <reg> ',' <reg> <ws>                                  }
+  rule instruction:sym<rr4>     { $<mnemonic>=@instr_rr4     <reg> ',' <reg> <ws>                                  }
+  rule instruction:sym<r2>      { $<mnemonic>=@instr_r2      <reg> <ws>                                            }
+  rule instruction:sym<r>       { $<mnemonic>=@instr_r       <reg> <ws>                                            }
+  rule instruction:sym<inh>     { $<mnemonic>=@instr_inh     <ws>                                                  }
+  rule instruction:sym<iw>      { $<mnemonic>=@instr_iw      <ws> <regpair> ',' <expression> <ws>                  }
+  rule instruction:sym<iw2>     { $<mnemonic>=@instr_iw      <ws> <reg> ',' <expression> <ws>                      }
+  rule instruction:sym<ir>      { $<mnemonic>=@instr_ir      <ws> <reg> ',' <expression> <ws>                      }
+  rule instruction:sym<irc>     { $<mnemonic>=@instr_irc     <ws> <reg> ',' <expression> <ws>                      }
+  rule instruction:sym<sreg>    { $<mnemonic>=@instr_sreg    <ws> <bit> <ws>                                       }
+  rule instruction:sym<tbit>    { $<mnemonic>=@instr_tbit    <ws> <reg> ',' <bit> <ws>                             }
+  rule instruction:sym<brb>     { $<mnemonic>=@instr_brb     <ws> <bit> ',' <expression> <ws>                      }
+  rule instruction:sym<branch>  { $<mnemonic>=@instr_branch  <ws> <expression> <ws>                                }
+  rule instruction:sym<lbranch> { $<mnemonic>=@instr_lbranch <ws> <expression> <ws>                                }
+  rule instruction:sym<long>    { $<mnemonic>=@instr_long    <ws> <expression> <ws>                                }
+  rule instruction:sym<lds>     { $<mnemonic>=@instr_lds     <ws> <reg> ',' <expression> <ws>                      }
+  rule instruction:sym<sts>     { $<mnemonic>=@instr_sts     <ws> <expression> ',' <reg> <ws>                      }
+  rule instruction:sym<bio>     { $<mnemonic>=@instr_bio     <ws> <expression> ',' <bit> <ws>                      }
+  rule instruction:sym<i4>      { $<mnemonic>=@instr_i4      <ws> <expression> <ws>                                }
+  rule instruction:sym<rx>      { $<mnemonic>=@instr_rx      <ws> <reg> ',' <[xX]> <!before '+'> <ws>              }
+  rule instruction:sym<xr>      { $<mnemonic>=@instr_xr      <ws> <[xX]> ',' <reg> <ws>                            }
+  rule instruction:sym<rxplus>  { $<mnemonic>=@instr_rxplus  <ws> <reg> ',' <[xX]>'+' <ws>                         }
+  rule instruction:sym<xrplus>  { $<mnemonic>=@instr_xrplus  <ws> <[xX]>'+' ',' <reg> <ws>                         }
+  rule instruction:sym<rxminus> { $<mnemonic>=@instr_rxminus <ws> <reg> ',' '-'<[xX]> <ws>                         }
+  rule instruction:sym<xrminus> { $<mnemonic>=@instr_xrminus <ws> '-'<[xX]> ',' <reg> <ws>                         }
+  rule instruction:sym<ry>      { $<mnemonic>=@instr_ry      <ws> <reg> ',' <[yY]> <!before '}'> <ws>              }
+  rule instruction:sym<yr>      { $<mnemonic>=@instr_yr      <ws> <[yY]> ',' <reg> <ws>                            }
+  rule instruction:sym<ryplus>  { $<mnemonic>=@instr_ryplus  <ws> <reg> ',' <[yY]>'+' <!before <expression> > <ws> }
+  rule instruction:sym<yrplus>  { $<mnemonic>=@instr_yrplus  <ws> <[yY]>'+' ',' <reg> <ws>                         }
+  rule instruction:sym<ryminus> { $<mnemonic>=@instr_ryminus <ws> <reg> ',' '-'<[yY]> <ws>                         }
+  rule instruction:sym<yrminus> { $<mnemonic>=@instr_yrminus <ws> '-'<[yY]> ',' <reg> <ws>                         }
+  rule instruction:sym<ryq>     { $<mnemonic>=@instr_ryq     <ws> <reg> ',' <[yY]> '+' <expression> <ws>           }
+  rule instruction:sym<yrq>     { $<mnemonic>=@instr_yrq     <ws> <[yY]> '+' <expression> ',' <reg> <ws>           }
+  rule instruction:sym<rz>      { $<mnemonic>=@instr_rz      <ws> <reg> ',' <[zZ]> <!before '+' > <ws>             }
+  rule instruction:sym<stzr>    { $<mnemonic>=@instr_stzr    <ws> <[zZ]> ',' <reg> <ws>                            }
+  rule instruction:sym<rzplus>  { $<mnemonic>=@instr_rzplus  <ws> <reg> ',' <[zZ]>'+' <ws>                         }
+  rule instruction:sym<zrplus>  { $<mnemonic>=@instr_zrplus  <ws> <[zZ]>'+' ',' <reg> <ws>                         }
+  rule instruction:sym<rzminus> { $<mnemonic>=@instr_rzminus <ws> <reg> ',' '-'<[zZ]> <ws>                         }
+  rule instruction:sym<zrminus> { $<mnemonic>=@instr_zrminus <ws> '-'<[zZ]> ',' <reg> <ws>                         }
+  rule instruction:sym<rzq>     { $<mnemonic>=@instr_rzq     <ws> <reg> ',' <[zZ]> '+' <expression> <ws>           }
+  rule instruction:sym<zrq>     { $<mnemonic>=@instr_zrq     <ws> <[zZ]> '+' <expression> ',' <reg> <ws>           }
+  rule instruction:sym<zr>      { $<mnemonic>=@instr_zr      <ws> <[zZ]> ',' <reg> <ws>                            }
+  rule instruction:sym<zplus>   { $<mnemonic>=@instr_zplus   <ws> <reg> ',' <[zZ]>'+' <ws>                         }
+  rule instruction:sym<noz>     { $<mnemonic>=@instr_noz     <ws>                                                  }
+  rule instruction:sym<i6r>     { $<mnemonic>=@instr_i6r     <ws> <reg> ',' <expression> <ws>                      }
+  rule instruction:sym<out>     { $<mnemonic>=@instr_out     <ws> <expression> ',' <reg> <ws>                      }
+}
+
+augment class Assembler::Actions {
+  method bit($/) {
+    my $val = $/<expression>.ast;
+    if 0 <= $val <= 7 {
+      make $val;
+    } else {
+     error_listing '*** Bit number out of range';
+     make 0;
+    }
+  }
+  method reg($/) {
+    my  $reg = $/[0];
+    if $/[1].defined {
+      my $offset = $/[1];
+      $reg += $offset;
+    }
+    if ! (0 <= $reg <= 31) {
+      error_listing '*** Registers must be in range r0 to r31';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method regpair($/) {
+    my $r1 = $/[0];
+    my $r2 = $/[1];
+    error_listing ('*** Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
+    make $r2;
+  }
+  method instruction:sym<rr>($/) {
+    my $opcode = %instr_rr{~$/<mnemonic>};
+    my $r1 = +$/<reg>[0].ast;
+    my $r2 = +$/<reg>[1].ast;
+    $opcode +|= ($r1 +< 4) +& 0x1f0;
+    $opcode +|=  $r2       +& 0x0f;
+    $opcode +|= ($r2 +< 5) +& 0x200;
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<ww1>($/) {
+    my $opcode = %instr_ww{~$/<mnemonic>};
+    my $r1 = +$/<regpair>[0].ast;
+    my $r2 = +$/<regpair>[1].ast;
+    $opcode +|= ($r1 +< 3) +& 0x00f0;
+    $opcode +|= ($r2 +> 1) +& 0x000f;
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<ww2>($/) {
+    my $opcode = %instr_ww{~$/<mnemonic>};
+    my $r1 = +$/<reg>[0].ast;
+    my $r2 = +$/<reg>[1].ast;
+    $opcode +|= ($r1 +< 3) +& 0x00f0;
+    $opcode +|= ($r2 +> 1) +& 0x000f;
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<rr3>($/) {
+    my $opcode = %instr_rr3{~$/<mnemonic>};
+    my $r1 = +$/<reg>[0].ast;
+    my $r2 = +$/<reg>[1].ast;
+    if ( (16 <= $r1 < 24) && (16 <= $r2 < 24) ) {
+      $opcode +|= ($r1 +< 4) +& 0x0070;
+      $opcode +|=  $r2       +& 0x0007;
+    } else {
+      error_listing '*** Registers must be in range 16 to 23';
+    }
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<rr4>($/) {
+    my $opcode = %instr_rr4{~$/<mnemonic>};
+    my $r1 = +$/<reg>[0].ast;
+    my $r2 = +$/<reg>[1].ast;
+    if ( (16 <= $r1 < 32) && (16 <= $r2 < 32) ) {
+      $opcode +|= ($r1 +< 4) +& 0x00f0;
+      $opcode +|=  $r2       +& 0x000f;
+    } else {
+      error_listing '*** Registers must be in range 16 to 31';
+    }
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<r2>($/) {
+    my $opcode = %instr_r2{~$/<mnemonic>};
+    my $r1 = +$/<reg>.ast;
+    $opcode +|= ($r1 +< 4) +& 0x1f0;
+    $opcode +|=  $r1       +& 0x0f;
+    $opcode +|= ($r1 +< 5) +& 0x200;
+    make( ($opcode,) ); # don't remove the comma!
+  }
+  method instruction:sym<iw>($/) {
+    my $opcode = %instr_iw{~$/<mnemonic>};
+    my $reg = $/<regpair>.ast;
+    my $val = $/<expression>.ast;
+    if ($reg < 24) || ($reg +& 1) {
+      error_listing('*** Register must be r25:r24, r27:r26, r29:r28 or r31:r30');
+      $reg = 24;
+    }
+    $opcode +|= ($reg +< 1) +& 0x0030;
+    $opcode +|=  $val       +& 0x000f;
+    $opcode +|= ($val +< 2) +& 0x00c0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<iw2>($/) {
+    my $opcode = %instr_iw{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>.ast;
+    if ($reg < 24) || ($reg +& 1) {
+      error_listing('*** Register must be r24, r26, r28 or r30');
+      $reg = 24;
+    }
+    $opcode +|= ($reg +< 1) +& 0x0030;
+    $opcode +|=  $val       +& 0x000f;
+    $opcode +|= ($val +< 2) +& 0x00c0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<ir>($/) {
+    my $opcode = %instr_ir{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>.ast;
+    if $reg < 16 {
+      error_listing('*** Register must be r16 - r31');
+      $reg = 16;
+    }
+    $opcode +|= ($reg +< 4) +& 0x00f0;
+    $opcode +|=  $val       +& 0x000f;
+    $opcode +|= ($val +< 4) +& 0x0f00;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<i6r>($/) {
+    my $opcode = %instr_i6r{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>.ast;
+    if 0 <= $val <= 63 {
+      $opcode +|= ($reg +< 4) +& 0x01f0;
+      $opcode +|=  $val       +& 0x000f;
+      $opcode +|= ($val +< 4) +& 0x0f00;
+    } else {
+      error_listing '*** Location must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<out>($/) {
+    my $opcode = %instr_out{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>.ast;
+    if 0 <= $val <= 63 {
+      $opcode +|= ($reg +< 4) +& 0x01f0;
+      $opcode +|=  $val       +& 0x000f;
+      $opcode +|= ($val +< 4) +& 0x0f00;
+    } else {
+      error_listing '*** Location must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<irc>($/) {
+    my $opcode = %instr_irc{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>.ast +^ 0xff;
+    if $reg < 16 {
+      error_listing('*** Register must be r16 - r31');
+      $reg = 16;
+    }
+    $opcode +|= ($reg +< 4) +& 0x00f0;
+    $opcode +|=  $val       +& 0x000f;
+    $opcode +|= ($val +< 4) +& 0x0f00;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<r>($/) {
+    my $opcode = %instr_r{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    if ! %instr_r_reg & (1 +< $reg) {
+      error_listing "Invaild use of register $reg";
+    }
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<inh>($/) {
+    my $opcode = %instr_inh{$/<mnemonic>};
+    make ( ($opcode,) );
+  }
+  method instruction:sym<sreg>($/) {
+    my $opcode = %instr_sreg{~$/<mnemonic>};
+    my $bit = $/<bit>.ast;
+    $opcode +|= ($bit +< 4) +& 0x0070;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<tbit>($/) {
+    my $opcode = %instr_tbit{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $bit = $/<bit>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    $opcode +|=  $bit       +& 0x0007;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<brb>($/) {
+    my $opcode = %instr_brb{~$/<mnemonic>};
+    my $bit = $/<bit>.ast;
+    my $target = $/<expression>.ast;
+    my $offset = $target - $pc - 1;
+    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+    $opcode +|= ($offset +< 3) +& 0x03f0;
+    $opcode +|=  $bit          +& 0x0007;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<branch>($/) {
+    my $opcode = %instr_branch{~$/<mnemonic>};
+    my $target = $/<expression>.ast;
+    my $offset = $target - $pc - 1;
+    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+    $opcode +|= ($offset +< 3) +& 0x03f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<lbranch>($/) {
+    my $opcode = %instr_lbranch{~$/<mnemonic>};
+    my $target = $/<expression>.ast;
+    my $offset = $target - $pc - 1;
+    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
+    $opcode +|= $offset +& 0x0fff;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<long>($/) {
+    my $opcode = %instr_long{~$/<mnemonic>};
+    my $target = $/<expression>.ast;
+    $opcode +|= ($target +> 16) +& 0x0001;
+    $opcode +|= ($target +> 13) +& 0x01f0;
+    make ( ($opcode,($target +& 0xffff)) );
+  }
+  method instruction:sym<lds>($/) {
+# TODO: Handle 7-bit address variant
+    my $opcode = %instr_lds{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $addr = $/<expression>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,($addr +& 0xffff)) );
+  }
+  method instruction:sym<sts>($/) {
+# TODO: Handle 7-bit address variant
+    my $opcode = %instr_sts{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $addr = $/<expression>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,($addr +& 0xffff)) );
+  }
+  method instruction:sym<bio>($/) {
+    my $opcode = %instr_bio{~$/<mnemonic>};
+    my $bit = $/<bit>.ast;
+    my $reg = $/<expression>.ast;
+    error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
+    $opcode +|=  $bit       +& 0x0007;
+    $opcode +|= ($reg +< 3) +& 0x00f8;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<i4>($/) {
+    my $opcode = %instr_i4{~$/<mnemonic>};
+    my $round = $/<expression>.ast;
+    error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
+    $opcode +|= ($round +< 4) +& 0x00f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rx>($/) {
+    my $opcode = %instr_rx{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<xr>($/) {
+    my $opcode = %instr_xr{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rxplus>($/) {
+    my $opcode = %instr_rxplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<xrplus>($/) {
+    my $opcode = %instr_xrplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rxminus>($/) {
+    my $opcode = %instr_rxminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<xrminus>($/) {
+    my $opcode = %instr_xrminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<ry>($/) {
+    my $opcode = %instr_ry{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<yr>($/) {
+    my $opcode = %instr_yr{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<ryplus>($/) {
+    my $opcode = %instr_ryplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<yrplus>($/) {
+    my $opcode = %instr_yrplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<ryminus>($/) {
+    my $opcode = %instr_ryminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<yrminus>($/) {
+    my $opcode = %instr_yrminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<ryq>($/) {
+    my $opcode = %instr_ryq{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    if 0 <= $val <= 63 {
+      $opcode +|=  $val       +& 0x0007;
+      $opcode +|= ($val +< 7) +& 0x0c00;
+      $opcode +|= ($val +< 8) +& 0x1000;
+    } else {
+      error_listing '*** Offset must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<yrq>($/) {
+    my $opcode = %instr_yrq{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    if 0 <= $val <= 63 {
+      $opcode +|=  $val       +& 0x0007;
+      $opcode +|= ($val +< 7) +& 0x0c00;
+      $opcode +|= ($val +< 8) +& 0x1000;
+    } else {
+      error_listing '*** Offset must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rz>($/) {
+    my $opcode = %instr_rz{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<stzr>($/) {
+    my $opcode = %instr_stzr{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rzplus>($/) {
+    my $opcode = %instr_rzplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<zrplus>($/) {
+    my $opcode = %instr_zrplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rzminus>($/) {
+    my $opcode = %instr_rzminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<zrminus>($/) {
+    my $opcode = %instr_zrminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<rzq>($/) {
+    my $opcode = %instr_rzq{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    if 0 <= $val <= 63 {
+      $opcode +|=  $val       +& 0x0007;
+      $opcode +|= ($val +< 7) +& 0x0c00;
+      $opcode +|= ($val +< 8) +& 0x1000;
+    } else {
+      error_listing '*** Offset must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<zrq>($/) {
+    my $opcode = %instr_zrq{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    if 0 <= $val <= 63 {
+      $opcode +|=  $val       +& 0x0007;
+      $opcode +|= ($val +< 7) +& 0x0c00;
+      $opcode +|= ($val +< 8) +& 0x1000;
+    } else {
+      error_listing '*** Offset must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<z>($/) {
+    my $opcode = %instr_z{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<zr>($/) {
+    my $opcode = %instr_zr{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<zplus>($/) {
+    my $opcode = %instr_z{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<noz>($/) {
+    my $opcode = %instr_z{~$/<mnemonic>};
+    make ( ($opcode,) );
+  }
+}
+
+#######
+#
+# End of machine specific stuff
+#
+#######
+
+# START HERE
+for @*ARGS -> $arg {
+  if $arg ~~ /^\-s/ {
+    $s1file = ~$arg;
+    $s1file ~~ s/^\-s//;
+    next;
+  }
+  unshift @files, $arg; # last file specified will be first in list
+}
+
+{
+#  my $*OUT = open '/dev/null', :w;
+  do_pass(1+0);
+}
+
+do_pass(+2);
+
+#say "Assembly completed!!!";
+print_symbols();
+
+if $s1file {
+  write_s1($s1file);
+}

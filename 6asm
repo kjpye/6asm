@@ -31,237 +31,139 @@ setup_local();
 
 my %symbol = ();
 
+my $isa = '';
+my %instructions;
+
 # Variables required for AVR
 
-my %avr_instr_inh = {};
-my @avr_instr_inh = %avr_instr_inh.keys;
-
-my %avr_instr_rr = {};
-my @avr_instr_rr = %avr_instr_rr.keys;
-
-my %avr_instr_ww = {};
-my @avr_instr_ww = %avr_instr_ww.keys;
-
-my %avr_instr_rr3 = {};
-my @avr_instr_rr3 = %avr_instr_rr3.keys;
-
-my %avr_instr_rr4 = {};
-my @avr_instr_rr4 = %avr_instr_rr4.keys;
-
-my %avr_instr_r2 = {};
-my @avr_instr_r2 = %avr_instr_r2.keys;
-
-my %avr_instr_r = {};
-my @avr_instr_r = %avr_instr_r.keys;
-
-my %avr_instr_r_reg = {};
-my @avr_instr_r_reg = %avr_instr_r_reg.keys;
-
-my %avr_instr_iw = {};
-my @avr_instr_iw = %avr_instr_iw.keys;
-
-my %avr_instr_ir = {};
-my @avr_instr_ir = %av_instr_ir.keys;
-
-my %avr_instr_i6r = {};
-my @avr_instr_i6r = %avr_instr_i6r.keys;
-
-my %avr_instr_out = {};
-my @avr_instr_out = %avr_instr_out.keys;
-
-my %avr_instr_irc = {};
-my @avr_instr_irc = %avr_instr_irc.keys;
-
-my %avr_instr_sreg = {};
-my @avr_instr_sreg = %avr_instr_sreg.keys;
-
-my %avr_instr_tbit = {};
-my @avr_instr_tbit = %avr_instr_tbit.keys;
-
-my %avr_instr_brb = {};
-my @avr_instr_brb = %avr_instr_brb.keys;
-
-my %avr_instr_branch = {};
-my @avr_instr_branch = %avr_instr_branch.keys;
-
-my %avr_instr_lbranch = {};
-my @avr_instr_lbranch = %avr_instr_lbranch.keys;
-
-my %avr_instr_long = {};
-my @avr_instr_long = %avr_instr_long.keys;
-
-my %avr_instr_lds = {};
-my @avr_instr_lds = %avr_instr_lds.keys;
-
-my %avr_instr_sts = {};
-my @avr_instr_sts = %avr_nstr_sts.keys;
-
-my %avr_instr_bio = {};
-my @avr_instr_bio = %avr_instr_bio.keys;
-
-my %avr_instr_i4 = {};
-my @avr_instr_i4 = %avr_instr_i4.keys;
-
-my %avr_instr_rx = {};
-my @avr_instr_rx = %avr_instr_rx.keys;
-
-my %avr_instr_xr = {};
-my @avr_instr_xr = %avr_instr_xr.keys;
-
-my %avr_instr_rxplus = {};
-my @avr_instr_rxplus = %avr_instr_rxplus.keys;
-
-my %avr_instr_xrplus = {};
-my @avr_instr_xrplus = %avr_instr_xrplus.keys;
-
-my %avr-instr_rxminus = {};
-my @avr_instr_rxminus = %avr_instr_rxminus.keys;
-
-my %avr_instr_xrminus = {};
-my @avr_instr_xrminus = %avr_nstr_xrminus.keys;
-
-my %avr_instr_ry = {};
-my @avr_instr_ry = %avr_instr_ry.keys;
-
-my %avr_instr_yr = {};
-my @avr_instr_yr = %avr_instr_yr.keys;
-
-my %avr_instr_ryplus = {};
-my @avr_instr_ryplus = %avr_instr_ryplus.keys;
-
-my %avr_instr_yrplus = {};
-my @avr_instr_yrplus = %avr_instr_yrplus.keys;
-
-my %avr_instr_ryminus = {};
-my @avr_instr_ryminus = %avr_instr_ryminus.keys;
-
-my %avr_instr_yrminus = {};
-my @avr_instr_yrminus = %avr_instr_yrminus.keys;
-
-my %avr_instr_ryq = {};
-my @avr_instr_ryq = %avr_instr_ryq.keys;
-
-my %avr_instr_yrq = {};
-my @avr_instr_yrq = %avr_instr_yrq.keys;
-
-my %avr_instr_rz = {};
-my @avr_instr_rz = %avr_instr_rz.keys;
-
-my %avr_instr_stzr = {};
-my @avr_instr_stzr = %avr_instr_stzr.keys;
-
-my %avr_instr_rzplus = {};
-my @avr_instr_rzplus = %avr_instr_rzplus.keys;
-
-my %avr_instr_zrplus = {};
-my @avr_instr_zrplus = %avr_instr_zrplus.keys;
-
-my %avr_instr_rzminus = {};
-my @avr_instr_rzminus = %avr_instr_rzminus.keys;
-
-my %avr_instr_zrminus = {};
-my @avr_instr_zrminus = %avr_instr_zrminus.keys;
-
-my %avr_instr_rzq = {};
-my @avr_instr_rzq = %avr_instr_rzq.keys;
-
-my %avr_instr_zrq = {};
-my @avr_instr_zrq = %avr_instr_zrq.keys;
-
-my %avr_instr_z = {};
-my @avr_instr_z = %avr_instr_z.keys;
-
-my %avr_instr_zr = {};
-my @avr_instr_zr = %avr_instr_zr.keys;
-
-my %avr_instr_zplus = {};
-my @avr_instr_zplus = %avr_instr_zplus.keys;
-
-my %avr_instr_noz = {};
-my @avr_instr_noz = %avr_instr_noz.keys;
+my %avr_instr_inh;       my @avr_instr_inh;      %instructions<avr><inh>     = {hash => %avr_instr_inh, array => @avr_instr_inh};
+my %avr_instr_rr;        my @avr_instr_rr;       %instructions<avr><rr>      = {hash => %avr_instr_rr, array => @avr_instr_rr};
+my %avr_instr_ww;        my @avr_instr_ww;       %instructions<avr><ww>      = {hash => %avr_instr_ww, array => @avr_instr_ww};
+my %avr_instr_rr3;       my @avr_instr_rr3;      %instructions<avr><rr3>     = {hash => %avr_instr_rr3, array => @avr_instr_rr3};
+my %avr_instr_rr4;       my @avr_instr_rr4;      %instructions<avr><rr4>     = {hash => %avr_instr_rr4, array => @avr_instr_rr4};
+my %avr_instr_r2;        my @avr_instr_r2;       %instructions<avr><r2>      = {hash => %avr_instr_r2, array => @avr_instr_r2};
+my %avr_instr_r;         my @avr_instr_r;        %instructions<avr><r>       = {hash => %avr_instr_r, array => @avr_instr_r};
+my %avr_instr_r_reg;     my @avr_instr_r_reg;    %instructions<avr><r_reg>   = {hash => %avr_instr_r_reg, array => @avr_instr_r_reg};
+my %avr_instr_iw;        my @avr_instr_iw;       %instructions<avr><iw>      = {hash => %avr_instr_iw, array => @avr_instr_iw};
+my %avr_instr_ir;        my @avr_instr_ir;       %instructions<avr><ir>      = {hash => %avr_instr_ir, array => @avr_instr_ir};
+my %avr_instr_i6r;       my @avr_instr_i6r;      %instructions<avr><i6r>     = {hash => %avr_instr_i6r, array => @avr_instr_i6r};
+my %avr_instr_out;       my @avr_instr_out;      %instructions<avr><out>     = {hash => %avr_instr_out, array => @avr_instr_out};
+my %avr_instr_irc;       my @avr_instr_irc;      %instructions<avr><irc>     = {hash => %avr_instr_irc, array => @avr_instr_irc};
+my %avr_instr_sreg;      my @avr_instr_sreg;     %instructions<avr><sreg>    = {hash => %avr_instr_sreg, array => @avr_instr_sreg};
+my %avr_instr_tbit;      my @avr_instr_tbit;     %instructions<avr><tbit>    = {hash => %avr_instr_tbit, array => @avr_instr_tbit};
+my %avr_instr_brb;       my @avr_instr_brb;      %instructions<avr><brb>     = {hash => %avr_instr_brb, array => @avr_instr_brb};
+my %avr_instr_branch;    my @avr_instr_branch;   %instructions<avr><branch>  = {hash => %avr_instr_branch, array => @avr_instr_branch};
+my %avr_instr_lbranch;   my @avr_instr_lbranch;  %instructions<avr><lbranch> = {hash => %avr_instr_lbranch, array => @avr_instr_lbranch};
+my %avr_instr_long;      my @avr_instr_long;     %instructions<avr><long>    = {hash => %avr_instr_long, array => @avr_instr_long};
+my %avr_instr_lds;       my @avr_instr_lds;      %instructions<avr><lds>     = {hash => %avr_instr_lds, array => @avr_instr_lds};
+my %avr_instr_sts;       my @avr_instr_sts;      %instructions<avr><sts>     = {hash => %avr_instr_sts, array => @avr_instr_sts};
+my %avr_instr_bio;       my @avr_instr_bio;      %instructions<avr><bio>     = {hash => %avr_instr_bio, array => @avr_instr_bio};
+my %avr_instr_i4;        my @avr_instr_i4;       %instructions<avr><i4>      = {hash => %avr_instr_i4, array => @avr_instr_i4};
+my %avr_instr_rx;        my @avr_instr_rx;       %instructions<avr><rx>      = {hash => %avr_instr_rx, array => @avr_instr_rx};
+my %avr_instr_xr;        my @avr_instr_xr;       %instructions<avr><xr>      = {hash => %avr_instr_xr, array => @avr_instr_xr};
+my %avr_instr_rxplus;    my @avr_instr_rxplus;   %instructions<avr><rxplus>  = {hash => %avr_instr_rxplus, array => @avr_instr_rxplus};
+my %avr_instr_xrplus;    my @avr_instr_xrplus;   %instructions<avr><xrplus>  = {hash => %avr_instr_xrplus, array => @avr_instr_xrplus};
+my %avr_instr_rxminus;   my @avr_instr_rxminus;  %instructions<avr><rxminus> = {hash => %avr_instr_rxminus, array => @avr_instr_rxminus};
+my %avr_instr_xrminus;   my @avr_instr_xrminus;  %instructions<avr><xrminus> = {hash => %avr_instr_xrminus, array => @avr_instr_xrminus};
+my %avr_instr_ry;        my @avr_instr_ry;       %instructions<avr><ry>      = {hash => %avr_instr_ry, array => @avr_instr_ry};
+my %avr_instr_yr;        my @avr_instr_yr;       %instructions<avr><yr>      = {hash => %avr_instr_yr, array => @avr_instr_yr};
+my %avr_instr_ryplus;    my @avr_instr_ryplus;   %instructions<avr><ryplus>  = {hash => %avr_instr_ryplus, array => @avr_instr_ryplus};
+my %avr_instr_yrplus;    my @avr_instr_yrplus;   %instructions<avr><yrplus>  = {hash => %avr_instr_yrplus, array => @avr_instr_yrplus};
+my %avr_instr_ryminus;   my @avr_instr_ryminus;  %instructions<avr><ryminus> = {hash => %avr_instr_ryminus, array => @avr_instr_ryminus};
+my %avr_instr_yrminus;   my @avr_instr_yrminus;  %instructions<avr><yrminus> = {hash => %avr_instr_yrminus, array => @avr_instr_yrminus};
+my %avr_instr_ryq;       my @avr_instr_ryq;      %instructions<avr><ryq>     = {hash => %avr_instr_ryq, array => @avr_instr_ryq};
+my %avr_instr_yrq;       my @avr_instr_yrq;      %instructions<avr><yrq>     = {hash => %avr_instr_yrq, array => @avr_instr_yrq};
+my %avr_instr_rz;        my @avr_instr_rz;       %instructions<avr><rz>      = {hash => %avr_instr_rz, array => @avr_instr_rz};
+my %avr_instr_stzr;      my @avr_instr_stzr;     %instructions<avr><stzr>    = {hash => %avr_instr_stzr, array => @avr_instr_stzr};
+my %avr_instr_rzplus;    my @avr_instr_rzplus;   %instructions<avr><rzplus>  = {hash => %avr_instr_rzplus, array => @avr_instr_rzplus};
+my %avr_instr_zrplus;    my @avr_instr_zrplus;   %instructions<avr><zrplus>  = {hash => %avr_instr_zrplus, array => @avr_instr_zrplus};
+my %avr_instr_rzminus;   my @avr_instr_rzminus;  %instructions<avr><rzminus> = {hash => %avr_instr_rzminus, array => @avr_instr_rzminus};
+my %avr_instr_zrminus;   my @avr_instr_zrminus;  %instructions<avr><zrminus> = {hash => %avr_instr_zrminus, array => @avr_instr_zrminus};
+my %avr_instr_rzq;       my @avr_instr_rzq;      %instructions<avr><rzq>     = {hash => %avr_instr_rzq, array => @avr_instr_rzq};
+my %avr_instr_zrq;       my @avr_instr_zrq;      %instructions<avr><zrq>     = {hash => %avr_instr_zrq, array => @avr_instr_zrq};
+my %avr_instr_z;         my @avr_instr_z;        %instructions<avr><z>       = {hash => %avr_instr_z, array => @avr_instr_z};
+my %avr_instr_zr;        my @avr_instr_zr;       %instructions<avr><zr>      = {hash => %avr_instr_zr, array => @avr_instr_zr};
+my %avr_instr_zplus;     my @avr_instr_zplus;    %instructions<avr><zplus>   = {hash => %avr_instr_zplus, array => @avr_instr_zplus};
+my %avr_instr_noz;       my @avr_instr_noz;      %instructions<avr><noz>     = {hash => %avr_instr_noz, array => @avr_instr_noz};
 
 # basic rules for expressions
 
 grammar Assembler {
-    token identifier { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
-    token localref { (\d\d?) ( <[fb]> ) }
-    proto token number { <*> }
-    token number:sym<decimal> { '-'? <[0..9]>+ }
-    token number:sym<binary>  { '0' <[bB]> <[01]>+ }
-    token number:sym<octal>   { '0' <[oO]> <[0..7]>+ }
-    token number:sym<hex>     { '0' <[Xx]> <[0..9 a..f A..F]>+ }
-    token number:sym<hex2>    {     '$'   (<[0..9 a..f A..F]>+) }
-    proto rule term { <*> }
-    rule term:sym<localref>   { <localref> }
-    rule term:sym<number>     { <number> }
-    rule term:sym<funcall>    { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')' }
-    rule term:sym<identifier> { <identifier> }
-    rule term:sym<pexpr>      {'(' <expression> ')' }
-    token addoper { '+' | '-' }
-    token muloper { '*' | '/' | '%' | '<<' | '>>' }
-    rule mulexpr { <term> [ <muloper> <term> ]* }
-    rule expression { [ <mulexpr> [ <addoper> <mulexpr> ]* ] }
-    proto token string { <*> }
+    token identifier              { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
+    token localref                { (\d\d?) ( <[fb]> ) }
+    proto token number            { <*> }
+    token number:sym<decimal>     { '-'? <[0..9]>+ }
+    token number:sym<binary>      { '0' <[bB]> <[01]>+ }
+    token number:sym<octal>       { '0' <[oO]> <[0..7]>+ }
+    token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+ }
+    token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+) }
+    proto rule term               { <*> }
+    rule term:sym<localref>       { <localref> }
+    rule term:sym<number>         { <number> }
+    rule term:sym<funcall>        { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')' }
+    rule term:sym<identifier>     { <identifier> }
+    rule term:sym<pexpr>          {'(' <expression> ')' }
+    token addoper                 { '+' | '-' }
+    token muloper                 { '*' | '/' | '%' | '<<' | '>>' }
+    rule mulexpr                  { <term> [ <muloper> <term> ]* }
+    rule expression               { [ <mulexpr> [ <addoper> <mulexpr> ]* ] }
+    proto token string            { <*> }
     token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \' } # FIXME
-    rule stringexpression { <string> }
-    proto rule instruction { <*> }
+    rule stringexpression         { <string> }
+    proto rule instruction        { <*> }
 
-  rule avr_bit                      { <expression>                                                                     }
-  token avr_reg                     { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                    }
-  token avr_regpair                 { <[rR]> ( \d+ ) ':' <[rR]> ( \d+ )                                                }
-  rule instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> ',' <avr_reg> <ws>                                  }
-  rule instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> ',' <avr_regpair> <ws>                          }
-  rule instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> ',' <avr_reg> <ws>                                  }
-  rule instruction:sym<rr3>     { $<mnemonic>=@instr_rr3     <reg> ',' <reg> <ws>                                  }
-  rule instruction:sym<rr4>     { $<mnemonic>=@instr_rr4     <reg> ',' <reg> <ws>                                  }
-  rule instruction:sym<r2>      { $<mnemonic>=@instr_r2      <reg> <ws>                                            }
-  rule instruction:sym<r>       { $<mnemonic>=@instr_r       <reg> <ws>                                            }
-  rule instruction:sym<inh>     { $<mnemonic>=@instr_inh     <ws>                                                  }
-  rule instruction:sym<iw>      { $<mnemonic>=@instr_iw      <ws> <regpair> ',' <expression> <ws>                  }
-  rule instruction:sym<iw2>     { $<mnemonic>=@instr_iw      <ws> <reg> ',' <expression> <ws>                      }
-  rule instruction:sym<ir>      { $<mnemonic>=@instr_ir      <ws> <reg> ',' <expression> <ws>                      }
-  rule instruction:sym<irc>     { $<mnemonic>=@instr_irc     <ws> <reg> ',' <expression> <ws>                      }
-  rule instruction:sym<sreg>    { $<mnemonic>=@instr_sreg    <ws> <bit> <ws>                                       }
-  rule instruction:sym<tbit>    { $<mnemonic>=@instr_tbit    <ws> <reg> ',' <bit> <ws>                             }
-  rule instruction:sym<brb>     { $<mnemonic>=@instr_brb     <ws> <bit> ',' <expression> <ws>                      }
-  rule instruction:sym<branch>  { $<mnemonic>=@instr_branch  <ws> <expression> <ws>                                }
-  rule instruction:sym<lbranch> { $<mnemonic>=@instr_lbranch <ws> <expression> <ws>                                }
-  rule instruction:sym<long>    { $<mnemonic>=@instr_long    <ws> <expression> <ws>                                }
-  rule instruction:sym<lds>     { $<mnemonic>=@instr_lds     <ws> <reg> ',' <expression> <ws>                      }
-  rule instruction:sym<sts>     { $<mnemonic>=@instr_sts     <ws> <expression> ',' <reg> <ws>                      }
-  rule instruction:sym<bio>     { $<mnemonic>=@instr_bio     <ws> <expression> ',' <bit> <ws>                      }
-  rule instruction:sym<i4>      { $<mnemonic>=@instr_i4      <ws> <expression> <ws>                                }
-  rule instruction:sym<rx>      { $<mnemonic>=@instr_rx      <ws> <reg> ',' <[xX]> <!before '+'> <ws>              }
-  rule instruction:sym<xr>      { $<mnemonic>=@instr_xr      <ws> <[xX]> ',' <reg> <ws>                            }
-  rule instruction:sym<rxplus>  { $<mnemonic>=@instr_rxplus  <ws> <reg> ',' <[xX]>'+' <ws>                         }
-  rule instruction:sym<xrplus>  { $<mnemonic>=@instr_xrplus  <ws> <[xX]>'+' ',' <reg> <ws>                         }
-  rule instruction:sym<rxminus> { $<mnemonic>=@instr_rxminus <ws> <reg> ',' '-'<[xX]> <ws>                         }
-  rule instruction:sym<xrminus> { $<mnemonic>=@instr_xrminus <ws> '-'<[xX]> ',' <reg> <ws>                         }
-  rule instruction:sym<ry>      { $<mnemonic>=@instr_ry      <ws> <reg> ',' <[yY]> <!before '}'> <ws>              }
-  rule instruction:sym<yr>      { $<mnemonic>=@instr_yr      <ws> <[yY]> ',' <reg> <ws>                            }
-  rule instruction:sym<ryplus>  { $<mnemonic>=@instr_ryplus  <ws> <reg> ',' <[yY]>'+' <!before <expression> > <ws> }
-  rule instruction:sym<yrplus>  { $<mnemonic>=@instr_yrplus  <ws> <[yY]>'+' ',' <reg> <ws>                         }
-  rule instruction:sym<ryminus> { $<mnemonic>=@instr_ryminus <ws> <reg> ',' '-'<[yY]> <ws>                         }
-  rule instruction:sym<yrminus> { $<mnemonic>=@instr_yrminus <ws> '-'<[yY]> ',' <reg> <ws>                         }
-  rule instruction:sym<ryq>     { $<mnemonic>=@instr_ryq     <ws> <reg> ',' <[yY]> '+' <expression> <ws>           }
-  rule instruction:sym<yrq>     { $<mnemonic>=@instr_yrq     <ws> <[yY]> '+' <expression> ',' <reg> <ws>           }
-  rule instruction:sym<rz>      { $<mnemonic>=@instr_rz      <ws> <reg> ',' <[zZ]> <!before '+' > <ws>             }
-  rule instruction:sym<stzr>    { $<mnemonic>=@instr_stzr    <ws> <[zZ]> ',' <reg> <ws>                            }
-  rule instruction:sym<rzplus>  { $<mnemonic>=@instr_rzplus  <ws> <reg> ',' <[zZ]>'+' <ws>                         }
-  rule instruction:sym<zrplus>  { $<mnemonic>=@instr_zrplus  <ws> <[zZ]>'+' ',' <reg> <ws>                         }
-  rule instruction:sym<rzminus> { $<mnemonic>=@instr_rzminus <ws> <reg> ',' '-'<[zZ]> <ws>                         }
-  rule instruction:sym<zrminus> { $<mnemonic>=@instr_zrminus <ws> '-'<[zZ]> ',' <reg> <ws>                         }
-  rule instruction:sym<rzq>     { $<mnemonic>=@instr_rzq     <ws> <reg> ',' <[zZ]> '+' <expression> <ws>           }
-  rule instruction:sym<zrq>     { $<mnemonic>=@instr_zrq     <ws> <[zZ]> '+' <expression> ',' <reg> <ws>           }
-  rule instruction:sym<zr>      { $<mnemonic>=@instr_zr      <ws> <[zZ]> ',' <reg> <ws>                            }
-  rule instruction:sym<zplus>   { $<mnemonic>=@instr_zplus   <ws> <reg> ',' <[zZ]>'+' <ws>                         }
-  rule instruction:sym<noz>     { $<mnemonic>=@instr_noz     <ws>                                                  }
-  rule instruction:sym<i6r>     { $<mnemonic>=@instr_i6r     <ws> <reg> ',' <expression> <ws>                      }
-  rule instruction:sym<out>     { $<mnemonic>=@instr_out     <ws> <expression> ',' <reg> <ws>                      }
-}
-
-augment class Assembler::Actions {
-}
+  rule avr_bit                      { <expression>                                                                             }
+  token avr_reg                     { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
+  token avr_regpair                 { <[rR]> ( \d+ ) ':' <[rR]> ( \d+ )                                                        }
+  rule instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> ',' <avr_reg> <ws>                              }
+  rule instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> ',' <avr_regpair> <ws>                      }
+  rule instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> ',' <avr_reg> <ws>                              }
+  rule instruction:sym<avr_rr3>     { $<mnemonic>=@avr_instr_rr3     <avr_reg> ',' <avr_reg> <ws>                              }
+  rule instruction:sym<avr_rr4>     { $<mnemonic>=@avr_instr_rr4     <avr_reg> ',' <avr_reg> <.ws>                             }
+  rule instruction:sym<avr_r2>      { $<mnemonic>=@avr_instr_r2      <avr_reg> <ws>                                            }
+  rule instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <reg> <ws>                                                }
+  rule instruction:sym<avr_inh>     { $<mnemonic>=@avr_instr_inh     <ws>                                                      }
+  rule instruction:sym<avr_iw>      { $<mnemonic>=@avr_instr_iw      <ws> <avr_regpair> ',' <expression> <ws>                  }
+  rule instruction:sym<avr_iw2>     { $<mnemonic>=@avr_instr_iw      <ws> <avr_reg> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_ir>      { $<mnemonic>=@avr_instr_ir      <ws> <avr_reg> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_irc>     { $<mnemonic>=@avr_instr_irc     <ws> <avr_reg> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_sreg>    { $<mnemonic>=@avr_instr_sreg    <ws> <avr_bit> <ws>                                       }
+  rule instruction:sym<avr_tbit>    { $<mnemonic>=@avr_instr_tbit    <ws> <avr_reg> ',' <avr_bit> <ws>                         }
+  rule instruction:sym<avr_brb>     { $<mnemonic>=@avr_instr_brb     <ws> <avr_bit> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_branch>  { $<mnemonic>=@avr_instr_branch  <ws> <expression> <ws>                                    }
+  rule instruction:sym<avr_lbranch> { $<mnemonic>=@avr_instr_lbranch <ws> <expression> <ws>                                    }
+  rule instruction:sym<avr_long>    { $<mnemonic>=@avr_instr_long    <ws> <expression> <ws>                                    }
+  rule instruction:sym<avr_lds>     { $<mnemonic>=@avr_instr_lds     <ws> <avr_reg> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_sts>     { $<mnemonic>=@avr_instr_sts     <ws> <expression> ',' <avr_reg> <ws>                      }
+  rule instruction:sym<avr_bio>     { $<mnemonic>=@avr_instr_bio     <ws> <expression> ',' <avr_bit> <ws>                      }
+  rule instruction:sym<avr_i4>      { $<mnemonic>=@avr_instr_i4      <ws> <expression> <ws>                                    }
+  rule instruction:sym<avr_rx>      { $<mnemonic>=@avr_instr_rx      <ws> <avr_reg> ',' <[xX]> <!before '+'> <ws>              }
+  rule instruction:sym<avr_xr>      { $<mnemonic>=@avr_instr_xr      <ws> <[xX]> ',' <avr_reg> <ws>                            }
+  rule instruction:sym<avr_rxplus>  { $<mnemonic>=@avr_instr_rxplus  <ws> <avr_reg> ',' <[xX]>'+' <ws>                         }
+  rule instruction:sym<avr_xrplus>  { $<mnemonic>=@avr_instr_xrplus  <ws> <[xX]>'+' ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_rxminus> { $<mnemonic>=@avr_instr_rxminus <ws> <avr_reg> ',' '-'<[xX]> <ws>                         }
+  rule instruction:sym<avr_xrminus> { $<mnemonic>=@avr_instr_xrminus <ws> '-'<[xX]> ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_ry>      { $<mnemonic>=@avr_instr_ry      <ws> <avr_reg> ',' <[yY]> <!before '}'> <ws>              }
+  rule instruction:sym<avr_yr>      { $<mnemonic>=@avr_instr_yr      <ws> <[yY]> ',' <avr_reg> <ws>                            }
+  rule instruction:sym<avr_ryplus>  { $<mnemonic>=@avr_instr_ryplus  <ws> <avr_reg> ',' <[yY]>'+' <!before <expression> > <ws> }
+  rule instruction:sym<avr_yrplus>  { $<mnemonic>=@avr_instr_yrplus  <ws> <[yY]>'+' ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_ryminus> { $<mnemonic>=@avr_instr_ryminus <ws> <avr_reg> ',' '-'<[yY]> <ws>                         }
+  rule instruction:sym<avr_yrminus> { $<mnemonic>=@avr_instr_yrminus <ws> '-'<[yY]> ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_ryq>     { $<mnemonic>=@avr_instr_ryq     <ws> <avr_reg> ',' <[yY]> '+' <expression> <ws>           }
+  rule instruction:sym<avr_yrq>     { $<mnemonic>=@avr_instr_yrq     <ws> <[yY]> '+' <expression> ',' <avr_reg> <ws>           }
+  rule instruction:sym<avr_rz>      { $<mnemonic>=@avr_instr_rz      <ws> <avr_reg> ',' <[zZ]> <!before '+' > <ws>             }
+  rule instruction:sym<avr_stzr>    { $<mnemonic>=@avr_instr_stzr    <ws> <[zZ]> ',' <avr_reg> <ws>                            }
+  rule instruction:sym<avr_rzplus>  { $<mnemonic>=@avr_instr_rzplus  <ws> <avr_reg> ',' <[zZ]>'+' <ws>                         }
+  rule instruction:sym<avr_zrplus>  { $<mnemonic>=@avr_instr_zrplus  <ws> <[zZ]>'+' ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_rzminus> { $<mnemonic>=@avr_instr_rzminus <ws> <avr_reg> ',' '-'<[zZ]> <ws>                         }
+  rule instruction:sym<avr_zrminus> { $<mnemonic>=@avr_instr_zrminus <ws> '-'<[zZ]> ',' <avr_reg> <ws>                         }
+  rule instruction:sym<avr_rzq>     { $<mnemonic>=@avr_instr_rzq     <ws> <avr_reg> ',' <[zZ]> '+' <expression> <ws>           }
+  rule instruction:sym<avr_zrq>     { $<mnemonic>=@avr_instr_zrq     <ws> <[zZ]> '+' <expression> ',' <avr_reg> <ws>           }
+  rule instruction:sym<avr_zr>      { $<mnemonic>=@avr_instr_zr      <ws> <[zZ]> ',' <avr_reg> <ws>                            }
+  rule instruction:sym<avr_zplus>   { $<mnemonic>=@avr_instr_zplus   <ws> <avr_reg> ',' <[zZ]>'+' <ws>                         }
+  rule instruction:sym<avr_noz>     { $<mnemonic>=@avr_instr_noz     <ws>                                                      }
+  rule instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> ',' <expression> <ws>                      }
+  rule instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> ',' <avr_reg> <ws>                      }
 }
 
 class Assembler::Actions {
@@ -352,7 +254,7 @@ class Assembler::Actions {
 
 # AVR specific methods
 
-  method reg($/) {
+  method avr_reg($/) {
     my  $reg = $/[0];
     if $/[1].defined {
       my $offset = $/[1];
@@ -364,14 +266,14 @@ class Assembler::Actions {
     }
     make $reg;
   }
-  method regpair($/) {
+  method avr_regpair($/) {
     my $r1 = $/[0];
     my $r2 = $/[1];
     error_listing ('*** Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
     make $r2;
   }
-  method instruction:sym<rr>($/) {
-    my $opcode = %instr_rr{~$/<mnemonic>};
+  method instruction:sym<avr_rr>($/) {
+    my $opcode = %avr_instr_rr{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     $opcode +|= ($r1 +< 4) +& 0x1f0;
@@ -379,24 +281,24 @@ class Assembler::Actions {
     $opcode +|= ($r2 +< 5) +& 0x200;
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<ww1>($/) {
-    my $opcode = %instr_ww{~$/<mnemonic>};
+  method instruction:sym<avr_ww1>($/) {
+    my $opcode = %avr_instr_ww{~$/<mnemonic>};
     my $r1 = +$/<regpair>[0].ast;
     my $r2 = +$/<regpair>[1].ast;
     $opcode +|= ($r1 +< 3) +& 0x00f0;
     $opcode +|= ($r2 +> 1) +& 0x000f;
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<ww2>($/) {
-    my $opcode = %instr_ww{~$/<mnemonic>};
+  method instruction:sym<avr_ww2>($/) {
+    my $opcode = %avr_instr_ww{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     $opcode +|= ($r1 +< 3) +& 0x00f0;
     $opcode +|= ($r2 +> 1) +& 0x000f;
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<rr3>($/) {
-    my $opcode = %instr_rr3{~$/<mnemonic>};
+  method instruction:sym<avr_rr3>($/) {
+    my $opcode = %avr_instr_rr3{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     if ( (16 <= $r1 < 24) && (16 <= $r2 < 24) ) {
@@ -407,8 +309,8 @@ class Assembler::Actions {
     }
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<rr4>($/) {
-    my $opcode = %instr_rr4{~$/<mnemonic>};
+  method instruction:sym<avr_rr4>($/) {
+    my $opcode = %avr_instr_rr4{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     if ( (16 <= $r1 < 32) && (16 <= $r2 < 32) ) {
@@ -419,16 +321,16 @@ class Assembler::Actions {
     }
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<r2>($/) {
-    my $opcode = %instr_r2{~$/<mnemonic>};
+  method instruction:sym<avr_r2>($/) {
+    my $opcode = %avr_instr_r2{~$/<mnemonic>};
     my $r1 = +$/<reg>.ast;
     $opcode +|= ($r1 +< 4) +& 0x1f0;
     $opcode +|=  $r1       +& 0x0f;
     $opcode +|= ($r1 +< 5) +& 0x200;
     make( ($opcode,) ); # don't remove the comma!
   }
-  method instruction:sym<iw>($/) {
-    my $opcode = %instr_iw{~$/<mnemonic>};
+  method instruction:sym<avr_iw>($/) {
+    my $opcode = %avr_instr_iw{~$/<mnemonic>};
     my $reg = $/<regpair>.ast;
     my $val = $/<expression>.ast;
     if ($reg < 24) || ($reg +& 1) {
@@ -440,8 +342,8 @@ class Assembler::Actions {
     $opcode +|= ($val +< 2) +& 0x00c0;
     make ( ($opcode,) );
   }
-  method instruction:sym<iw2>($/) {
-    my $opcode = %instr_iw{~$/<mnemonic>};
+  method instruction:sym<avr_iw2>($/) {
+    my $opcode = %avr_instr_iw{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if ($reg < 24) || ($reg +& 1) {
@@ -453,8 +355,8 @@ class Assembler::Actions {
     $opcode +|= ($val +< 2) +& 0x00c0;
     make ( ($opcode,) );
   }
-  method instruction:sym<ir>($/) {
-    my $opcode = %instr_ir{~$/<mnemonic>};
+  method instruction:sym<avr_ir>($/) {
+    my $opcode = %avr_instr_ir{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if $reg < 16 {
@@ -466,8 +368,8 @@ class Assembler::Actions {
     $opcode +|= ($val +< 4) +& 0x0f00;
     make ( ($opcode,) );
   }
-  method instruction:sym<i6r>($/) {
-    my $opcode = %instr_i6r{~$/<mnemonic>};
+  method instruction:sym<avr_i6r>($/) {
+    my $opcode = %avr_instr_i6r{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if 0 <= $val <= 63 {
@@ -479,8 +381,8 @@ class Assembler::Actions {
     }
     make ( ($opcode,) );
   }
-  method instruction:sym<out>($/) {
-    my $opcode = %instr_out{~$/<mnemonic>};
+  method instruction:sym<avr_out>($/) {
+    my $opcode = %avr_instr_out{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if 0 <= $val <= 63 {
@@ -492,8 +394,8 @@ class Assembler::Actions {
     }
     make ( ($opcode,) );
   }
-  method instruction:sym<irc>($/) {
-    my $opcode = %instr_irc{~$/<mnemonic>};
+  method instruction:sym<avr_irc>($/) {
+    my $opcode = %avr_instr_irc{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast +^ 0xff;
     if $reg < 16 {
@@ -505,35 +407,35 @@ class Assembler::Actions {
     $opcode +|= ($val +< 4) +& 0x0f00;
     make ( ($opcode,) );
   }
-  method instruction:sym<r>($/) {
-    my $opcode = %instr_r{~$/<mnemonic>};
+  method instruction:sym<avr_r>($/) {
+    my $opcode = %avr_instr_r{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
-    if ! %instr_r_reg & (1 +< $reg) {
+    if ! %avr_instr_r_reg & (1 +< $reg) {
       error_listing "Invaild use of register $reg";
     }
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<inh>($/) {
-    my $opcode = %instr_inh{$/<mnemonic>};
+  method instruction:sym<avr_inh>($/) {
+    my $opcode = %avr_instr_inh{$/<mnemonic>};
     make ( ($opcode,) );
   }
-  method instruction:sym<sreg>($/) {
-    my $opcode = %instr_sreg{~$/<mnemonic>};
+  method instruction:sym<avr_sreg>($/) {
+    my $opcode = %avr_instr_sreg{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     $opcode +|= ($bit +< 4) +& 0x0070;
     make ( ($opcode,) );
   }
-  method instruction:sym<tbit>($/) {
-    my $opcode = %instr_tbit{~$/<mnemonic>};
+  method instruction:sym<avr_tbit>($/) {
+    my $opcode = %avr_instr_tbit{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $bit = $/<bit>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     $opcode +|=  $bit       +& 0x0007;
     make ( ($opcode,) );
   }
-  method instruction:sym<brb>($/) {
-    my $opcode = %instr_brb{~$/<mnemonic>};
+  method instruction:sym<avr_brb>($/) {
+    my $opcode = %avr_instr_brb{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
@@ -542,47 +444,47 @@ class Assembler::Actions {
     $opcode +|=  $bit          +& 0x0007;
     make ( ($opcode,) );
   }
-  method instruction:sym<branch>($/) {
-    my $opcode = %instr_branch{~$/<mnemonic>};
+  method instruction:sym<avr_branch>($/) {
+    my $opcode = %avr_instr_branch{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
     error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
     $opcode +|= ($offset +< 3) +& 0x03f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<lbranch>($/) {
-    my $opcode = %instr_lbranch{~$/<mnemonic>};
+  method instruction:sym<avr_lbranch>($/) {
+    my $opcode = %avr_instr_lbranch{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
     error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
     $opcode +|= $offset +& 0x0fff;
     make ( ($opcode,) );
   }
-  method instruction:sym<long>($/) {
-    my $opcode = %instr_long{~$/<mnemonic>};
+  method instruction:sym<avr_long>($/) {
+    my $opcode = %avr_instr_long{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     $opcode +|= ($target +> 16) +& 0x0001;
     $opcode +|= ($target +> 13) +& 0x01f0;
     make ( ($opcode,($target +& 0xffff)) );
   }
-  method instruction:sym<lds>($/) {
+  method instruction:sym<avr_lds>($/) {
 # TODO: Handle 7-bit address variant
-    my $opcode = %instr_lds{~$/<mnemonic>};
+    my $opcode = %avr_instr_lds{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $addr = $/<expression>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,($addr +& 0xffff)) );
   }
-  method instruction:sym<sts>($/) {
+  method instruction:sym<avr_sts>($/) {
 # TODO: Handle 7-bit address variant
-    my $opcode = %instr_sts{~$/<mnemonic>};
+    my $opcode = %avr_instr_sts{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $addr = $/<expression>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,($addr +& 0xffff)) );
   }
-  method instruction:sym<bio>($/) {
-    my $opcode = %instr_bio{~$/<mnemonic>};
+  method instruction:sym<avr_bio>($/) {
+    my $opcode = %avr_instr_bio{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     my $reg = $/<expression>.ast;
     error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
@@ -590,101 +492,87 @@ class Assembler::Actions {
     $opcode +|= ($reg +< 3) +& 0x00f8;
     make ( ($opcode,) );
   }
-  method instruction:sym<i4>($/) {
-    my $opcode = %instr_i4{~$/<mnemonic>};
+  method instruction:sym<avr_i4>($/) {
+    my $opcode = %avr_instr_i4{~$/<mnemonic>};
     my $round = $/<expression>.ast;
     error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
     $opcode +|= ($round +< 4) +& 0x00f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<rx>($/) {
-    my $opcode = %instr_rx{~$/<mnemonic>};
+  method instruction:sym<avr_rx>($/) {
+    my $opcode = %avr_instr_rx{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<xr>($/) {
-    my $opcode = %instr_xr{~$/<mnemonic>};
+  method instruction:sym<avr_xr>($/) {
+    my $opcode = %avr_instr_xr{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<rxplus>($/) {
-    my $opcode = %instr_rxplus{~$/<mnemonic>};
+  method instruction:sym<avr_rxplus>($/) {
+    my $opcode = %avr_instr_rxplus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<xrplus>($/) {
-    my $opcode = %instr_xrplus{~$/<mnemonic>};
+  method instruction:sym<avr_xrplus>($/) {
+    my $opcode = %avr_instr_xrplus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<rxminus>($/) {
-    my $opcode = %instr_rxminus{~$/<mnemonic>};
+  method instruction:sym<avr_rxminus>($/) {
+    my $opcode = %avr_instr_rxminus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<xrminus>($/) {
-    my $opcode = %instr_xrminus{~$/<mnemonic>};
+  method instruction:sym<avr_xrminus>($/) {
+    my $opcode = %avr_instr_xrminus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<ry>($/) {
-    my $opcode = %instr_ry{~$/<mnemonic>};
+  method instruction:sym<avr_ry>($/) {
+    my $opcode = %avr_instr_ry{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<yr>($/) {
-    my $opcode = %instr_yr{~$/<mnemonic>};
+  method instruction:sym<avr_yr>($/) {
+    my $opcode = %avr_instr_yr{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<ryplus>($/) {
-    my $opcode = %instr_ryplus{~$/<mnemonic>};
+  method instruction:sym<avr_ryplus>($/) {
+    my $opcode = %avr_instr_ryplus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<yrplus>($/) {
-    my $opcode = %instr_yrplus{~$/<mnemonic>};
+  method instruction:sym<avr_yrplus>($/) {
+    my $opcode = %avr_instr_yrplus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<ryminus>($/) {
-    my $opcode = %instr_ryminus{~$/<mnemonic>};
+  method instruction:sym<avr_ryminus>($/) {
+    my $opcode = %avr_instr_ryminus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<yrminus>($/) {
-    my $opcode = %instr_yrminus{~$/<mnemonic>};
+  method instruction:sym<avr_yrminus>($/) {
+    my $opcode = %avr_instr_yrminus{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<ryq>($/) {
-    my $opcode = %instr_ryq{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    my $val = $/<expression>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    if 0 <= $val <= 63 {
-      $opcode +|=  $val       +& 0x0007;
-      $opcode +|= ($val +< 7) +& 0x0c00;
-      $opcode +|= ($val +< 8) +& 0x1000;
-    } else {
-      error_listing '*** Offset must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<yrq>($/) {
-    my $opcode = %instr_yrq{~$/<mnemonic>};
+  method instruction:sym<avr_ryq>($/) {
+    my $opcode = %avr_instr_ryq{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -697,44 +585,8 @@ class Assembler::Actions {
     }
     make ( ($opcode,) );
   }
-  method instruction:sym<rz>($/) {
-    my $opcode = %instr_rz{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<stzr>($/) {
-    my $opcode = %instr_stzr{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<rzplus>($/) {
-    my $opcode = %instr_rzplus{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<zrplus>($/) {
-    my $opcode = %instr_zrplus{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<rzminus>($/) {
-    my $opcode = %instr_rzminus{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<zrminus>($/) {
-    my $opcode = %instr_zrminus{~$/<mnemonic>};
-    my $reg = $/<reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<rzq>($/) {
-    my $opcode = %instr_rzq{~$/<mnemonic>};
+  method instruction:sym<avr_yrq>($/) {
+    my $opcode = %avr_instr_yrq{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -747,8 +599,44 @@ class Assembler::Actions {
     }
     make ( ($opcode,) );
   }
-  method instruction:sym<zrq>($/) {
-    my $opcode = %instr_zrq{~$/<mnemonic>};
+  method instruction:sym<avr_rz>($/) {
+    my $opcode = %avr_instr_rz{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_stzr>($/) {
+    my $opcode = %avr_instr_stzr{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_rzplus>($/) {
+    my $opcode = %avr_instr_rzplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_zrplus>($/) {
+    my $opcode = %avr_instr_zrplus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_rzminus>($/) {
+    my $opcode = %avr_instr_rzminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_zrminus>($/) {
+    my $opcode = %avr_instr_zrminus{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_rzq>($/) {
+    my $opcode = %avr_instr_rzq{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -761,26 +649,40 @@ class Assembler::Actions {
     }
     make ( ($opcode,) );
   }
-  method instruction:sym<z>($/) {
-    my $opcode = %instr_z{~$/<mnemonic>};
+  method instruction:sym<avr_zrq>($/) {
+    my $opcode = %avr_instr_zrq{~$/<mnemonic>};
+    my $reg = $/<reg>.ast;
+    my $val = $/<expression>;
+    $opcode +|= ($reg +< 4) +& 0x01f0;
+    if 0 <= $val <= 63 {
+      $opcode +|=  $val       +& 0x0007;
+      $opcode +|= ($val +< 7) +& 0x0c00;
+      $opcode +|= ($val +< 8) +& 0x1000;
+    } else {
+      error_listing '*** Offset must be 0 to 63';
+    }
+    make ( ($opcode,) );
+  }
+  method instruction:sym<avr_z>($/) {
+    my $opcode = %avr_instr_z{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<zr>($/) {
-    my $opcode = %instr_zr{~$/<mnemonic>};
+  method instruction:sym<avr_zr>($/) {
+    my $opcode = %avr_instr_zr{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<zplus>($/) {
-    my $opcode = %instr_z{~$/<mnemonic>};
+  method instruction:sym<avr_zplus>($/) {
+    my $opcode = %avr_instr_z{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
-  method instruction:sym<noz>($/) {
-    my $opcode = %instr_z{~$/<mnemonic>};
+  method instruction:sym<avr_noz>($/) {
+    my $opcode = %avr_instr_z{~$/<mnemonic>};
     make ( ($opcode,) );
   }
 }
@@ -1285,6 +1187,44 @@ my %constantsize = '.db' => 1,
     }
   }
 };
+%directive<.isa> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  return unless $pass == 1;
+  my $args = $rest;
+  my $m = Assembler.parse($args,
+                          :actions(Assembler::Actions),
+                          :rule(<identifier>));
+  if ?$m {
+    $isa = ~$m[0];
+  } else {
+    say "Invalid format for .isa directive";
+  }
+}
+# .instruction inh     clt    0x94d8
+%directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  return unless $pass == 1;
+  my $args = $rest;
+  my $m = Assembler.parse($args,
+			  :actions(Assembler::Actions),
+			  :rule(<identifier>));
+  my $opc = ~$m[0];
+  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  $m = Assembler.parse($args,
+                       :actions(Assembler::Actions),
+		       :rule(<identifier>));
+  my $instr_type = ~$m[0];
+  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  $m = Assembler.parse($args,
+		       :actions(Assembler::Actions),
+		       :rule(<expression>));
+  my $value = +$m.ast;
+  #format_listing(-1, '', $label, $opcode, $rest);
+  %instructions{$isa}{$instr_type}{$opc} = $value;
+};
+%directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  for %instructions{$isa}.keys {
+    %instructions{$isa}{$_}<array> = %instructions{$isa}{$_}<hash>.keys;
+  }
+}
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $words = ();

@@ -36,55 +36,62 @@ my %instructions;
 
 # Variables required for AVR
 
-my %avr_instr_inh;       my @avr_instr_inh;      %instructions<avr><inh>     = {hash => %avr_instr_inh, array => @avr_instr_inh};
-my %avr_instr_rr;        my @avr_instr_rr;       %instructions<avr><rr>      = {hash => %avr_instr_rr, array => @avr_instr_rr};
-my %avr_instr_ww;        my @avr_instr_ww;       %instructions<avr><ww>      = {hash => %avr_instr_ww, array => @avr_instr_ww};
-my %avr_instr_rr3;       my @avr_instr_rr3;      %instructions<avr><rr3>     = {hash => %avr_instr_rr3, array => @avr_instr_rr3};
-my %avr_instr_rr4;       my @avr_instr_rr4;      %instructions<avr><rr4>     = {hash => %avr_instr_rr4, array => @avr_instr_rr4};
-my %avr_instr_r2;        my @avr_instr_r2;       %instructions<avr><r2>      = {hash => %avr_instr_r2, array => @avr_instr_r2};
-my %avr_instr_r;         my @avr_instr_r;        %instructions<avr><r>       = {hash => %avr_instr_r, array => @avr_instr_r};
-my %avr_instr_r_reg;     my @avr_instr_r_reg;    %instructions<avr><r_reg>   = {hash => %avr_instr_r_reg, array => @avr_instr_r_reg};
-my %avr_instr_iw;        my @avr_instr_iw;       %instructions<avr><iw>      = {hash => %avr_instr_iw, array => @avr_instr_iw};
-my %avr_instr_ir;        my @avr_instr_ir;       %instructions<avr><ir>      = {hash => %avr_instr_ir, array => @avr_instr_ir};
-my %avr_instr_i6r;       my @avr_instr_i6r;      %instructions<avr><i6r>     = {hash => %avr_instr_i6r, array => @avr_instr_i6r};
-my %avr_instr_out;       my @avr_instr_out;      %instructions<avr><out>     = {hash => %avr_instr_out, array => @avr_instr_out};
-my %avr_instr_irc;       my @avr_instr_irc;      %instructions<avr><irc>     = {hash => %avr_instr_irc, array => @avr_instr_irc};
-my %avr_instr_sreg;      my @avr_instr_sreg;     %instructions<avr><sreg>    = {hash => %avr_instr_sreg, array => @avr_instr_sreg};
-my %avr_instr_tbit;      my @avr_instr_tbit;     %instructions<avr><tbit>    = {hash => %avr_instr_tbit, array => @avr_instr_tbit};
-my %avr_instr_brb;       my @avr_instr_brb;      %instructions<avr><brb>     = {hash => %avr_instr_brb, array => @avr_instr_brb};
-my %avr_instr_branch;    my @avr_instr_branch;   %instructions<avr><branch>  = {hash => %avr_instr_branch, array => @avr_instr_branch};
-my %avr_instr_lbranch;   my @avr_instr_lbranch;  %instructions<avr><lbranch> = {hash => %avr_instr_lbranch, array => @avr_instr_lbranch};
-my %avr_instr_long;      my @avr_instr_long;     %instructions<avr><long>    = {hash => %avr_instr_long, array => @avr_instr_long};
-my %avr_instr_lds;       my @avr_instr_lds;      %instructions<avr><lds>     = {hash => %avr_instr_lds, array => @avr_instr_lds};
-my %avr_instr_sts;       my @avr_instr_sts;      %instructions<avr><sts>     = {hash => %avr_instr_sts, array => @avr_instr_sts};
-my %avr_instr_bio;       my @avr_instr_bio;      %instructions<avr><bio>     = {hash => %avr_instr_bio, array => @avr_instr_bio};
-my %avr_instr_i4;        my @avr_instr_i4;       %instructions<avr><i4>      = {hash => %avr_instr_i4, array => @avr_instr_i4};
-my %avr_instr_rx;        my @avr_instr_rx;       %instructions<avr><rx>      = {hash => %avr_instr_rx, array => @avr_instr_rx};
-my %avr_instr_xr;        my @avr_instr_xr;       %instructions<avr><xr>      = {hash => %avr_instr_xr, array => @avr_instr_xr};
-my %avr_instr_rxplus;    my @avr_instr_rxplus;   %instructions<avr><rxplus>  = {hash => %avr_instr_rxplus, array => @avr_instr_rxplus};
-my %avr_instr_xrplus;    my @avr_instr_xrplus;   %instructions<avr><xrplus>  = {hash => %avr_instr_xrplus, array => @avr_instr_xrplus};
-my %avr_instr_rxminus;   my @avr_instr_rxminus;  %instructions<avr><rxminus> = {hash => %avr_instr_rxminus, array => @avr_instr_rxminus};
-my %avr_instr_xrminus;   my @avr_instr_xrminus;  %instructions<avr><xrminus> = {hash => %avr_instr_xrminus, array => @avr_instr_xrminus};
-my %avr_instr_ry;        my @avr_instr_ry;       %instructions<avr><ry>      = {hash => %avr_instr_ry, array => @avr_instr_ry};
-my %avr_instr_yr;        my @avr_instr_yr;       %instructions<avr><yr>      = {hash => %avr_instr_yr, array => @avr_instr_yr};
-my %avr_instr_ryplus;    my @avr_instr_ryplus;   %instructions<avr><ryplus>  = {hash => %avr_instr_ryplus, array => @avr_instr_ryplus};
-my %avr_instr_yrplus;    my @avr_instr_yrplus;   %instructions<avr><yrplus>  = {hash => %avr_instr_yrplus, array => @avr_instr_yrplus};
-my %avr_instr_ryminus;   my @avr_instr_ryminus;  %instructions<avr><ryminus> = {hash => %avr_instr_ryminus, array => @avr_instr_ryminus};
-my %avr_instr_yrminus;   my @avr_instr_yrminus;  %instructions<avr><yrminus> = {hash => %avr_instr_yrminus, array => @avr_instr_yrminus};
-my %avr_instr_ryq;       my @avr_instr_ryq;      %instructions<avr><ryq>     = {hash => %avr_instr_ryq, array => @avr_instr_ryq};
-my %avr_instr_yrq;       my @avr_instr_yrq;      %instructions<avr><yrq>     = {hash => %avr_instr_yrq, array => @avr_instr_yrq};
-my %avr_instr_rz;        my @avr_instr_rz;       %instructions<avr><rz>      = {hash => %avr_instr_rz, array => @avr_instr_rz};
-my %avr_instr_stzr;      my @avr_instr_stzr;     %instructions<avr><stzr>    = {hash => %avr_instr_stzr, array => @avr_instr_stzr};
-my %avr_instr_rzplus;    my @avr_instr_rzplus;   %instructions<avr><rzplus>  = {hash => %avr_instr_rzplus, array => @avr_instr_rzplus};
-my %avr_instr_zrplus;    my @avr_instr_zrplus;   %instructions<avr><zrplus>  = {hash => %avr_instr_zrplus, array => @avr_instr_zrplus};
-my %avr_instr_rzminus;   my @avr_instr_rzminus;  %instructions<avr><rzminus> = {hash => %avr_instr_rzminus, array => @avr_instr_rzminus};
-my %avr_instr_zrminus;   my @avr_instr_zrminus;  %instructions<avr><zrminus> = {hash => %avr_instr_zrminus, array => @avr_instr_zrminus};
-my %avr_instr_rzq;       my @avr_instr_rzq;      %instructions<avr><rzq>     = {hash => %avr_instr_rzq, array => @avr_instr_rzq};
-my %avr_instr_zrq;       my @avr_instr_zrq;      %instructions<avr><zrq>     = {hash => %avr_instr_zrq, array => @avr_instr_zrq};
-my %avr_instr_z;         my @avr_instr_z;        %instructions<avr><z>       = {hash => %avr_instr_z, array => @avr_instr_z};
-my %avr_instr_zr;        my @avr_instr_zr;       %instructions<avr><zr>      = {hash => %avr_instr_zr, array => @avr_instr_zr};
-my %avr_instr_zplus;     my @avr_instr_zplus;    %instructions<avr><zplus>   = {hash => %avr_instr_zplus, array => @avr_instr_zplus};
-my %avr_instr_noz;       my @avr_instr_noz;      %instructions<avr><noz>     = {hash => %avr_instr_noz, array => @avr_instr_noz};
+# This should be a macro!
+sub make_hash(Str $isa, Str $instr) {
+  # %instructions{$isa}{$instr} = hash => {}, array => "{$isa}_instr_{$instr}";
+  %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
+  #%instructions{$isa}{$instr}<hash> = ();
+}
+my @avr_instr_inh;      make_hash('avr', 'inh');
+my @avr_instr_rr;       make_hash('avr', 'rr');
+my @avr_instr_ww;       make_hash('avr', 'ww');
+my @avr_instr_rr3;      make_hash('avr', 'rr3');
+my @avr_instr_rr4;      make_hash('avr', 'rr4');
+my @avr_instr_r2;       make_hash('avr', 'r2');
+my @avr_instr_r;        make_hash('avr', 'r');
+my @avr_instr_r_reg;    make_hash('avr', 'r_reg');
+my @avr_instr_iw;       make_hash('avr', 'iw');
+my @avr_instr_ir;       make_hash('avr', 'ir');
+my @avr_instr_i6r;      make_hash('avr', 'i6r');
+my @avr_instr_out;      make_hash('avr', 'out');
+my @avr_instr_irc;      make_hash('avr', 'irc');
+my @avr_instr_sreg;     make_hash('avr', 'sreg');
+my @avr_instr_tbit;     make_hash('avr', 'tbit');
+my @avr_instr_brb;      make_hash('avr', 'brb');
+my @avr_instr_branch;   make_hash('avr', 'branch');
+my @avr_instr_lbranch;  make_hash('avr', 'lbranch');
+my @avr_instr_long;     make_hash('avr', 'long');
+my @avr_instr_lds;      make_hash('avr', 'lds');
+my @avr_instr_sts;      make_hash('avr', 'sts');
+my @avr_instr_bio;      make_hash('avr', 'bio');
+my @avr_instr_i4;       make_hash('avr', 'i4');
+my @avr_instr_rx;       make_hash('avr', 'rx');
+my @avr_instr_xr;       make_hash('avr', 'xr');
+my @avr_instr_rxplus;   make_hash('avr', 'rxplus');
+my @avr_instr_xrplus;   make_hash('avr', 'xrplus');
+my @avr_instr_rxminus;  make_hash('avr', 'rxminus');
+my @avr_instr_xrminus;  make_hash('avr', 'xrminus');
+my @avr_instr_ry;       make_hash('avr', 'ry');
+my @avr_instr_yr;       make_hash('avr', 'yr');
+my @avr_instr_ryplus;   make_hash('avr', 'ryplus');
+my @avr_instr_yrplus;   make_hash('avr', 'yrplus');
+my @avr_instr_ryminus;  make_hash('avr', 'ryminus');
+my @avr_instr_yrminus;  make_hash('avr', 'yrminus');
+my @avr_instr_ryq;      make_hash('avr', 'ryq');
+my @avr_instr_yrq;      make_hash('avr', 'yrq');
+my @avr_instr_rz;       make_hash('avr', 'rz');
+my @avr_instr_stzr;     make_hash('avr', 'stzr');
+my @avr_instr_rzplus;   make_hash('avr', 'rzplus');
+my @avr_instr_zrplus;   make_hash('avr', 'zrplus');
+my @avr_instr_rzminus;  make_hash('avr', 'rzminus');
+my @avr_instr_zrminus;  make_hash('avr', 'zrminus');
+my @avr_instr_rzq;      make_hash('avr', 'rzq');
+my @avr_instr_zrq;      make_hash('avr', 'zrq');
+my @avr_instr_z;        make_hash('avr', 'z');
+my @avr_instr_zr;       make_hash('avr', 'zr');
+my @avr_instr_zplus;    make_hash('avr', 'zplus');
+my @avr_instr_noz;      make_hash('avr', 'noz');
+say %instructions;
 
 # basic rules for expressions
 
@@ -273,7 +280,7 @@ class Assembler::Actions {
     make $r2;
   }
   method instruction:sym<avr_rr>($/) {
-    my $opcode = %avr_instr_rr{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rr>{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     $opcode +|= ($r1 +< 4) +& 0x1f0;
@@ -282,7 +289,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_ww1>($/) {
-    my $opcode = %avr_instr_ww{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ww>{~$/<mnemonic>};
     my $r1 = +$/<regpair>[0].ast;
     my $r2 = +$/<regpair>[1].ast;
     $opcode +|= ($r1 +< 3) +& 0x00f0;
@@ -290,7 +297,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_ww2>($/) {
-    my $opcode = %avr_instr_ww{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ww>{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     $opcode +|= ($r1 +< 3) +& 0x00f0;
@@ -298,7 +305,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_rr3>($/) {
-    my $opcode = %avr_instr_rr3{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rr3>{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     if ( (16 <= $r1 < 24) && (16 <= $r2 < 24) ) {
@@ -310,7 +317,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_rr4>($/) {
-    my $opcode = %avr_instr_rr4{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rr4>{~$/<mnemonic>};
     my $r1 = +$/<reg>[0].ast;
     my $r2 = +$/<reg>[1].ast;
     if ( (16 <= $r1 < 32) && (16 <= $r2 < 32) ) {
@@ -322,7 +329,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_r2>($/) {
-    my $opcode = %avr_instr_r2{~$/<mnemonic>};
+    my $opcode = %instructions<avr><r2>{~$/<mnemonic>};
     my $r1 = +$/<reg>.ast;
     $opcode +|= ($r1 +< 4) +& 0x1f0;
     $opcode +|=  $r1       +& 0x0f;
@@ -330,7 +337,7 @@ class Assembler::Actions {
     make( ($opcode,) ); # don't remove the comma!
   }
   method instruction:sym<avr_iw>($/) {
-    my $opcode = %avr_instr_iw{~$/<mnemonic>};
+    my $opcode = %instructions<avr><iw>{~$/<mnemonic>};
     my $reg = $/<regpair>.ast;
     my $val = $/<expression>.ast;
     if ($reg < 24) || ($reg +& 1) {
@@ -343,7 +350,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_iw2>($/) {
-    my $opcode = %avr_instr_iw{~$/<mnemonic>};
+    my $opcode = %instructions<avr><iw>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if ($reg < 24) || ($reg +& 1) {
@@ -356,7 +363,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_ir>($/) {
-    my $opcode = %avr_instr_ir{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ir>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if $reg < 16 {
@@ -369,7 +376,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_i6r>($/) {
-    my $opcode = %avr_instr_i6r{~$/<mnemonic>};
+    my $opcode = %instructions<avr><i6r>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if 0 <= $val <= 63 {
@@ -382,7 +389,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_out>($/) {
-    my $opcode = %avr_instr_out{~$/<mnemonic>};
+    my $opcode = %instructions<avr><out>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast;
     if 0 <= $val <= 63 {
@@ -395,7 +402,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_irc>($/) {
-    my $opcode = %avr_instr_irc{~$/<mnemonic>};
+    my $opcode = %instructions<avr><irc>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>.ast +^ 0xff;
     if $reg < 16 {
@@ -408,26 +415,27 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_r>($/) {
-    my $opcode = %avr_instr_r{~$/<mnemonic>};
+    my $opcode = %instructions<avr><r>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
-    if ! %avr_instr_r_reg & (1 +< $reg) {
-      error_listing "Invaild use of register $reg";
-    }
+# TODO -- what was this for?
+#    if ! %avr_instr_r_reg & (1 +< $reg) {
+#      error_listing "Invalid use of register $reg";
+#    }
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_inh>($/) {
-    my $opcode = %avr_instr_inh{$/<mnemonic>};
+    my $opcode = %instructions<avr><inh>{~$/<mnemonic>};
     make ( ($opcode,) );
   }
   method instruction:sym<avr_sreg>($/) {
-    my $opcode = %avr_instr_sreg{~$/<mnemonic>};
+    my $opcode = %instructions<avr><sreg>{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     $opcode +|= ($bit +< 4) +& 0x0070;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_tbit>($/) {
-    my $opcode = %avr_instr_tbit{~$/<mnemonic>};
+    my $opcode = %instructions<avr><tbit>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $bit = $/<bit>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -435,7 +443,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_brb>($/) {
-    my $opcode = %avr_instr_brb{~$/<mnemonic>};
+    my $opcode = %instructions<avr><brb>{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
@@ -445,7 +453,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_branch>($/) {
-    my $opcode = %avr_instr_branch{~$/<mnemonic>};
+    my $opcode = %instructions<avr><branch>{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
     error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
@@ -453,7 +461,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_lbranch>($/) {
-    my $opcode = %avr_instr_lbranch{~$/<mnemonic>};
+    my $opcode = %instructions<avr><lbranch>{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
     error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
@@ -461,7 +469,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_long>($/) {
-    my $opcode = %avr_instr_long{~$/<mnemonic>};
+    my $opcode = %instructions<avr><long>{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     $opcode +|= ($target +> 16) +& 0x0001;
     $opcode +|= ($target +> 13) +& 0x01f0;
@@ -469,7 +477,7 @@ class Assembler::Actions {
   }
   method instruction:sym<avr_lds>($/) {
 # TODO: Handle 7-bit address variant
-    my $opcode = %avr_instr_lds{~$/<mnemonic>};
+    my $opcode = %instructions<avr><lds>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $addr = $/<expression>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -477,14 +485,14 @@ class Assembler::Actions {
   }
   method instruction:sym<avr_sts>($/) {
 # TODO: Handle 7-bit address variant
-    my $opcode = %avr_instr_sts{~$/<mnemonic>};
+    my $opcode = %instructions<avr><sts>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $addr = $/<expression>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,($addr +& 0xffff)) );
   }
   method instruction:sym<avr_bio>($/) {
-    my $opcode = %avr_instr_bio{~$/<mnemonic>};
+    my $opcode = %instructions<avr><bio>{~$/<mnemonic>};
     my $bit = $/<bit>.ast;
     my $reg = $/<expression>.ast;
     error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
@@ -493,86 +501,86 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_i4>($/) {
-    my $opcode = %avr_instr_i4{~$/<mnemonic>};
+    my $opcode = %instructions<avr><i4>{~$/<mnemonic>};
     my $round = $/<expression>.ast;
     error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
     $opcode +|= ($round +< 4) +& 0x00f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rx>($/) {
-    my $opcode = %avr_instr_rx{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rx>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_xr>($/) {
-    my $opcode = %avr_instr_xr{~$/<mnemonic>};
+    my $opcode = %instructions<avr><xr>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rxplus>($/) {
-    my $opcode = %avr_instr_rxplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rxplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_xrplus>($/) {
-    my $opcode = %avr_instr_xrplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><xrplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rxminus>($/) {
-    my $opcode = %avr_instr_rxminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rxminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_xrminus>($/) {
-    my $opcode = %avr_instr_xrminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><xrminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_ry>($/) {
-    my $opcode = %avr_instr_ry{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ry>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_yr>($/) {
-    my $opcode = %avr_instr_yr{~$/<mnemonic>};
+    my $opcode = %instructions<avr><yr>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_ryplus>($/) {
-    my $opcode = %avr_instr_ryplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ryplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_yrplus>($/) {
-    my $opcode = %avr_instr_yrplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><yrplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_ryminus>($/) {
-    my $opcode = %avr_instr_ryminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ryminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_yrminus>($/) {
-    my $opcode = %avr_instr_yrminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><yrminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_ryq>($/) {
-    my $opcode = %avr_instr_ryq{~$/<mnemonic>};
+    my $opcode = %instructions<avr><ryq>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -586,7 +594,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_yrq>($/) {
-    my $opcode = %avr_instr_yrq{~$/<mnemonic>};
+    my $opcode = %instructions<avr><yrq>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -600,43 +608,43 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rz>($/) {
-    my $opcode = %avr_instr_rz{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rz>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_stzr>($/) {
-    my $opcode = %avr_instr_stzr{~$/<mnemonic>};
+    my $opcode = %instructions<avr><stzr>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rzplus>($/) {
-    my $opcode = %avr_instr_rzplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rzplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_zrplus>($/) {
-    my $opcode = %avr_instr_zrplus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><zrplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rzminus>($/) {
-    my $opcode = %avr_instr_rzminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rzminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_zrminus>($/) {
-    my $opcode = %avr_instr_zrminus{~$/<mnemonic>};
+    my $opcode = %instructions<avr><zrminus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_rzq>($/) {
-    my $opcode = %avr_instr_rzq{~$/<mnemonic>};
+    my $opcode = %instructions<avr><rzq>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -650,7 +658,7 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_zrq>($/) {
-    my $opcode = %avr_instr_zrq{~$/<mnemonic>};
+    my $opcode = %instructions<avr><zrq>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     my $val = $/<expression>;
     $opcode +|= ($reg +< 4) +& 0x01f0;
@@ -664,25 +672,25 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
   method instruction:sym<avr_z>($/) {
-    my $opcode = %avr_instr_z{~$/<mnemonic>};
+    my $opcode = %instructions<avr><z>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_zr>($/) {
-    my $opcode = %avr_instr_zr{~$/<mnemonic>};
+    my $opcode = %instructions<avr><zr>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_zplus>($/) {
-    my $opcode = %avr_instr_z{~$/<mnemonic>};
+    my $opcode = %instructions<avr><zplus>{~$/<mnemonic>};
     my $reg = $/<reg>.ast;
     $opcode +|= ($reg +< 4) +& 0x01f0;
     make ( ($opcode,) );
   }
   method instruction:sym<avr_noz>($/) {
-    my $opcode = %avr_instr_z{~$/<mnemonic>};
+    my $opcode = %instructions<avr><noz>{~$/<mnemonic>};
     make ( ($opcode,) );
   }
 }
@@ -1206,23 +1214,26 @@ my %constantsize = '.db' => 1,
   my $m = Assembler.parse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
-  my $opc = ~$m[0];
-  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  my $instr_type = ~$m[0];
+  $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.parse($args,
                        :actions(Assembler::Actions),
 		       :rule(<identifier>));
-  my $instr_type = ~$m[0];
-  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+  my $opc = ~$m[0];
+  $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.parse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast;
   #format_listing(-1, '', $label, $opcode, $rest);
-  %instructions{$isa}{$instr_type}{$opc} = $value;
+say ".instruction: $isa $instr_type $opc $value";
+  %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  #say %instructions;
   for %instructions{$isa}.keys {
-    %instructions{$isa}{$_}<array> = %instructions{$isa}{$_}<hash>.keys;
+    my $arrayname = %instructions{$isa}{$_}<array>;
+    eval "\@$arrayname = <%instructions{$isa}{$_}.keys>";
   }
 }
 
@@ -1238,7 +1249,8 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       $words = $m.ast;
       my $nybbles = ((@memspace[0]<width> + 3) / 4);
       my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
-      for 0 .. (+$words - 1) -> $index {
+      for ^+$words -> $index {
+say "sprintf: $format $words[$index]";
         $code ~= sprintf($format, $words[$index]);
 	putword(($pc+$instruction_length)*2, $words[$index]);
 	$instruction_length++;

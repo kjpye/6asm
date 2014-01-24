@@ -62,12 +62,6 @@
         .LIST
         .LISTMAC
 
-	.macro  sub_24_24
-	sub @0, @3
-	sbc @1, @4
-	sbc @2, @5
-	.endm
-	
 	.macro	sub24
 	sub @0, @1
 	sbc @0+1, @1+1
@@ -2853,12 +2847,9 @@ MLP_LFOFALL:
         lds	R22, LFOBOTTOM_0	;\ 
 	lds	R23, LFOBOTTOM_1	; > R24:R23:R22 = Amin
 	lds	R24, LFOBOTTOM_2	;/
-	sub_24_24	R19, R20, R21, R16, R17, R18
-	sub24	r19, r16
-;	sub24 r24, r16
-;    	sub	R19, R16		;\ 
-;	sbc	R20, R17		; > A -= dA
-;	sbc	R21, R18		;/
+    	sub	R19, R16		;\ 
+	sbc	R20, R17		; > A -= dA
+	sbc	R21, R18		;/
 	brcs	MLP_LFOBOTTOM
 	cp	R22, R19		;\ 
 	cpc	R23, R20		; > Amin - A

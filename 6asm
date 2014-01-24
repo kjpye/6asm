@@ -91,7 +91,7 @@ my @avr_instr_z;        make_hash('avr', 'z');
 my @avr_instr_zr;       make_hash('avr', 'zr');
 my @avr_instr_zplus;    make_hash('avr', 'zplus');
 my @avr_instr_noz;      make_hash('avr', 'noz');
-say %instructions;
+# say %instructions;
 
 # basic rules for expressions
 
@@ -1226,11 +1226,11 @@ my %constantsize = '.db' => 1,
 		       :rule(<expression>));
   my $value = +$m.ast;
   #format_listing(-1, '', $label, $opcode, $rest);
-say ".instruction: $isa $instr_type $opc $value";
+#say ".instruction: $isa $instr_type $opc $value";
   %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  say %instructions;
+  #say %instructions;
   for %instructions{$isa}.keys {
     my $arrayname = %instructions{$isa}{$_}<array>;
     eval "\@$arrayname = <%instructions{$isa}{$_}.keys>";
@@ -1249,7 +1249,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       $words = $m.ast;
       my $nybbles = ((@memspace[0]<width> + 3) / 4);
       my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
-say $words.perl;
+#say $words.perl;
       for ^+$words -> $index {
         $code ~= sprintf($format, $words[$index]);
 	putword(($pc+$instruction_length)*2, $words[$index]);
@@ -1354,7 +1354,7 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
+  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

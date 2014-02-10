@@ -32,14 +32,15 @@ my %symbol = ();
 my $isa = '';
 my %instructions;
 
-# Variables required for AVR
-
 # This should be a macro!
 sub make_hash(Str $isa, Str $instr) {
   # %instructions{$isa}{$instr} = hash => {}, array => "{$isa}_instr_{$instr}";
   %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
   #%instructions{$isa}{$instr}<hash> = ();
 }
+
+# Variables required for AVR
+
 my @avr_instr_inh;      make_hash('avr', 'inh');
 my @avr_instr_rr;       make_hash('avr', 'rr');
 my @avr_instr_ww;       make_hash('avr', 'ww');
@@ -89,7 +90,8 @@ my @avr_instr_z;        make_hash('avr', 'z');
 my @avr_instr_zr;       make_hash('avr', 'zr');
 my @avr_instr_zplus;    make_hash('avr', 'zplus');
 my @avr_instr_noz;      make_hash('avr', 'noz');
-# say %instructions;
+
+# Variables required for PIC
 
 # basic rules for expressions
 
@@ -116,6 +118,8 @@ grammar Assembler {
     token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \' } # FIXME
     rule stringexpression         { <string> }
     proto rule instruction        { <*> }
+
+# Rules for AVR
 
   rule avr_bit                      { <expression>                                                                             }
   token avr_reg                     { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
@@ -169,6 +173,9 @@ grammar Assembler {
   rule instruction:sym<avr_noz>     { $<mnemonic>=@avr_instr_noz     <ws>                                                      }
   rule instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> ',' <expression> <ws>                      }
   rule instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> ',' <avr_reg> <ws>                      }
+
+Rules for PIC
+
 }
 
 class Assembler::Actions {
@@ -697,6 +704,9 @@ class Assembler::Actions {
     my $opcode = %instructions<avr><noz><hash>{~$/<mnemonic>};
     make ( ($opcode,) );
   }
+
+# PIC-specific methods
+
 }
 
 # Input routines

@@ -179,7 +179,7 @@ class Assembler::Actions {
     if ~$/[1] eq 'f' {
       ++$index2;
     }
-say "In method local_ref: index is $index ($index2)";
+#say "In method local_ref: index is $index ($index2)";
     if $index2 < 0 {
       $value = 0; # Should be error
     } else {
@@ -1107,6 +1107,7 @@ my %constantsize = '.db' => 1,
   my $size = %constantsize{$opcode};
   my $format = sprintf("\%\%0\%dx", $size*2);
   my $args = $rest;
+  assign_symbol($label, $pc, $pass) if $label;
   loop {
     my $m = Assembler.parse($args,
 			    :actions(Assembler::Actions),
@@ -1331,6 +1332,17 @@ sub print_symbols () {
 	      ~ %memspace{$memspace}<label>;
       $pc_str = sprintf($pcformat, $pc);
       say sprintf "%s %s", $pc_str, $symbol;
+    }
+  }
+  say "";
+  say "Definitions:";
+  say "===========";
+  for (sort keys %define) -> $symbol {
+    if $symbol ~~ /^_/ {
+      # ignore symbols starting with _
+    } else {
+      my $value = %symbol{$symbol};
+      say sprintf "%s %s", $symbol, $value;
     }
   }
 }

@@ -837,7 +837,7 @@ CALC_DIST:
         clc							;clear carry
 	sub16	LDAC, a_L
                             	;check for overflow / do hard clipping
-        brvc OVERFLOW_1     		;if overflow bit is clear jump to OVERFLOW_1
+        brvc 1f     		;no overflow
 
         			;sub overflow happened -> set to min
                             	;b1000.0000 b0000.0001 -> min
@@ -846,15 +846,12 @@ CALC_DIST:
         ldi    	LDAC, 0b00000001
         ldi 	HDAC, 0b10000000
 
-OVERFLOW_1: 						;when overflow is clear
+1: 						;when overflow is clear
 
         							;(in-a) is now in HDAC:LDAC as signed
         							;now calc q*(a-b)
 
         lds    r22,SCALED_RESONANCE	;load filter Q value, unsigned
-
-
-OVERFLOW_2:
 
 	mov16	r20, a_L            	; load 'a' , signed
 
@@ -862,7 +859,7 @@ OVERFLOW_2:
 
 	sub16	r20, z_L            	; (a-b) signed
 
-        brvc OVERFLOW_3            	;if overflow is clear jump to OVERFLOW_3
+        brvc 3f            	;no overflow
 
         							;b1000.0000 b0000.0001 -> min
         							;0b0111.1111 0b1111.1111 -> max
@@ -870,7 +867,7 @@ OVERFLOW_2:
         ldi   r20, 0b00000001
         ldi   r21, 0b10000000
 
-OVERFLOW_3:
+3:
 
 	lds		r18, MODEFLAGS2		; Check Low Pass/High Pass panel switch.
 	sbrs 	r18, 3
@@ -889,9 +886,9 @@ CALC_LOWPASS:
 	add	r18, r1
 	adc	r19, zero
 	rol 	r0					; r0.7 --> Cy
-	brcc	NO_ROUND			; LSbyte < $80, so don't round up
+	brcc	1f			; LSbyte < $80, so don't round up
 	inc 	r18
-NO_ROUND:
+1:
         clc
         lsl     r18
         rol     r19
@@ -909,14 +906,14 @@ DCF_ADD:
 
 	add16	LDAC, z_L
 
-        brvc	OVERFLOW_4            	;if overflow is clear
+        brvc	4f            	;if overflow is clear
         						   	;b1000.0000 b0000.0001 -> min
 								   	;0b0111.1111 0b1111.1111 -> max
 
         ldi    LDAC, 0b11111111
         ldi    HDAC, 0b01111111
 
-OVERFLOW_4:
+4:
 
         							;Result is a signed value in HDAC:LDAC
         							;calc * f
@@ -937,15 +934,15 @@ OVERFLOW_4:
 	add		r18, r1				; signed result in r19:r18
 	adc		r19, zero
 	rol 	r0					; r0.7 --> Cy
-	brcc	NO_ROUND2			; LSbyte < $80, so don't round up
+	brcc	1f			; LSbyte < $80, so don't round up
 	inc 	r18
-NO_ROUND2:
+1:
         							;Add result to 'a'
         							;a+=f*((in-a)+q*(a-b))
 
         add        a_L, r18
         adc        a_H, r19
-        brvc	OVERFLOW_5           	;if overflow is clear
+        brvc	5f           	;if overflow is clear
                                 	;b1000.0000 b0000.0001 -> min
                                 	;0b0111.1111 0b1111.1111 -> max
 
@@ -954,7 +951,7 @@ NO_ROUND2:
         mov    a_L, z_H
         mov    a_H, z_L
 
-OVERFLOW_5:
+5:
 
         							;calculated a+=f*((in-a)+q*(a-b)) as signed value and saved in a_H:a_L
         							;calc 'b'
@@ -969,14 +966,14 @@ OVERFLOW_5:
         sub	z_L, temp        		;\ 
         sbc	z_H, temp2				;/ (a - b) signed
 
-        brvc	OVERFLOW_6    			;if overflow is clear
+        brvc	6f    			;if overflow is clear
                          			;b1000.0000 b0000.0001 -> min
 						 			;0b0111.1111 0b1111.1111 -> max
 
         ldi	z_L, 0b00000001
         ldi	z_H, 0b10000000
 
-OVERFLOW_6:
+6:
 
         lds	r20, LPF_I	;load lowpass 'F' value
 	lds	r18, MODEFLAGS2
@@ -998,13 +995,13 @@ OVERFLOW_6:
         add	temp,  r18	;\  add result to 'b' , signed
         adc	temp2, r19	;/ b +=(a-b)*f
 
-        brvc	OVERFLOW_7	;if overflow is clear
+        brvc	7f	;if overflow is clear
 					;b1000.0000 b0000.0001 -> min
 					;0b0111.1111 0b1111.1111 -> max
         ldi	temp,  0b11111111
         ldi	temp2, 0b01111111
 
-OVERFLOW_7:
+7:
 	sts16	b_L, temp	; save value of 'b'
 ;	sts	b_L, temp	;\ 
 ;       sts	b_H, temp2      ;/ save value of 'b'
@@ -1033,24 +1030,24 @@ DCA:
 	ldi	R31, 0
 	lds	R18, LEVEL
 	cpi	R18, 255
-	brne	T2_ACHECK	; multiply when LEVEL!=255
+	brne	2f	; multiply when LEVEL!=255
 	mov	R30, R16
 	mov	R31, R17
-	rjmp	T2_AEXIT
+	rjmp	3f
 
-T2_ALOOP:
+1:
         asr	R17		;\ 
 	ror	R16		;/ R17:R16 = R17:R16 asr 1
 	lsl	R18		; Cy <-- R31 <-- 0
-	brcc	T2_ACHECK
+	brcc	2f
     	add	R30, R16
 	adc	R31, R17
 
-T2_ACHECK:
+2:
         tst	R18
-	brne	T2_ALOOP
+	brne	1b
 
-T2_AEXIT:
+3:
 
 ;-------------------------------------------------------------------------------------------------------------------
 ; Output Sample
@@ -1176,13 +1173,13 @@ UART_RXC:
 	mov	R17, R16
 	andi	R17, 0xF0
 	cpi	R17, 0x80
-	breq	INTRX_ACCEPT	; 8x note off
+	breq	1f	; 8x note off
 	cpi	R17, 0x90
-	breq	INTRX_ACCEPT	; 9x note on
+	breq	1f	; 9x note on
 	cpi	R17, 0xB0
-	breq	INTRX_ACCEPT	; Bx control change
+	breq	1f	; Bx control change
 	cpi	R17, 0xE0
-	breq	INTRX_ACCEPT	; Ex pitch bend
+	breq	1f	; Ex pitch bend
 	ldi	R17, 0		;\ 
 	sts	MIDIPHASE, R17	;/ MIDIPHASE = 0
 	rjmp	INTRX_EXIT	; Ax polyphonic aftertouch
@@ -1190,20 +1187,20 @@ UART_RXC:
 				; Dx channel aftertouch
 				; Fx system
 
-INTRX_ACCEPT:
+1:
         sts	MIDIPHASE, R17		; phase = 80 90 B0 E0
 	andi	R16, 0x0F		;\ 
 	inc	R16			; > store MIDI channel 1..16
 	sts	MIDICHANNEL, R16	;/
 	lds	R17, SETMIDICHANNEL	;0 for OMNI or 1..15
 	tst	R17
-	breq	INTRX_ACPT_X		; end when OMNI
+	breq	2f		; end when OMNI
 	cp	R17, R16		; compare set channel to the incoming channel
-	breq	INTRX_ACPT_X		; end when right channel
+	breq	2f		; end when right channel
 	ldi	R17, 0			;\  otherwise:
 	sts	MIDIPHASE, R17		;/ MIDIPHASE = 0 (no data service)
 
-INTRX_ACPT_X:
+2:
         rjmp	INTRX_EXIT
 
 ;MIDI data byte (0xxxxxxx):
@@ -1375,9 +1372,9 @@ WAIT_10US:
         push	R16		; 3+2
 	ldi	R16, 50		; 1
 
-W10U_LOOP:
+1:
         dec	R16		; 1\ 
-	brne	W10U_LOOP	; 2/1	/ 49*3 + 2
+	brne	1b		; 2/1	/ 49*3 + 2
 	pop	R16		; 2
 	ret			; 4
 
@@ -1405,9 +1402,9 @@ ADC_START:
 ;Used:	    SREG,R17
 ;-----------------------------------------------------------------------------
 ADC_END:
-ADCE_LOOP:
+1:
         sbis	ADCSRA, 4	;\ 
-	rjmp	ADCE_LOOP	;/ wait for ADIF==1
+	rjmp	1b		;/ wait for ADIF==1
 	sbi	ADCSRA, 4 	; clear ADIF
 	in	R16, ADCL	;\ 
 	in	R17, ADCH	;/ R17:R16 = 000000Dd:dddddddd
@@ -1431,17 +1428,17 @@ ADCE_LOOP:
 ;-----------------------------------------------------------------------------
 ASR16:
         tst	R18
-	breq	ASR16_EXIT
+	breq	2f
 	push	R18
 
-ASR16_LOOP:
+1:
         asr	R17		;\ 
 	ror	R16		;/ R17,R16 = R17,R16 asr 1
 	dec	R18
-	brne	ASR16_LOOP
+	brne	1b
 	pop	R18
 
-ASR16_EXIT:
+2:
         ret
 
 ;-----------------------------------------------------------------------------
@@ -1454,19 +1451,19 @@ ASR16_EXIT:
 ;-----------------------------------------------------------------------------
 SHR32:
         tst	R20
-	breq	SHR32_EXIT
+	breq	2f
 	push	R20
 
-SHR32_LOOP:
+1:
         lsr	R19
 	ror	R18
 	ror	R17
 	ror	R16
 	dec	R20
-	brne	SHR32_LOOP
+	brne	1b
 	pop	R20
 
-SHR32_EXIT:
+2:
         ret
 
 ;-----------------------------------------------------------------------------
@@ -1479,19 +1476,19 @@ SHR32_EXIT:
 ;-----------------------------------------------------------------------------
 SHL32:
         tst	R20
-	breq	SHL32_EXIT
+	breq	2f
 	push	R20
 
-SHL32_LOOP:
+1:
         lsl	R16
 	rol	R17
 	rol	R18
 	rol	R19
 	dec	R20
-	brne	SHL32_LOOP
+	brne	1b
 	pop	R20
 
-SHL32_EXIT:
+2:
         ret
 
 ;-----------------------------------------------------------------------------
@@ -1521,14 +1518,14 @@ MUL8X8S:
 	neg	R16		;/ R16 = abs(R16)	0..128
 	mul	r16, r17
 	movw 	r16,r0		; R17,R16 = LFO * LFOMOD
-	brtc	M8X8S_EXIT	; exit if x >= 0
+	brtc	1f		; exit if x >= 0
 	com	R16		;\ 
 	com	R17		; \ 
 	sec			;  > R17:R16 = -R17:R16
 	adc	R16, zero	; /
 	adc	R17, zero	;/
 
-M8X8S_EXIT:
+1:
         ret
 
 ;-----------------------------------------------------------------------------
@@ -1549,12 +1546,12 @@ MUL32X16:
 	clr	R27		;  / ZZ = 0
 	clr	R28		; /
 	clr	R29		;/
-	rjmp	M3216_CHECK
+	rjmp	3f
 
-M3216_LOOP:
+1:
         lsr	R23		;\ 
 	ror	R22		;/ y:Carry = y >> 1
-	brcc	M3216_SKIP
+	brcc	2f
 	add	R24,R16		;\ 
 	adc	R25,R17		; \ 
 	adc	R26,R18		;  \ 
@@ -1562,7 +1559,7 @@ M3216_LOOP:
 	adc	R28,R20		; /
 	adc	R29,R21		;/
 
-M3216_SKIP:
+2:
         lsl	R16		;\ 
 	rol	R17		; \ 
 	rol	R18		;  \ 
@@ -1570,10 +1567,10 @@ M3216_SKIP:
 	rol	R20		; /
 	rol	R21		;/
 
-M3216_CHECK:
+3:
         mov	R30,R22		;\ 
 	or	R30,R23		;/ check if y == 0
-	brne	M3216_LOOP
+	brne	1b
 	mov	R16,R26		;\ 
     	mov	R17,R27		; \ 
 	mov	R18,R28		; / x * y
@@ -1662,15 +1659,15 @@ LOAD_DELTA:
 ;-----------------------------------------------------------------------------
 NOTERECALC:
         ldi	R20,0		; n12 = 0
-	rjmp	NRC_2
+	rjmp	2f
 
-NRC_1:
+1:
         subi	R23, 12		; m12 -= 12
 	inc	R20		; n12++
 
-NRC_2:
+2:
         cpi	R23, 12
-	brsh	NRC_1		; repeat while m12 >= 12
+	brsh	1b		; repeat while m12 >= 12
 	ret
 
 ;-----------------------------------------------------------------------------
@@ -1738,35 +1735,35 @@ NONLINPOT:
         ldi	R22, 0
 	mov	R23, R16
     	cpi	R23, 112
-	brlo	NLP_I
+	brlo	1f
 	cpi	R23, 144
-	brlo	NLP_II
-	rjmp	NLP_III
+	brlo	2f
+	rjmp	3f
 
-NLP_I:
+1:
         ldi	R16, 0		;\   R18,R17:R16 = m =
 	ldi	R17, 32		; > = 126/112 =
 	ldi	R18, 1		;/  = 1,125
     	ldi	R30, 0		;\  R31,R30 = n =
 	ldi	R31, 0		;/ = 0,0
-	rjmp	NLP_CONT
+	rjmp	4f
 
-NLP_II:
+2:
         ldi	R16, 8		;\   R18,R17:R16 = m =
 	ldi	R17, 33		; > = (130-126)/(143-112) =
     	ldi	R18, 0		;/  = 0,129032258
 	ldi	R30, 140	;\  R31,R30 = n =
 	ldi	R31, 111	;/ = 126 - m*112 = 111,5483871
-	rjmp	NLP_CONT
+	rjmp	4f
 
-NLP_III:
+3:
         ldi	R16, 183	;\   R18,R17:R16 = m =
 	ldi	R17, 29		; > = (255-130)/(255-143) =
 	ldi	R18, 1		;/  = 1,116071429
     	ldi	R30, 103	;\  R31,R30 = n =
 	ldi	R31, 226	;/ 255 - m*255 = -29,59821429
 
-NLP_CONT:
+4:
         ldi	R19, 0
 	rcall	MUL32X16
 	add	R16, R30
@@ -2141,7 +2138,7 @@ MLP_SCAN:
 	ldi	R20, 0x00    		; bits of SWITCH2
 	ldi	R21, 0x00		; bits of SWITCH3
 
-MLP_SWLOOP:
+1:
 
         in	R30, PORTD
 	ori	R30, 0xF0
@@ -2162,7 +2159,7 @@ MLP_SWLOOP:
 	lsl	R17
 	lsl	R18
 	lsl 	R16
-	brne	MLP_SWLOOP
+	brne	1b
 	in	R16, PORTD
 	ori	R16, 0xF0		; OR 1111 0000
 	out     PORTD, R16		; just resets the ROW selector bits
@@ -2464,37 +2461,24 @@ MLP_SKIPSCAN:
 ; KNOB BANK 0
 ;-------------------------------------------------------------------------------------------------------------------
 
-
-	.macro	readadc
+	.macro read_adc
+97:
 	lds	r16, @0
-	sbrc	r18, 0
-	jmp	load_adc_%
+	sbrc	r18, 1
+        jmp	99f
 	mov	r19, r16
-	lds	r17, old_@0
+	lds	r17, @1
 	sub	r19, r17
-	brpl	dead_check_%
+	brpl	98f
 	neg	r19
-dead_check_%:	
+98:
 	cpi	r19, 5
-	brlo	load_adc_%
-	sbr	r18, 1
-load_adc_%:	
+	brlo	97f
+	sbr	r18, 2
+99:
 	.endm
-	
-;	readadc	adc_0
-;	readadc	adc_1
-	lds	R16, ADC_0
-	sbrc	R18, 0		; Check bit 0
-	jmp	LOAD_ADC_0	; ADC_0 status bit is set, so just update parameter
-	mov	R19, R16
-	lds	R17, OLD_ADC_0
-	sub	R19, R17
-	brpl	DEAD_CHECK_0
-	neg	R19
-DEAD_CHECK_0:
-	cpi	R19, 5
-	brlo	KNOB_10		; Skip ahead if pot change is < the deadzone limit
-	sbr 	r18,1		; Update knob status bit and continue -- pot moved
+
+	read_adc	ADC_0, OLD_ADC_0
 
 ;-------------------------------------------------------------------------------------------------------------------
 ; Knob 0 --> LFO speed
@@ -2507,77 +2491,33 @@ LOAD_ADC_0:
 	; the overhead of calling and returning from a subroutine (or at least
 	; that's my excuse). In all honesty, we have plenty of flash memory
 	; so I don't mind a bit of cut and paste to shave a few clock cycles.
-KNOB_10:
-	lds	R16, ADC_1
-	sbrc	R18, 1		; Check bit 1
-	jmp	LOAD_ADC_10	; ADC_1 status bit is set, so just update parameter
-	mov	R19, R16
-	lds	R17, OLD_ADC_1
-	sub	R19, R17
-	brpl	DEAD_CHECK_10
-	neg	R19
-DEAD_CHECK_10:
-	cpi	R19, 5
-	brlo	KNOB_60
-	sbr 	r18,2
+97::
+	read_adc	ADC_1, OLD_ADC_1
 
 ;-------------------------------------------------------------------------------------------------------------------
 ; Knob 1 --> LFO depth
 ;-------------------------------------------------------------------------------------------------------------------
 
-LOAD_ADC_10:
 	sts	LFOLEVEL,R16
 	sts	PANEL_LFOLEVEL, r16
-;-------------------------------------------------------------------------------------------------------------------
-
-KNOB_60:
-	lds	R16, ADC_6
-	sbrc	R18, 6		; Check bit 6
-	jmp	LOAD_ADC_60	; ADC_6 status bit is set, so just update parameter
-	mov	R19, R16
-	lds	R17, OLD_ADC_6
-	sub	R19, R17
-	brpl	DEAD_CHECK_60
-	neg	R19
-DEAD_CHECK_60:
-	cpi	R19, 5
-	brlo	KNOB_70
-	sbr 	r18,64
+	read_adc	ADC_6, OLD_ADC_6
 
 ;-------------------------------------------------------------------------------------------------------------------
 ; Knob 6 --> FM depth
 ;-------------------------------------------------------------------------------------------------------------------
 
-LOAD_ADC_60:
-
 	sts	FMDEPTH, R16
-
-;-------------------------------------------------------------------------------------------------------------------
-
-KNOB_70:
-	lds	R16, ADC_7
-	sbrc	R18, 7		; Check bit 7
-	jmp	LOAD_ADC_70	; ADC_7 status bit is set, so just update parameter
-	mov	R19, R16
-	lds	R17, OLD_ADC_7
-	sub	R19, R17
-	brpl	DEAD_CHECK_70
-	neg	R19
-DEAD_CHECK_70:
-	cpi	R19, 5
-	brlo	EXIT_KNOB_BANK_0
-	sbr 	r18,128
+	read_adc	ADC_7, OLD_ADC_7
 
 ;-------------------------------------------------------------------------------------------------------------------
 ; Knob 7 --> Portamento (key glide)
 ;-------------------------------------------------------------------------------------------------------------------
 
-LOAD_ADC_70:
+97:
 	sts    PORTAMENTO,R16
 
 ;-------------------------------------------------------------------------------------------------------------------
 ;
-EXIT_KNOB_BANK_0:
 											; Finished knob bank 0
 	jmp	ENV_KNOBS				; Skip the second bank
 

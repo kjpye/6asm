@@ -1,0 +1,153 @@
+;	.nolist
+; Definitions for the MC6809 processor
+
+        .param pcwidth = 4
+
+	.pushmem ram
+	.defmem bottom = 0x0
+	.defmem top = 0xffff
+	.defmem width = 8
+	.defmem executable = 1
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 1
+	.defmem label = 'R'
+	.defmem pcwidth = 4
+	.popmem
+	
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+; instruction definitions
+ .isa mc6809
+ .instruction die adca 0x89
+ .instruction die adcb 0xc9
+ .instruction die adda 0x8b
+ .instruction die addb 0xcb
+ .instruction die addd 0xc3
+ .instruction die anda 0x84
+ .instruction die andb 0xc4
+ .instruction die asl  0x46 # incorrect for direct addressing!
+ .instruction die asr  0x47 # incorrect for direct addressing!
+ .instruction die bita 0x85
+ .instruction die bitb 0xc5
+ .instruction die cmpa 0x81
+ .instruction die cmpb 0xc1
+ .instruction die cmpd 0x1083
+ .instruction die cmps 0x118c
+ .instruction die cmpu 0x1183
+ .instruction die cmpx 0x8c
+ .instruction die cmpy 0x108c
+ .instruction die com  0x43
+ .instruction die dec  0x4a
+ .instruction die eora 0x88
+ .instruction die eorb 0xc8
+ .instruction die jmp  0x4e
+ .instruction die jsr  0x4d
+ .instruction die lda  0x86
+ .instruction die ldb  0xc6
+ .instruction die ldd  0xcc
+ .instruction die lds  0x10ce
+ .instruction die ldu  0xce
+ .instruction die ldx  0x8e
+ .instruction die ldy  0x108e
+ .instruction die lsl  0x48
+ .instruction die lsr  0x44
+ .instruction die neg  0x40
+ .instruction die ora  0x8a
+ .instruction die orb  0xca
+ .instruction die rol  0x49
+ .instruction die ror  0x46
+ .instruction die sbca 0x82
+ .instruction die sbcb 0xc2
+ .instruction die sta  0x87
+ .instruction die stb  0xc7
+ .instruction die std  0xcd
+ .instruction die sts  0x10cf
+ .instruction die stu  0xcf
+ .instruction die stx  0x8f
+ .instruction die sty  0x108f
+ .instruction die suba 0x80
+ .instruction die subb 0xc0
+ .instruction die subd 0x83
+ .instruction die tst  0x4d
+ .instruction inh abx  0x3a
+ .instruction inh asla 0x48
+ .instruction inh aslb 0x58
+ .instruction inh asra 0x47
+ .instruction inh asrb 0x57
+ .instruction inh clra 0x4f
+ .instruction inh clrb 0x5f
+ .instruction inh coma 0x43
+ .instruction inh comb 0x53
+ .instruction inh daa  0x19
+ .instruction inh deca 0x4a
+ .instruction inh decb 0x5a
+ .instruction inh inca 0x4c
+ .instruction inh incb 0x5c
+ .instruction inh lsla 0x48
+ .instruction inh lslb 0x58
+ .instruction inh mul  0x3d
+ .instruction inh nega 0x40
+ .instruction inh negb 0x50
+ .instruction inh rola 0x49
+ .instruction inh rolb 0x59
+ .instruction inh rora 0x46
+ .instruction inh rorb 0x56
+ .instruction inh rti  0x3b
+ .instruction inh rts  0x39
+ .instruction inh sex  0x1d
+ .instruction inh swi  0x3f
+ .instruction inh swi2 0x103f
+ .instruction inh swi3 0x113f
+ .instruction inh sync 0x13
+ .instruction inh tsta 0x4d
+ .instruction inh tstb 0x5d
+ .instruction imm8 adca  0x89
+ .instruction imm8 adcb  0xc9
+ .instruction imm8 adda  0x8b
+ .instruction imm8 addb  0xcb
+ .instruction imm8 anda  0x84
+ .instruction imm8 andb  0xc4
+ .instruction imm8 andcc 0x1c
+ .instruction imm8 bita  0x85
+ .instruction imm8 bitb  0xc5
+ .instruction imm8 cmpa  0x81
+ .instruction imm8 cmpb  0xc1
+ .instruction imm8 eora  0x88
+ .instruction imm8 eorb  0xc8
+ .instruction imm8 lda   0xb6
+ .instruction imm8 ldb   0xc6
+ .instruction imm8 ora   0x8a
+ .instruction imm8 orb   0xca
+ .instruction imm8 pshs  0x34
+ .instruction imm8 pshu  0x36
+ .instruction imm8 puls  0x35
+ .instruction imm8 pulu  0x37
+ .instruction imm8 sbca  0x82
+ .instruction imm8 sbcb  0xc2
+ .instruction imm8 suba  0x80
+ .instruction imm8 subb  0xc0
+ .instruction imm16 addd 0xc3
+ .instruction imm16 cmpd 0x1083
+ .instruction imm16 cmps 0x118c
+ .instruction imm16 cmpu 0x1183
+ .instruction imm16 cmpx 0x8c
+ .instruction imm16 cmpy 0x108c
+ .instruction imm16 ldd  0xcc
+ .instruction imm16 lds  0x10ce
+ .instruction imm16 ldu  0xce
+ .instruction imm16 ldx  0x8e
+ .instruction imm16 ldy  0x108e
+ .instruction imm16 subd 0x83
+ .assemble
+; IO register definitions
+
+;;        .set    portb ;; page 93 in data sheet
+
+;	.list

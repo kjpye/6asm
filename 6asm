@@ -93,6 +93,26 @@ my @avr_instr_noz;      make_hash('avr', 'noz');
 
 # Variables required for PIC
 
+my @pic_instr_inh;      make_hash('pic', 'inh');
+my @pic_instr_bytefda;  make_hash('pic', 'bytefda');
+my @pic_instr_bytefa;   make_hash('pic', 'bytefa');
+my @pic_instr_byteff;   make_hash('pic', 'byteff');
+my @pic_instr_bit;      make_hash('pic', 'bit');
+my @pic_instr_branch;   make_hash('pic', 'branch');
+my @pic_instr_lbranch;  make_hash('pic', 'lbranch');
+my @pic_instr_call;     make_hash('pic', 'call');
+my @pic_instr_ret;      make_hash('pic', 'ret');
+my @pic_instr_lit;      make_hash('pic', 'lit');
+my @pic_instr_bsr;      make_hash('pic', 'bsr');
+my @pic_instr_tblrd;    make_hash('pic', 'tblrd');
+
+# Variables required for mc6809
+
+my @mc6809_instr_inh;   make_hash('mc6809', 'inh');
+my @mc6809_instr_imm8;  make_hash('mc6809', 'imm8');
+my @mc6809_instr_imm16; make_hash('mc6809', 'imm16');
+my @mc6809_instr_die;   make_hash('mc6809', 'die');
+
 # basic rules for expressions
 
 grammar Assembler {
@@ -174,7 +194,36 @@ grammar Assembler {
   rule instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> ',' <expression> <ws>                      }
   rule instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> ',' <avr_reg> <ws>                      }
 
-Rules for PIC
+# Rules for PIC
+
+  token pic_a                       { <expression>                                                                             } 
+  token pic_d                       { <expression>                                                                             } 
+  token pic_f                       { <expression>                                                                             } 
+  token pic_bit                     { <expression>                                                                             } 
+  rule instruction:sym<pic_inh>     { $<mnemonic>=@pic_instr_inh     <.ws>                                                     }
+  rule instruction:sym<pic_bytefda> { $<mnemonic>=@pic_instr_bytefda <.ws> <pic_f> ',' <pic_d> ',' <pic_a> <ws>                }
+  rule instruction:sym<pic_bytefa>  { $<mnemonic>=@pic_instr_bytefa  <.ws> <pic_f> ',' <pic_a> <ws>                            }
+  rule instruction:sym<pic_byteff>  { $<mnemonic>=@pic_instr_byteff  <.ws> <expression> ',' <expression> <ws>                  }
+  rule instruction:sym<pic_bitm>    { $<mnemonic>=@pic_instr_bit     <.ws> <pic_f> ',' <pic_bit> ',' <pic_a> <ws>              }
+  rule instruction:sym<pic_branch>  { $<mnemonic>=@pic_instr_branch  <.ws> <expression>                                        }
+  rule instruction:sym<pic_lbranch> { $<mnemonic>=@pic_instr_lbranch <.ws> <expression>                                        }
+  rule instruction:sym<pic_call>    { $<mnemonic>=@pic_instr_call    <.ws> <expression> [ ',' <expression> ] ?                 }
+  rule instruction:sym<pic_ret>     { $<mnemonic>=@pic_instr_ret     <.ws> <expression> ?                                      }
+  rule instruction:sym<pic_lit>     { $<mnemonic>=@pic_instr_lit     <.ws> <expression>                                        }
+  rule instruction:sym<pic_bsr>     { $<mnemonic>=@pic_instr_bsr     <.ws> <expression>                                        }
+  rule instruction:sym<pic_tblrd>   { $<mnemonic>=@pic_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')                                }
+
+# Rules for mc6809
+
+  token mc6809_acc                   { 'a'|'b'                                                                                   }
+  token mc6809_acc16                 { 'd'                                                                                       }
+  token mc6809_idx                   { 'x'|'y'|'u'|'s'                                                                           }
+  rule instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>                                                      }
+  rule instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>                                     }
+  rule instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>                                    }
+  rule instruction:sym<mc6809_dir>   { $<mnemonic>=@mc6809_instr_die <.ws> '<' <expression>                                      }
+  #rule instruction:sym<mc6809_ind>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression>                                          }
+  rule instruction:sym<mc6809_ext>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression>                                          }
 
 }
 
@@ -706,6 +755,185 @@ class Assembler::Actions {
   }
 
 # PIC-specific methods
+
+  method pic_f($/) {
+    my  $reg = +$/;
+    if ! (0 <= $reg <= 255) {
+      error_listing '*** Registers must be in range 0 to 255';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method pic_d($/) {
+    my  $reg = +$/;
+    if ! (0 <= $reg <= 1) {
+      error_listing '*** D must be 0 or 1';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method pic_a($/) {
+    my  $reg = +$/;
+    if ! (0 <= $reg <= 1) {
+      error_listing '*** A must be 0 or 1';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method pic_bit($/) {
+    my  $reg = +$/;
+    if ! (0 <= $reg <= 7) {
+      error_listing '*** bit number must be between 0 and 7';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method instruction:sym<pic_bytefda>($/) {
+    my $opcode = %instructions<pic><bytefda><hash>{~$/<mnemonic>};
+    my $f = $/<pic_f>.ast;
+    my $d = $/<pic_d>.ast;
+    my $a = $/<pic_a>.ast;
+    $opcode +|= $f;
+    $opcode +|= $a +< 8;
+    $opcode +|= $d +< 9;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_bytefa>($/) {
+    my $opcode = %instructions<pic><bytefa><hash>{~$/<mnemonic>};
+    my $f = $/<pic_f>.ast;
+    my $a = $/<pic_a>.ast;
+    $opcode +|= $f;
+    $opcode +|= $a +< 8;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_byteff>($/) {
+    my $opcode = %instructions<pic><byteff><hash>{~$/<mnemonic>};
+    my $fs = $/<expression>[0].ast +& 0x0fff;
+    my $fd = $/<expression>[1].ast +& 0x0fff;
+    $opcode +|= $fs;
+    make ( ($opcode, 0xf000 +| $fd) );
+  }
+  method instruction:sym<pic_bitm>($/) {
+    my $opcode = %instructions<pic><bit><hash>{~$/<mnemonic>};
+    my $f = $/<pic_f>.ast;
+    my $b = $/<pic_bit>.ast;
+    my $a = $/<pic_a>.ast;
+    $opcode +|= $f;
+    $opcode +|= $a +< 8;
+    $opcode +|= $b +< 9;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_inh>($/) {
+    my $opcode = %instructions<pic><inh><hash>{~$/<mnemonic>};
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_branch>($/) {
+    my $opcode = %instructions<pic><branch><hash>{~$/<mnemonic>};
+    my $target = $/<expression>.ast;
+    my $offset = $target - $pc - 1;
+    if ($offset < -128 || $offset > 127) {
+    }
+    $offset +&= 0xff;
+    $opcode +|= $offset;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_lbranch>($/) {
+    my $opcode = %instructions<pic><lbranch><hash>{~$/<mnemonic>};
+    my $target = $/<expression>.ast;
+    my $offset = $target - $pc - 1;
+    if ($offset < -1024 || $offset > 1023) {
+    }
+    $offset +&= 0x3ff;
+    $opcode +|= $offset;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_call>($/) {
+    my $opcode = %instructions<pic><call><hash>{~$/<mnemonic>};
+    my $target = $/<expression>[0].ast;
+    $target +&= 0x0fffff;
+    $opcode +|= $target +& 0x0fff;
+    $opcode +|= 0x0100 if defined $/<expression>[1] && $/<expression>[1].ast != 0;
+    make ( ($opcode, 0xf000 + ($target +> 12)) );
+  }
+  method instruction:sym<pic_ret>($/) {
+    my $opcode = %instructions<pic><ret><hash>{~$/<mnemonic>};
+    $opcode +|= 0x0001 if defined $/<expression> && $/<expression>.ast != 0;
+    make ( ($opcode,) );
+  }
+  method instruction:sym<pic_lit>($/) {
+    my $opcode = %instructions<pic><lit><hash>{~$/<mnemonic>};
+    my $imm = $/<expression>.ast;
+    $imm +&= 0xff;
+    make ( ($opcode +| $imm,) );
+  }
+  method instruction:sym<pic_bsr>($/) {
+    my $opcode = %instructions<pic><bsr><hash>{~$/<mnemonic>};
+    my $imm = $/<expression>.ast;
+    $imm +&= 0x0f;
+    make ( ($opcode +| $imm,) );
+  }
+  method instruction:sym<pic_tblrd>($/) {
+    my $opcode = %instructions<pic><tblrd><hash>{~$/<mnemonic>};
+    my $type = ~$/[0];
+    $opcode +|= 0x0001 if $type eq '*+';
+    $opcode +|= 0x0002 if $type eq '*-';
+    $opcode +|= 0x0003 if $type eq '+*';
+    make ( ($opcode,) );
+  }
+
+# mc6809-specific methods
+
+  method mc6809_acc($/) {
+    my  $acc = ~$/;
+    make $acc eq 'a' ?? 0 !! 1;
+  }
+  method instruction:sym<mc6809_inh>($/) {
+    my $opcode = %instructions<mc6809><inh><hash>{~$/<mnemonic>};
+    if ($opcode > 0xff) {
+      make ( ($opcode +> 8, $opcode +& 0xff) );
+    } else {
+      make ( ($opcode,) );
+    }
+  }
+  method instruction:sym<mc6809_imm8>($/) {
+    my $opcode = %instructions<mc6809><imm8><hash>{~$/<mnemonic>};
+    my $imm = +$/<expression>.ast +& 0xff;
+    if ($opcode > 0xff) {
+      make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
+    } else {
+      make ( ($opcode, $imm) );
+    }
+  }
+  method instruction:sym<mc6809_imm16>($/) {
+    my $opcode = %instructions<mc6809><imm16><hash>{~$/<mnemonic>};
+    my $imm = +$/<expression>.ast +& 0xffff;
+    if ($opcode > 0xff) {
+      make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
+    } else {
+      make ( ($opcode, $imm +> 8, $imm +& 0xff) );
+    }
+  }
+  method instruction:sym<mc6809_ext>($/) {
+    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+    $opcode +|= 0x30; # extended addressing mode
+    my $imm = +$/<expression>.ast +& 0xffff;
+    if ($opcode > 0xff) {
+      make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
+    } else {
+      make ( ($opcode, $imm +> 8, $imm +& 0xff) );
+    }
+  }
+  method instruction:sym<mc6809_dir>($/) {
+    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+    $opcode +|= 0x10; # direct addressing mode
+    $opcode +&= 0x8f if $opcode +& 0xf0 == 0x40; # ugh -- so much for orthogonality
+    my $imm = +$/<expression>.ast +& 0xff;
+    if ($opcode > 0xff) {
+      make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
+    } else {
+      make ( ($opcode, $imm) );
+    }
+  }
 
 }
 
@@ -1380,7 +1608,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

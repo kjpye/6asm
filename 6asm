@@ -93,18 +93,18 @@ my @avr_instr_noz;      make_hash('avr', 'noz');
 
 # Variables required for PIC
 
-my @pic_instr_inh;      make_hash('pic', 'inh');
-my @pic_instr_bytefda;  make_hash('pic', 'bytefda');
-my @pic_instr_bytefa;   make_hash('pic', 'bytefa');
-my @pic_instr_byteff;   make_hash('pic', 'byteff');
-my @pic_instr_bit;      make_hash('pic', 'bit');
-my @pic_instr_branch;   make_hash('pic', 'branch');
-my @pic_instr_lbranch;  make_hash('pic', 'lbranch');
-my @pic_instr_call;     make_hash('pic', 'call');
-my @pic_instr_ret;      make_hash('pic', 'ret');
-my @pic_instr_lit;      make_hash('pic', 'lit');
-my @pic_instr_bsr;      make_hash('pic', 'bsr');
-my @pic_instr_tblrd;    make_hash('pic', 'tblrd');
+my @pic18_instr_inh;      make_hash('pic', 'inh');
+my @pic18_instr_bytefda;  make_hash('pic', 'bytefda');
+my @pic18_instr_bytefa;   make_hash('pic', 'bytefa');
+my @pic18_instr_byteff;   make_hash('pic', 'byteff');
+my @pic18_instr_bit;      make_hash('pic', 'bit');
+my @pic18_instr_branch;   make_hash('pic', 'branch');
+my @pic18_instr_lbranch;  make_hash('pic', 'lbranch');
+my @pic18_instr_call;     make_hash('pic', 'call');
+my @pic18_instr_ret;      make_hash('pic', 'ret');
+my @pic18_instr_lit;      make_hash('pic', 'lit');
+my @pic18_instr_bsr;      make_hash('pic', 'bsr');
+my @pic18_instr_tblrd;    make_hash('pic', 'tblrd');
 
 # Variables required for mc6809
 
@@ -196,33 +196,42 @@ grammar Assembler {
 
 # Rules for PIC
 
-  token pic_a                       { <expression>                                                                             } 
-  token pic_d                       { <expression>                                                                             } 
-  token pic_f                       { <expression>                                                                             } 
-  token pic_bit                     { <expression>                                                                             } 
-  rule instruction:sym<pic_inh>     { $<mnemonic>=@pic_instr_inh     <.ws>                                                     }
-  rule instruction:sym<pic_bytefda> { $<mnemonic>=@pic_instr_bytefda <.ws> <pic_f> ',' <pic_d> ',' <pic_a> <ws>                }
-  rule instruction:sym<pic_bytefa>  { $<mnemonic>=@pic_instr_bytefa  <.ws> <pic_f> ',' <pic_a> <ws>                            }
-  rule instruction:sym<pic_byteff>  { $<mnemonic>=@pic_instr_byteff  <.ws> <expression> ',' <expression> <ws>                  }
-  rule instruction:sym<pic_bitm>    { $<mnemonic>=@pic_instr_bit     <.ws> <pic_f> ',' <pic_bit> ',' <pic_a> <ws>              }
-  rule instruction:sym<pic_branch>  { $<mnemonic>=@pic_instr_branch  <.ws> <expression>                                        }
-  rule instruction:sym<pic_lbranch> { $<mnemonic>=@pic_instr_lbranch <.ws> <expression>                                        }
-  rule instruction:sym<pic_call>    { $<mnemonic>=@pic_instr_call    <.ws> <expression> [ ',' <expression> ] ?                 }
-  rule instruction:sym<pic_ret>     { $<mnemonic>=@pic_instr_ret     <.ws> <expression> ?                                      }
-  rule instruction:sym<pic_lit>     { $<mnemonic>=@pic_instr_lit     <.ws> <expression>                                        }
-  rule instruction:sym<pic_bsr>     { $<mnemonic>=@pic_instr_bsr     <.ws> <expression>                                        }
-  rule instruction:sym<pic_tblrd>   { $<mnemonic>=@pic_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')                                }
+  token pic18_a                       { <expression>                                                                             } 
+  token pic18_d                       { <expression>                                                                             } 
+  token pic18_f                       { <expression>                                                                             } 
+  token pic18_bit                     { <expression>                                                                             } 
+  rule instruction:sym<pic18_inh>     { $<mnemonic>=@pic18_instr_inh     <.ws>                                                     }
+  rule instruction:sym<pic18_bytefda> { $<mnemonic>=@pic18_instr_bytefda <.ws> <pic18_f> ',' <pic18_d> ',' <pic18_a> <ws>                }
+  rule instruction:sym<pic18_bytefa>  { $<mnemonic>=@pic18_instr_bytefa  <.ws> <pic18_f> ',' <pic18_a> <ws>                            }
+  rule instruction:sym<pic18_byteff>  { $<mnemonic>=@pic18_instr_byteff  <.ws> <expression> ',' <expression> <ws>                  }
+  rule instruction:sym<pic18_bitm>    { $<mnemonic>=@pic18_instr_bit     <.ws> <pic18_f> ',' <pic18_bit> ',' <pic18_a> <ws>              }
+  rule instruction:sym<pic18_branch>  { $<mnemonic>=@pic18_instr_branch  <.ws> <expression>                                        }
+  rule instruction:sym<pic18_lbranch> { $<mnemonic>=@pic18_instr_lbranch <.ws> <expression>                                        }
+  rule instruction:sym<pic18_call>    { $<mnemonic>=@pic18_instr_call    <.ws> <expression> [ ',' <expression> ] ?                 }
+  rule instruction:sym<pic18_ret>     { $<mnemonic>=@pic18_instr_ret     <.ws> <expression> ?                                      }
+  rule instruction:sym<pic18_lit>     { $<mnemonic>=@pic18_instr_lit     <.ws> <expression>                                        }
+  rule instruction:sym<pic18_bsr>     { $<mnemonic>=@pic18_instr_bsr     <.ws> <expression>                                        }
+  rule instruction:sym<pic18_tblrd>   { $<mnemonic>=@pic18_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')                                }
 
 # Rules for mc6809
 
   token mc6809_acc                   { 'a'|'b'                                                                                   }
   token mc6809_acc16                 { 'd'                                                                                       }
-  token mc6809_idx                   { 'x'|'y'|'u'|'s'                                                                           }
+  token mc6809_reg16                 { <[xyus]>                                                                                  }
+  proto token mc6809_idx             { <*>                                                                                       }
+  token m6809_idx:sym<nooff>         { ',' <mc6809_reg16>                                                                        }
+  token m6809_idx:sym<off>           { <expression> ',' <mc6809_reg16>                                                           }
+  token m6809_idx:sym<accoff>        { <[abd]> ',' <mc6809_reg16>                                                                }
+  token m6809_idx:sym<postinc>       { ',' <mc6809_reg16> '+' '+'?                                                               }
+  token m6809_idx:sym<predec>        { ',' '-' '-'+ <mc6809_reg16> '+' '+'?                                                      }
+  token m6809_idx:sym<pcrel>         { <expression> ',pcr'                                                                       }
   rule instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>                                                      }
   rule instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>                                     }
   rule instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>                                    }
   rule instruction:sym<mc6809_dir>   { $<mnemonic>=@mc6809_instr_die <.ws> '<' <expression>                                      }
-  #rule instruction:sym<mc6809_ind>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression>                                          }
+  rule instruction:sym<mc6809_ind1>  { $<mnemonic>=@mc6809_instr_die <.ws> <mc6809idx>                                           }
+  rule instruction:sym<mc6809_ind2>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <mc6809idx> ']'                                   }
+  rule instruction:sym<mc6809_ind3>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <expression> ']'                                  }
   rule instruction:sym<mc6809_ext>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression>                                          }
 
 }
@@ -756,7 +765,7 @@ class Assembler::Actions {
 
 # PIC-specific methods
 
-  method pic_f($/) {
+  method pic18_f($/) {
     my  $reg = +$/;
     if ! (0 <= $reg <= 255) {
       error_listing '*** Registers must be in range 0 to 255';
@@ -764,7 +773,7 @@ class Assembler::Actions {
     }
     make $reg;
   }
-  method pic_d($/) {
+  method pic18_d($/) {
     my  $reg = +$/;
     if ! (0 <= $reg <= 1) {
       error_listing '*** D must be 0 or 1';
@@ -772,7 +781,7 @@ class Assembler::Actions {
     }
     make $reg;
   }
-  method pic_a($/) {
+  method pic18_a($/) {
     my  $reg = +$/;
     if ! (0 <= $reg <= 1) {
       error_listing '*** A must be 0 or 1';
@@ -780,7 +789,7 @@ class Assembler::Actions {
     }
     make $reg;
   }
-  method pic_bit($/) {
+  method pic18_bit($/) {
     my  $reg = +$/;
     if ! (0 <= $reg <= 7) {
       error_listing '*** bit number must be between 0 and 7';
@@ -788,46 +797,46 @@ class Assembler::Actions {
     }
     make $reg;
   }
-  method instruction:sym<pic_bytefda>($/) {
+  method instruction:sym<pic18_bytefda>($/) {
     my $opcode = %instructions<pic><bytefda><hash>{~$/<mnemonic>};
-    my $f = $/<pic_f>.ast;
-    my $d = $/<pic_d>.ast;
-    my $a = $/<pic_a>.ast;
+    my $f = $/<pic18_f>.ast;
+    my $d = $/<pic18_d>.ast;
+    my $a = $/<pic18_a>.ast;
     $opcode +|= $f;
     $opcode +|= $a +< 8;
     $opcode +|= $d +< 9;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_bytefa>($/) {
+  method instruction:sym<pic18_bytefa>($/) {
     my $opcode = %instructions<pic><bytefa><hash>{~$/<mnemonic>};
-    my $f = $/<pic_f>.ast;
-    my $a = $/<pic_a>.ast;
+    my $f = $/<pic18_f>.ast;
+    my $a = $/<pic18_a>.ast;
     $opcode +|= $f;
     $opcode +|= $a +< 8;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_byteff>($/) {
+  method instruction:sym<pic18_byteff>($/) {
     my $opcode = %instructions<pic><byteff><hash>{~$/<mnemonic>};
     my $fs = $/<expression>[0].ast +& 0x0fff;
     my $fd = $/<expression>[1].ast +& 0x0fff;
     $opcode +|= $fs;
     make ( ($opcode, 0xf000 +| $fd) );
   }
-  method instruction:sym<pic_bitm>($/) {
+  method instruction:sym<pic18_bitm>($/) {
     my $opcode = %instructions<pic><bit><hash>{~$/<mnemonic>};
-    my $f = $/<pic_f>.ast;
-    my $b = $/<pic_bit>.ast;
-    my $a = $/<pic_a>.ast;
+    my $f = $/<pic18_f>.ast;
+    my $b = $/<pic18_bit>.ast;
+    my $a = $/<pic18_a>.ast;
     $opcode +|= $f;
     $opcode +|= $a +< 8;
     $opcode +|= $b +< 9;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_inh>($/) {
+  method instruction:sym<pic18_inh>($/) {
     my $opcode = %instructions<pic><inh><hash>{~$/<mnemonic>};
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_branch>($/) {
+  method instruction:sym<pic18_branch>($/) {
     my $opcode = %instructions<pic><branch><hash>{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
@@ -837,7 +846,7 @@ class Assembler::Actions {
     $opcode +|= $offset;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_lbranch>($/) {
+  method instruction:sym<pic18_lbranch>($/) {
     my $opcode = %instructions<pic><lbranch><hash>{~$/<mnemonic>};
     my $target = $/<expression>.ast;
     my $offset = $target - $pc - 1;
@@ -847,7 +856,7 @@ class Assembler::Actions {
     $opcode +|= $offset;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_call>($/) {
+  method instruction:sym<pic18_call>($/) {
     my $opcode = %instructions<pic><call><hash>{~$/<mnemonic>};
     my $target = $/<expression>[0].ast;
     $target +&= 0x0fffff;
@@ -855,24 +864,24 @@ class Assembler::Actions {
     $opcode +|= 0x0100 if defined $/<expression>[1] && $/<expression>[1].ast != 0;
     make ( ($opcode, 0xf000 + ($target +> 12)) );
   }
-  method instruction:sym<pic_ret>($/) {
+  method instruction:sym<pic18_ret>($/) {
     my $opcode = %instructions<pic><ret><hash>{~$/<mnemonic>};
     $opcode +|= 0x0001 if defined $/<expression> && $/<expression>.ast != 0;
     make ( ($opcode,) );
   }
-  method instruction:sym<pic_lit>($/) {
+  method instruction:sym<pic18_lit>($/) {
     my $opcode = %instructions<pic><lit><hash>{~$/<mnemonic>};
     my $imm = $/<expression>.ast;
     $imm +&= 0xff;
     make ( ($opcode +| $imm,) );
   }
-  method instruction:sym<pic_bsr>($/) {
+  method instruction:sym<pic18_bsr>($/) {
     my $opcode = %instructions<pic><bsr><hash>{~$/<mnemonic>};
     my $imm = $/<expression>.ast;
     $imm +&= 0x0f;
     make ( ($opcode +| $imm,) );
   }
-  method instruction:sym<pic_tblrd>($/) {
+  method instruction:sym<pic18_tblrd>($/) {
     my $opcode = %instructions<pic><tblrd><hash>{~$/<mnemonic>};
     my $type = ~$/[0];
     $opcode +|= 0x0001 if $type eq '*+';
@@ -881,11 +890,21 @@ class Assembler::Actions {
     make ( ($opcode,) );
   }
 
-# mc6809-specific methods
-
+# mc6809-specific methods 
   method mc6809_acc($/) {
     my  $acc = ~$/;
     make $acc eq 'a' ?? 0 !! 1;
+  }
+  method mc6809_reg16($/) {
+    my  $acc = ~$/;
+    my %mc6809_reg16 = ('x' => 0, 'y' => 1, 'u' => 2, 's' => 3);
+    make %mc6809_reg16{$acc};
+  }
+  method m6809_idx:sym<nooff>($/) {
+    make ( (0x84 +| ($/<mc6809_reg16>.ast +< 5), ));
+  }
+  method m6809_idx:sym<off>($/) {
+    make ( (0x84 +| ($/<mc6809_reg16>.ast +< 5), ));
   }
   method instruction:sym<mc6809_inh>($/) {
     my $opcode = %instructions<mc6809><inh><hash>{~$/<mnemonic>};

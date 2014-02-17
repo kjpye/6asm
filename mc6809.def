@@ -1,6 +1,7 @@
 ;	.nolist
 ; Definitions for the MC6809 processor
 
+	.param codewidth = 11
         .param pcwidth = 4
 
 	.pushmem ram
@@ -11,7 +12,7 @@
 	.defmem writeable = 1
 	.defmem readable = 1
 	.defmem init = 1
-	.defmem label = 'R'
+	.defmem label = ''
 	.defmem pcwidth = 4
 	.popmem
 	
@@ -23,8 +24,52 @@
 	.pushmem ram
 	.endm
 
+	.macro .setdp
+	.param dp = @0
+	.endm
+
+; setting default dp
+	.param dp = 0
+
 ; instruction definitions
  .isa mc6809
+ .instruction br  bcc  0x24
+ .instruction br  bcs  0x25
+ .instruction br  beq  0x27
+ .instruction br  bge  0x2c
+ .instruction br  bgt  0x2e
+ .instruction br  bhi  0x22
+ .instruction br  bhs  0x24
+ .instruction br  ble  0x2f
+ .instruction br  blo  0x25
+ .instruction br  bls  0x23
+ .instruction br  blt  0x2d
+ .instruction br  bmi  0x2b
+ .instruction br  bne  0x26
+ .instruction br  bpl  0x2a
+ .instruction br  bra  0x2d
+ .instruction br  brn  0x21
+ .instruction br  bsr  0x8d
+ .instruction br  bvc  0x2b
+ .instruction br  bvs  0x29
+ .instruction lbr lbcs 0x1025
+ .instruction lbr lbeq 0x1027
+ .instruction lbr lbge 0x102c
+ .instruction lbr lbgt 0x102e
+ .instruction lbr lbhi 0x1022
+ .instruction lbr lbhs 0x1024
+ .instruction lbr lble 0x102f
+ .instruction lbr lblo 0x1025
+ .instruction lbr lbls 0x1023
+ .instruction lbr lblt 0x102d
+ .instruction lbr lbmi 0x102b
+ .instruction lbr lbne 0x1026
+ .instruction lbr lbpl 0x102a
+ .instruction lbr lbra 0x16
+ .instruction lbr lbrn 0x1021
+ .instruction lbr lbsr 0x17
+ .instruction lbr lbvc 0x102b
+ .instruction lbr lbvs 0x1029
  .instruction die adca 0x89
  .instruction die adcb 0xc9
  .instruction die adda 0x8b
@@ -145,6 +190,8 @@
  .instruction imm16 ldx  0x8e
  .instruction imm16 ldy  0x108e
  .instruction imm16 subd 0x83
+ .instruction tfr   exg  0x1e
+ .instruction tfr   tfr  0x1f
  .assemble
 ; IO register definitions
 

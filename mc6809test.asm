@@ -26,3 +26,4 @@
  lbhi 3b
  exg x,y
  tfr a, dp
+ pshs a,d,cc,s,u

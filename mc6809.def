@@ -190,6 +190,10 @@
  .instruction imm16 ldx  0x8e
  .instruction imm16 ldy  0x108e
  .instruction imm16 subd 0x83
+ .instruction psh   pshs 0x34
+ .instruction psh   pshu 0x36
+ .instruction psh   puls 0x35
+ .instruction psh   pulu 0x37
  .instruction tfr   exg  0x1e
  .instruction tfr   tfr  0x1f
  .assemble

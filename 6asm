@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl6
+
 use v6;
 
 my %param = (codewidth => 9);
@@ -117,6 +118,10 @@ my @mc6809_instr_br;    make_hash('mc6809', 'br');
 my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
 my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
 my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
+
+# Variables required for ARM
+
+my @arm_instr_inh;      make_hash('arm', 'inh');
 
 grammar Assembler {
 
@@ -243,6 +248,12 @@ grammar Assembler {
   regex instruction:sym<mc6809_lbr>   { $<mnemonic>=@mc6809_instr_lbr <.ws> <expression>                                         }
   regex instruction:sym<mc6809_tfr>   { $<mnemonic>=@mc6809_instr_tfr <.ws> <mc6809_anyreg> <.ws>? ',' <.ws>? <mc6809_anyreg>    }
   regex instruction:sym<mc6809_psh>   { $<mnemonic>=@mc6809_instr_psh <.ws> <mc6809_anyreg>+ % ','                               }
+
+# Rules for ARM
+
+  token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
+  token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?                                        }
+  regex instruction:sym<arm_inh>      { $<mnenonic>=@arm_instr_inh <arm_cond> <.ws>                                              }
 
 }
 
@@ -1094,56 +1105,56 @@ class Assembler::Actions {
   method instruction:sym<mc6809_psh>($/) {
     my $opcode = %instructions<mc6809><psh><hash>{~$/<mnemonic>};
     my $postbyte = 0;
-    for @($/<mc5809_anyreg>) -> $reg {
-      if $reg == 0 {
+    for @($/<mc6809_anyreg>) -> $reg {
+      if $reg eq 'd' {
         if $postbyte +& 0x06 {
            error_listing "*** Register d conflicts with previous register specification";
         }
         $postbyte +|= 0x06;
       }
-      if $reg == 1 {
+      if $reg eq 'x' {
         if $postbyte +& 0x10 {
            error_listing "*** Register x conflicts with previous register specification";
         }
         $postbyte +|= 0x10;
       }
-      if $reg == 2 {
+      if $reg eq 'y' {
         if $postbyte +& 0x20 {
            error_listing "*** Register y conflicts with previous register specification";
         }
         $postbyte +|= 0x20;
       }
-      if $reg == 3 | 4 {
+      if $reg eq 'u' | 's' {
         if $postbyte +& 0x40 {
            error_listing "*** Register u/s conflicts with previous register specification";
         }
         $postbyte +|= 0x40;
       }
-      if $reg == 5 {
+      if $reg eq 'pc' {
         if $postbyte +& 0x80 {
            error_listing "*** Register pc conflicts with previous register specification";
         }
         $postbyte +|= 0x80;
       }
-      if $reg == 8 {
+      if $reg eq 'a' {
         if $postbyte +& 0x02 {
            error_listing "*** Register a conflicts with previous register specification";
         }
         $postbyte +|= 0x02;
       }
-      if $reg == 9 {
+      if $reg eq 'b' {
         if $postbyte +& 0x04 {
            error_listing "*** Register b conflicts with previous register specification";
         }
         $postbyte +|= 0x04;
       }
-      if $reg == 10 {
+      if $reg eq 'cc' {
         if $postbyte +& 0x01 {
            error_listing "*** Register cc conflicts with previous register specification";
         }
         $postbyte +|= 0x01;
       }
-      if $reg == 11 {
+      if $reg eq 'dp' {
         if $postbyte +& 0x08 {
            error_listing "*** Register dp conflicts with previous register specification";
         }
@@ -1151,6 +1162,41 @@ class Assembler::Actions {
       }
     }
     make ( ($opcode, $postbyte) );
+  }
+
+# ARM specific methods
+
+  method arm_reg($/) {
+    my  $reg = $/[0];
+    if $/[1].defined {
+      my $offset = $/[1];
+      $reg += $offset;
+    }
+    if ! (0 <= $reg <= 15) {
+      error_listing '*** Registers must be in range r0 to r15';
+      $reg = 0;
+    }
+    make $reg;
+  }
+  method arm_cond($/) {
+say "In arm_cond -- got " ~ ~$/;
+    my %arm_cond = ('eq' => 0, 'ne' => 1, 'cs' => 2, 'cc' => 3, 'mi' => 4, 'pl' => 5, 'vs' => 6, 'vc' => 7, 'hi' => 8, 'ls' => 9, 'ge' => 10, 'lt' => 11, 'gt' => 12, 'le' => 13, 'al' => 14);
+say "hash set up";
+    my $cond = 14; # default to "always"
+say "default value is $cond";
+    $cond = %arm_cond{~$/} if ~$/.defined;
+say "real value is $cond";
+    make $cond +<= 28; # shift to where the instruction will use it
+  }
+  method instruction:sym<arm_inh>($/) {
+say %instructions;
+say "got inherent instruction";
+    my $opcode = %instructions<arm><inh><hash>{~$/<mnemonic>};
+say "opcode is $opcode";
+    my $cond = $/<cond>.ast;
+say "cond is $cond";
+    $opcode +|= $cond;
+    make ( ($opcode,) );
   }
 
 }

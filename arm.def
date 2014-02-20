@@ -24,5 +24,15 @@
 ;	.list
  .isa arm
  .instruction inh     undef  0x06000010
+ .instruction mla     mla    0x00200090
+ .instruction mul     mul    0x00000090
+ .instruction mull    umull  0x00c00090
+ .instruction mull    smull  0x00800090
+ .instruction mull    umlal  0x00e00090
+ .instruction mull    smlal  0x00a00090
+ .instruction sds     swp    0x01000090
+ .instruction brx     bx     0x012fff10
+ .instruction hdt     ldr    0x00100000
+ .instruction hdt     str    0x00000000
  .list
  .assemble

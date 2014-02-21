@@ -129,6 +129,7 @@ my @arm_instr_sds;      make_hash('arm', 'sds');
 my @arm_instr_brx;      make_hash('arm', 'brx');
 my @arm_instr_hdt;      make_hash('arm', 'hdt');
 my @arm_instr_sdt;      make_hash('arm', 'sdt');
+my @arm_instr_bdt;      make_hash('arm', 'bdt');
 
 grammar Assembler {
 
@@ -261,13 +262,17 @@ grammar Assembler {
 # Rules for ARM
 
   token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
+  #token arm_reg                       { <[rR]> <expression>                                                                      }
+  regex arm_rrange                    { <arm_reg> [ '-' <arm_reg> ]?                                                             }
+  regex arm_rlist                     { '{' <arm_rrange>+ % <comma> '}'                                                          }
   token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?                                        }
   token arm_setcond                   { 's'?                                                                                     }
   token arm_byte                      { 'b'?                                                                                     }
   proto regex arm_shift               { <*>                                                                                      }
   regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                                     }
   regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                            }
-  regex arm_shift:sym<rrx>            { 'rrx'                                                                                    }
+  regex arm_shift:sym<rrx>            { 'rrx' <arm_reg>                                                                          }
+  regex arm_bdttype                   { < fd ed fa ea ia ib da db >                                                              }
   proto regex arm_hdtaddr             { <*>                                                                                      }
   regex arm_hdtaddr:sym<expr>         { <expression>                                                                             }
   regex arm_hdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >                                                     }
@@ -279,11 +284,11 @@ grammar Assembler {
   regex arm_sdtaddr:sym<expr>         { <expression>                                                                             }
   regex arm_sdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >                                                     }
   regex arm_sdtaddr:sym<preimm>       { '[' <arm_reg> <comma> '#' <expression> ']' ('!'?)                                        }
-  regex arm_sdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ( <comma> <expression> )? ']' ('!'?)         }
+  regex arm_sdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ( <comma> <arm_shift> )? ']' ('!'?)          }
   regex arm_sdtaddr:sym<postimm>      { '[' <arm_reg> ']' <comma> '#' <expression>                                               }
-  regex arm_sdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg> ( <comma> <expression> )?               }
+  regex arm_sdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg> ( <comma> <arm_shift> )?                }
   regex arm_sbh                       { < h sb sh >                                                                              }
-  regex arm_b                         { 'b'?                                                                                     }
+  #regex arm_b                         { 'b'?                                                                                    }
   regex arm_t                         { 't'?                                                                                     }
   regex instruction:sym<arm_inh>      { $<mnemonic>=@arm_instr_inh  <arm_cond>               <.ws>                               }
   regex instruction:sym<arm_mul>      { $<mnemonic>=@arm_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>   }
@@ -292,7 +297,8 @@ grammar Assembler {
   regex instruction:sym<arm_sds>      { $<mnemonic>=@arm_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']' }
   regex instruction:sym<arm_brx>      { $<mnemonic>=@arm_instr_brx  <arm_cond>               <.ws> <arm_reg>                     }
   regex instruction:sym<arm_hdt>      { $<mnemonic>=@arm_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>       }
-  regex instruction:sym<arm_sdt>      { $<mnemonic>=@arm_instr_sdt  <arm_cond> <arm_b> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>       }
+  regex instruction:sym<arm_sdt>      { $<mnemonic>=@arm_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>       }
+  regex instruction:sym<arm_bdt>      { $<mnemonic>=@arm_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')? }
 
 }
 
@@ -1218,6 +1224,27 @@ class Assembler::Actions {
     }
     make $reg;
   }
+  method arm_rrange($/) {
+say $/;
+    my $regs = 0;
+    my $start = +$/<arm_reg>[0].ast;
+    my $end   = ($/<arm_reg>[1].defined) ?? +$/<arm_reg>[1].ast !! $start;
+    for $start..$end -> $r {
+      $regs +|= 1 +< $r;
+    }
+say "rrange: $regs";
+    make ($regs);
+  }
+  method arm_rlist($/) {
+say $/;
+    my $regs = 0;
+    for @($/<arm_reg>) -> $r {
+say "rlist adding $r.ast";
+      $regs +|= $r.ast;
+    }
+say "rlist: $regs";
+    make ($regs);
+  }
   method arm_cond($/) {
     my %arm_cond = ('eq' => 0, 'ne' => 1, 'cs' => 2, 'cc' => 3, 'mi' => 4, 'pl' => 5, 'vs' => 6, 'vc' => 7, 'hi' => 8, 'ls' => 9, 'ge' => 10, 'lt' => 11, 'gt' => 12, 'le' => 13, 'al' => 14, '' => 14);
     my $cond = 14; # default to "always"
@@ -1346,6 +1373,71 @@ class Assembler::Actions {
     $opcode +|= $/<arm_cond>.ast;
     $opcode +|= $/<arm_hdtaddr>.ast;
     $opcode +|= $/<arm_sbh>.ast;
+    make ( ($opcode,) );
+  }
+  method arm_sdtaddr:sym<expr>($/) {
+    my $offset = $/<expression>.ast - $pc - 8;
+# TODO Check for offset more than 8 bits either direction
+    if ($offset < 0) {
+      $offset = -$offset;
+      make (0x01800000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+    } else {
+      make (0x01000000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+    }
+  }
+  method arm_sdtaddr:sym<reg>($/) {
+    make (0x01000000 +| $/<arm_reg>.ast +< 16;);
+  }
+  method arm_sdtaddr:sym<preimm>($/) {
+    my $offset = $/<expression>.ast;
+# TODO Check for offset more than 8 bits either direction
+    my $postbyte = 0x03000000;
+    if ($offset < 0) {
+      $offset = -$offset;
+    } else {
+      $postbyte +|= 0x00800000;
+    }
+    $postbyte +|= $/<arm_reg>.ast +< 16;
+    $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
+    make ($postbyte);
+  }
+  method arm_sdtaddr:sym<preind>($/) {
+    my $postbyte = 0x03000090;
+    if ($/<plusminus>.ast > 0) {
+      $postbyte +|= 0x00800000;
+    }
+    $postbyte +|= 1 +< 21 if $/[0] eq '!';
+    $postbyte +|= $/<arm_reg>[0].ast +< 16;
+    $postbyte +|= $/<arm_reg>[1].ast;
+    make ($postbyte);
+  }
+  method arm_sdtaddr:sym<postimm>($/) {
+    my $offset = $/<expression>.ast;
+# TODO Check for offset more than 8 bits either direction
+    my $postbyte = 0x00000000;
+    if ($offset < 0) {
+      $offset = -$offset;
+    } else {
+      $postbyte +|= 0x00800000;
+    }
+    $postbyte +|= $/<arm_reg>.ast +< 16;
+    $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
+    make ($postbyte);
+  }
+  method arm_sdtaddr:sym<postind>($/) {
+    my $postbyte = 0x00000000;
+    if ($/<plusminus>.ast > 0) {
+      $postbyte +|= 0x00800000;
+    }
+    $postbyte +|= $/<arm_reg>[0].ast +< 16;
+    $postbyte +|= $/<arm_reg>[1].ast;
+    make ($postbyte);
+  }
+  method instruction:sym<arm_sdt>($/) {
+    my $opcode = %instructions<arm><sdt><hash>{~$/<mnemonic>};
+    $opcode +|= $/<arm_cond>.ast;
+    $opcode +|= $/<arm_byte>.ast +< 22;
+    $opcode +|= $/<arm_sdtaddr>.ast;
     make ( ($opcode,) );
   }
 

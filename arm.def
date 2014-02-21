@@ -21,6 +21,9 @@
 	.pushmem ram
 	.endm
 	
+	.def pc = r15
+	.def sp = r14 ; perhaps
+
 ;	.list
  .isa arm
  .instruction inh     undef  0x06000010
@@ -34,5 +37,9 @@
  .instruction brx     bx     0x012fff10
  .instruction hdt     ldr    0x00100000
  .instruction hdt     str    0x00000000
+ .instruction sdt     ldr    0x04100000
+ .instruction sdt     str    0x04000000
+ .instruction bdt     ldm    0x08100000
+ .instruction bdt     stm    0x08000000
  .list
  .assemble

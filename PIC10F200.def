@@ -1,0 +1,49 @@
+;	.nolist
+; Definitions for the PIC 18f4520 processor
+
+        .param pcwidth = 2
+
+	.pushmem flash
+	.defmem bottom = 0
+	.defmem top = 0xff ; 256 words
+	.defmem width = 12
+	.defmem executable = 1
+	.defmem writeable = 0
+	.defmem readable = 0
+	.defmem init = 1
+	.defmem label = 'C'
+	.defmem pcwidth = 2
+
+	.pushmem ram
+	.defmem bottom = 0x0
+	.defmem top = 0x1f ; 16 bytes
+	.defmem width = 8
+	.defmem executable = 0
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 0
+	.defmem label = 'R'
+	.defmem pcwidth = 3
+	.popmem
+	
+	.macro .flash
+	.pushmem flash
+	.endm
+
+	.macro .cseg
+	.pushmem flash
+	.endm
+
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+; instruction definitions
+        .include pic10.def
+; IO register definitions
+
+;	.list

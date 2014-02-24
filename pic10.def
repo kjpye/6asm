@@ -1,0 +1,39 @@
+ ; .nolist
+ .isa pic10
+ .list
+ .instruction inh   clrw   0x040
+ .instruction inh   nop    0x000
+ .instruction inh   clrwdt 0x004
+ .instruction inh   option 0x002
+ .instruction inh   sleep  0x003
+ .instruction byte  addwf  0x1c0
+ .instruction byte  andwf  0x140
+ .instruction byte  comf   0x240
+ .instruction byte  decf   0x0c0
+ .instruction byte  decfsz 0x2c0
+ .instruction byte  incf   0x280
+ .instruction byte  decfsz 0x2c0
+ .instruction byte  incf   0x280
+ .instruction byte  incfsz 0x3c0
+ .instruction byte  iorwf  0x100
+ .instruction byte  movf   0x200
+ .instruction byte  rlf    0x240
+ .instruction byte  rrf    0x300
+ .instruction byte  subwf  0x080
+ .instruction byte  swapf  0x380
+ .instruction byte  xorwf  0x180
+ .instruction bytes clrf   0x060
+ .instruction bytes movwf  0x020
+ .instruction bit   bcf    0x400
+ .instruction bit   bsf    0x500
+ .instruction bit   btfsc  0x600
+ .instruction bit   btfss  0x700
+ .instruction lit   andlw  0xe00
+ .instruction lit   call   0x900
+ .instruction lit   iorlw  0xd00
+ .instruction lit   movlw  0xc00
+ .instruction lit   retlw  0x800
+ .instruction lit   xorlw  0xf00
+ .instruction goto  goto   0xa00
+ .instruction tris  tris   0x000
+ .assemble

@@ -1,0 +1,71 @@
+;	.nolist
+; Definitions for the PIC 18f4520 processor
+
+        .param pcwidth = 4
+
+	.pushmem flash
+	.defmem bottom = 0
+	.defmem top = 0x3fff ; 32k bytes addressed as 16k words
+	.defmem width = 16
+	.defmem executable = 1
+	.defmem writeable = 0
+	.defmem readable = 0
+	.defmem init = 1
+	.defmem label = 'C'
+	.defmem pcwidth = 4
+
+	.pushmem ram
+	.defmem bottom = 0x0
+	.defmem top = 0x5ff ; 1536 bytes
+	.defmem width = 8
+	.defmem executable = 0
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 0
+	.defmem label = 'R'
+	.defmem pcwidth = 3
+	.popmem
+	
+	.pushmem eeprom
+	.defmem bottom = 0
+	.defmem top = 0x1ff ; 256 bytes
+	.defmem width = 8
+	.defmem executable = 0
+	.defmem writeable = 0
+	.defmem readable = 0
+	.defmem init = 0
+	.defmem label = 'E'
+	.defmem pcwidth = 2
+	.popmem
+	
+	.macro .flash
+	.pushmem flash
+	.endm
+
+	.macro .cseg
+	.pushmem flash
+	.endm
+
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+	.macro .eeprom
+	.pushmem eeprom
+	.endm
+
+	.macro .eseg
+	.pushmem eeprom
+	.endm
+
+; instruction definitions
+        .include pic18.def
+; IO register definitions
+
+;;        .set    portb ;; page 93 in data sheet
+
+;	.list

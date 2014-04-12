@@ -2,8 +2,9 @@
 
 use v6;
 
-my %param = (codewidth => 9);
-%param<pcwidth> = 8;
+my %param = (codewidth => 9,
+             pcwidth   => 8,
+            );
 
 my %directive = ();
 
@@ -36,9 +37,7 @@ my %instructions;
 
 # This should be a macro!
 sub make_hash(Str $isa, Str $instr) {
-  # %instructions{$isa}{$instr} = hash => {}, array => "{$isa}_instr_{$instr}";
   %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
-  #%instructions{$isa}{$instr}<hash> = ();
 }
 
 # Variables required for AVR
@@ -170,16 +169,16 @@ grammar Assembler {
 
 # Rules for AVR
 
-  rule avr_bit                      { <expression>                                                                             }
-  token avr_reg                     { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
-  token avr_regpair                 { <[rR]> ( \d+ ) ':' <[rR]> ( \d+ )                                                        }
+  rule avr_bit                       { <expression>                                                                             }
+  token avr_reg                      { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
+  token avr_regpair                  { <[rR]> ( \d+ ) ':' <[rR]>? ( \d+ )                                                       }
   regex instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> ',' <avr_reg> <ws>                              }
   regex instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> ',' <avr_regpair> <ws>                      }
   regex instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> ',' <avr_reg> <ws>                              }
   regex instruction:sym<avr_rr3>     { $<mnemonic>=@avr_instr_rr3     <avr_reg> ',' <avr_reg> <ws>                              }
   regex instruction:sym<avr_rr4>     { $<mnemonic>=@avr_instr_rr4     <avr_reg> ',' <avr_reg> <.ws>                             }
   regex instruction:sym<avr_r2>      { $<mnemonic>=@avr_instr_r2      <avr_reg> <ws>                                            }
-  regex instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <avr_reg> <ws>                                                }
+  regex instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <avr_reg> <ws>                                            }
   regex instruction:sym<avr_inh>     { $<mnemonic>=@avr_instr_inh     <ws>                                                      }
   regex instruction:sym<avr_iw>      { $<mnemonic>=@avr_instr_iw      <ws> <avr_regpair> ',' <expression> <ws>                  }
   regex instruction:sym<avr_iw2>     { $<mnemonic>=@avr_instr_iw      <ws> <avr_reg> ',' <expression> <ws>                      }
@@ -260,11 +259,11 @@ grammar Assembler {
   token mc6809_reg16                  { < x y u s >                                                                              }
   token mc6809_anyreg                 { < a b cc dp x y u s d pc >                                                               }
   proto regex mc6809_idx              { <*>                                                                                      }
-  regex mc6809_idx:sym<off>            { <expression> ',' <mc6809_reg16>                                                          }
-  regex mc6809_idx:sym<accoff>         { < a b d > ',' <mc6809_reg16>                                                             }
-  regex mc6809_idx:sym<postinc>        { ',' <mc6809_reg16> ('+' ** 0..2)                                                         }
-  regex mc6809_idx:sym<predec>         { ',' ('-' ** 1..2) <mc6809_reg16>                                                         }
-  regex mc6809_idx:sym<pcrel>          { <expression> ',pcr'                                                                      }
+  regex mc6809_idx:sym<off>           { <expression> ',' <mc6809_reg16>                                                          }
+  regex mc6809_idx:sym<accoff>        { < a b d > ',' <mc6809_reg16>                                                             }
+  regex mc6809_idx:sym<postinc>       { ',' <mc6809_reg16> ('+' ** 0..2)                                                         }
+  regex mc6809_idx:sym<predec>        { ',' ('-' ** 1..2) <mc6809_reg16>                                                         }
+  regex mc6809_idx:sym<pcrel>         { <expression> ',pcr'                                                                      }
   regex instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>                                                     }
   regex instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>                                    }
   regex instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>                                   }
@@ -281,7 +280,7 @@ grammar Assembler {
 # Rules for ARM
 
   token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
-  #token arm_reg                       { <[rR]> <expression>                                                                      }
+  #token arm_reg                      { <[rR]> <expression>                                                                      }
   regex arm_rrange                    { <arm_reg> [ '-' <arm_reg> ]?                                                             }
   regex arm_rlist                     { '{' <arm_rrange>+ % <comma> '}'                                                          }
   token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?                                        }
@@ -328,6 +327,9 @@ sub mkexp {
 }
 
 class Assembler::Actions {
+
+# Generic actions
+
   method localref($/) {
     my $value;
     my $def = 1; # assume backwards ref
@@ -1672,7 +1674,7 @@ get_next_line {
 	# only in this case do we care about the value of the expression
 	my $expr = $line;
 	$expr ~~ s/^<ws> '.if' <ws>//;
-	my $m = Assembler.parse($expr,
+	my $m = Assembler.subparse($expr,
 				:actions(Assembler::Actions),
 				:rule(<expression>));
 	if ?+$m.ast<value> {
@@ -1857,6 +1859,9 @@ sub assign_symbol(Str $labelfield, $value, $pass) {
   }
 }
 
+# Here's where we define the assembler directives. They are ISA independent
+# Note that the code is a set of anonymous subroutines, stored in the %directive hash.
+
 my %constantsize = '.db' => 1,
                    '.dw' => 2,
 		   '.dl' => 4;
@@ -1865,84 +1870,96 @@ my %constantsize = '.db' => 1,
   format_listing($pc, '', $label, $opcode, $rest);
   assign_symbol($label, +$pc, $pass) if $label; ++$pc;
 };
+
 %directive<.word> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing($pc, '', $label, $opcode, $rest);
   assign_symbol($label, +$pc, $pass) if $label;
   $pc += 2;
 };
+
 %directive<.long> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing($pc, '', $label, $opcode, $rest);
   assign_symbol($label, +$pc, $pass) if $label;
   $pc += 4;
 };
+
 %directive<.list> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing(-1, '', $label, $opcode, $rest);
   $nolist--;
   $nolist = 0 if $nolist < 0;
 };
+
 %directive<.nolist> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing(-1, '', $label, $opcode, $rest);
   ++$nolist;
 };
+
 %directive<.device> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing(-1, '', $label, $opcode, $rest);
 };
+
 %directive<.listmac> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   format_listing(-1, '', $label, $opcode, $rest);
 };
+
 %directive<.set> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
   format_listing(-1, '', $label, $opcode, $rest);
   assign_symbol($symbol, +$m.ast, $pass);
 };
+
 %directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  return unless $pass == 1; # not much point continuing; the name has already been substituted!
   my $args = $rest;
   chomp $args;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws> \= <ws> //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<identifier>));
   my $value = ~$m[0];
   simple_listing ".def $symbol = $value";
   %define{$symbol} = $value;
 };
+
 %directive<.param> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $param = ~$m[0];
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws>? \= <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
   simple_listing ".param $param = $value";
   %param{$param} = $value;
 };
+
 %directive<.equ> = %directive<.set>;
+
 %directive<.db> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $size = %constantsize{$opcode};
   my $format = sprintf("\%\%0\%dx", $size*2);
   my $args = $rest;
   assign_symbol($label, $pc, $pass) if $label;
   loop {
-    my $m = Assembler.parse($args,
+    my $m = Assembler.subparse($args,
 			    :actions(Assembler::Actions),
 			    :rule(<expression>));
     if ?$m {
@@ -1964,23 +1981,29 @@ my %constantsize = '.db' => 1,
     }
   }
 };
+
 %directive<.dw> = %directive<.db>;
+
 %directive<.dl> = %directive<.db>;
+
 %directive<.end> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   say ".end" unless $nolist;
 };
+
 %directive<.exit> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   simple_listing ".exit";
 };
+
 %directive<.org> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   say ".org" unless $nolist;
-  my $m = Assembler.parse($rest,
+  my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<expression>));
   $pc = +$m.ast<value>;
 };
+
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  my $m = Assembler.parse($rest,
+  my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $arg = ~$m[0];
@@ -1992,18 +2015,20 @@ my %constantsize = '.db' => 1,
   @memspace.unshift(%memspace{$arg});
   $pc := @memspace[0]<pc>;
 };
+
 %directive<.popmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   shift @memspace;
   $pc := @memspace[0]<pc>;
 };
+
 %directive<.defmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   if ?$m {
@@ -2011,7 +2036,7 @@ my %constantsize = '.db' => 1,
     format_listing(-1, '', $label, $opcode, $rest);
     @memspace[0]{$symbol} = $value;
   } else {
-    $m = Assembler.parse($args,
+    $m = Assembler.subparse($args,
   		       :actions(Assembler::Actions),
   		       :rule(<stringexpression>));
     if ?$m {
@@ -2024,6 +2049,7 @@ my %constantsize = '.db' => 1,
     }
   }
 };
+
 %directive<.dump> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
   my @args = $rest.split(',');
@@ -2033,10 +2059,11 @@ my %constantsize = '.db' => 1,
     }
   }
 };
+
 %directive<.isa> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1;
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
                           :actions(Assembler::Actions),
                           :rule(<identifier>));
   if ?$m {
@@ -2045,21 +2072,23 @@ my %constantsize = '.db' => 1,
     say "Invalid format for .isa directive";
   }
 }
+
 # .instruction inh     clt    0x94d8
+
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1;
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $instr_type = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
                        :actions(Assembler::Actions),
 		       :rule(<identifier>));
   my $opc = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
@@ -2067,12 +2096,14 @@ my %constantsize = '.db' => 1,
 #say ".instruction: $isa $instr_type $opc $value";
   %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
+
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   #say %instructions;
   for %instructions{$isa}.keys {
     my $arrayname = %instructions{$isa}{$_}<array>;
-    eval "\@$arrayname = <%instructions{$isa}{$_}.keys>";
+    EVAL "\@$arrayname = <%instructions{$isa}{$_}.keys>";
   }
+
 }
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
@@ -2080,7 +2111,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $code = '';
   my $instruction_length = 0;
   if $opcode {
-    my $m = Assembler.parse("$opcode $rest ",
+    my $m = Assembler.subparse("$opcode $rest ",
 			    :actions(Assembler::Actions),
 			    :rule(<instruction>));
     if $m {
@@ -2170,27 +2201,15 @@ sub print_symbols () {
   say "";
   say "Definitions:";
   say "===========";
-  for (sort keys %define) -> $symbol {
+  for (%define.keys.sort) -> $symbol {
     if $symbol ~~ /^_/ {
       # ignore symbols starting with _
     } else {
-      my $value = %symbol{$symbol};
+      my $value = %define{$symbol};
       say sprintf "%s %s", $symbol, $value;
     }
   }
 }
-
-#######
-#
-# Here's where we put the machine specific stuff
-#
-#######
-
-#######
-#
-# End of machine specific stuff
-#
-#######
 
 # START HERE
 for @*ARGS -> $arg {

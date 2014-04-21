@@ -360,6 +360,7 @@ class Assembler::Actions {
       error_listing "*** Undefined symbol \"$sym\"";
       make mkexp(0, 0);
     }
+say "Found identifier $lcsym";
   }
   method term:sym<number>($/)     { make mkexp($/<number>.ast, 1); }
   method term:sym<expression>($/) { make $/<expression>.ast; }
@@ -1672,7 +1673,7 @@ get_next_line {
 	# only in this case do we care about the value of the expression
 	my $expr = $line;
 	$expr ~~ s/^<ws> '.if' <ws>//;
-	my $m = Assembler.parse($expr,
+	my $m = Assembler.subparse($expr,
 				:actions(Assembler::Actions),
 				:rule(<expression>));
 	if ?+$m.ast<value> {
@@ -1892,12 +1893,12 @@ my %constantsize = '.db' => 1,
 };
 %directive<.set> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
@@ -1907,13 +1908,13 @@ my %constantsize = '.db' => 1,
 %directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
   chomp $args;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws> \= <ws> //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<identifier>));
   my $value = ~$m[0];
@@ -1921,14 +1922,18 @@ my %constantsize = '.db' => 1,
   %define{$symbol} = $value;
 };
 %directive<.param> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+say $rest;
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
+# my $m = $args ~~ / <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> /;
+say $m.perl;
   my $param = ~$m[0];
+say $param;
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws>? \= <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
@@ -1942,7 +1947,7 @@ my %constantsize = '.db' => 1,
   my $args = $rest;
   assign_symbol($label, $pc, $pass) if $label;
   loop {
-    my $m = Assembler.parse($args,
+    my $m = Assembler.subparse($args,
 			    :actions(Assembler::Actions),
 			    :rule(<expression>));
     if ?$m {
@@ -1974,13 +1979,13 @@ my %constantsize = '.db' => 1,
 };
 %directive<.org> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   say ".org" unless $nolist;
-  my $m = Assembler.parse($rest,
+  my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<expression>));
   $pc = +$m.ast<value>;
 };
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  my $m = Assembler.parse($rest,
+  my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $arg = ~$m[0];
@@ -1998,12 +2003,12 @@ my %constantsize = '.db' => 1,
 };
 %directive<.defmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   if ?$m {
@@ -2011,7 +2016,7 @@ my %constantsize = '.db' => 1,
     format_listing(-1, '', $label, $opcode, $rest);
     @memspace[0]{$symbol} = $value;
   } else {
-    $m = Assembler.parse($args,
+    $m = Assembler.subparse($args,
   		       :actions(Assembler::Actions),
   		       :rule(<stringexpression>));
     if ?$m {
@@ -2036,7 +2041,7 @@ my %constantsize = '.db' => 1,
 %directive<.isa> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1;
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
                           :actions(Assembler::Actions),
                           :rule(<identifier>));
   if ?$m {
@@ -2049,17 +2054,17 @@ my %constantsize = '.db' => 1,
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1;
   my $args = $rest;
-  my $m = Assembler.parse($args,
+  my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<identifier>));
   my $instr_type = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
                        :actions(Assembler::Actions),
 		       :rule(<identifier>));
   my $opc = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
-  $m = Assembler.parse($args,
+  $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.ast<value>;
@@ -2080,7 +2085,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $code = '';
   my $instruction_length = 0;
   if $opcode {
-    my $m = Assembler.parse("$opcode $rest ",
+    my $m = Assembler.subparse("$opcode $rest ",
 			    :actions(Assembler::Actions),
 			    :rule(<instruction>));
     if $m {

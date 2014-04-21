@@ -2,6 +2,8 @@
  .ram
  .setdp 0x12
 
+ .def sp = s
+
  abx
 
  swi2

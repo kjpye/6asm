@@ -126,7 +126,7 @@ my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
 my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
 my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
 
-# Variables required for ARM
+# Variables required for standard ARM instruction set
 
 my @arm_instr_inh;      make_hash('arm', 'inh');
 my @arm_instr_mul;      make_hash('arm', 'mul');
@@ -137,6 +137,11 @@ my @arm_instr_brx;      make_hash('arm', 'brx');
 my @arm_instr_hdt;      make_hash('arm', 'hdt');
 my @arm_instr_sdt;      make_hash('arm', 'sdt');
 my @arm_instr_bdt;      make_hash('arm', 'bdt');
+
+# Variables required for ARM thumb instruction sets
+
+my @thumb_instr_inh;    make_hash('thumb', 'inh');
+my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
 
 grammar Assembler {
 
@@ -276,9 +281,11 @@ grammar Assembler {
   regex instruction:sym<mc6809_lbr>   { $<mnemonic>=@mc6809_instr_lbr <.ws> <expression>                                         }
   regex instruction:sym<mc6809_tfr>   { $<mnemonic>=@mc6809_instr_tfr <.ws> <mc6809_anyreg> <.ws>? ',' <.ws>? <mc6809_anyreg>    }
   regex instruction:sym<mc6809_psh>   { $<mnemonic>=@mc6809_instr_psh <.ws> <mc6809_anyreg>+ % ','                               }
+}
 
 # Rules for ARM
 
+grammar Arm is Assembler {
   token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
   #token arm_reg                      { <[rR]> <expression>                                                                      }
   regex arm_rrange                    { <arm_reg> [ '-' <arm_reg> ]?                                                             }
@@ -286,6 +293,9 @@ grammar Assembler {
   token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?                                        }
   token arm_setcond                   { 's'?                                                                                     }
   token arm_byte                      { 'b'?                                                                                     }
+}
+
+grammar Armfull is Arm {
   proto regex arm_shift               { <*>                                                                                      }
   regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                                     }
   regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                            }
@@ -318,6 +328,57 @@ grammar Assembler {
   regex instruction:sym<arm_sdt>      { $<mnemonic>=@arm_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>       }
   regex instruction:sym<arm_bdt>      { $<mnemonic>=@arm_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')? }
 
+}
+
+grammar Thumb is Arm {
+  token thumb_width                  { [ '.' (<[nNwW]>) ]?
+                                       { if $/[0].defined {
+                                           if $/[0] ~~ /<[nN]>/ {
+                                             make 16;
+                                           } else {
+                                             make 32;
+                                           }
+                                         } else {
+                                           make 0;
+                                         }
+                                       };
+                                     }
+  token thumb_imm                    { '#' <expression>
+                                       {
+                                         make 0 if $/<expression>.made == 0; # the simplest case
+                                         make $/<expression> if $/<expression +& 0xffffff00 == 0; # also easy (and makes the previous case superfluous!)
+                                         make 0x00001000 +| ($/<expression>.made +& 0x000000ff) if ($/<expression>.made +&0x000000ff) == ($/<expression>.made +> 16); ******* NOT COMPLETE
+                                         make 0x00004000 +| (($/<expression>.made +& 0x7f000000) +> 24) if $/<expression>.made +& 0x80ffffff == 0x80000000;
+                                         make 0x00004080 +| (($/<expression>.made +& 0x3f800000) +> 23) if $/<expression>.made +& 0xc07fffff == 0x40000000;
+                                         make 0x00005000 +| (($/<expression>.made +& 0x1fc00000) +> 22) if $/<expression>.made +& 0xe03fffff == 0x20000000;
+                                         make 0x00005080 +| (($/<expression>.made +& 0x0fe00000) +> 21) if $/<expression>.made +& 0xf01fffff == 0x10000000;
+                                         make 0x00006000 +| (($/<expression>.made +& 0x07f00000) +> 20) if $/<expression>.made +& 0xf80fffff == 0x08000000;
+                                         make 0x00006080 +| (($/<expression>.made +& 0x03f80000) +> 19) if $/<expression>.made +& 0xfc07ffff == 0x04000000;
+                                         make 0x00007000 +| (($/<expression>.made +& 0x01fc0000) +> 18) if $/<expression>.made +& 0xfe03ffff == 0x02000000;
+                                         make 0x00007080 +| (($/<expression>.made +& 0x00fe0000) +> 17) if $/<expression>.made +& 0xff01ffff == 0x01000000;
+                                         make 0x04000000 +| (($/<expression>.made +& 0x007f0000) +> 16) if $/<expression>.made +& 0xff80ffff == 0x00800000;
+                                         make 0x04000080 +| (($/<expression>.made +& 0x003f8000) +> 15) if $/<expression>.made +& 0xffc07fff == 0x00400000;
+                                         make 0x04001000 +| (($/<expression>.made +& 0x001fc000) +> 14) if $/<expression>.made +& 0xffe03fff == 0x00200000;
+                                         make 0x04001080 +| (($/<expression>.made +& 0x000fe000) +> 13) if $/<expression>.made +& 0xfff01fff == 0x00100000;
+                                         make 0x04002000 +| (($/<expression>.made +& 0x0007f000) +> 12) if $/<expression>.made +& 0xfff80fff == 0x00080000;
+                                         make 0x04002080 +| (($/<expression>.made +& 0x0003f800) +> 11) if $/<expression>.made +& 0xfffc07ff == 0x00040000;
+                                         make 0x04003000 +| (($/<expression>.made +& 0x0001fc00) +> 10) if $/<expression>.made +& 0xfffe03ff == 0x00020000;
+                                         make 0x04003080 +| (($/<expression>.made +& 0x0000fe00) +>  9) if $/<expression>.made +& 0xffff01ff == 0x00010000;
+                                         make 0x04004000 +| (($/<expression>.made +& 0x00007f00) +>  8) if $/<expression>.made +& 0xffff80ff == 0x00008000;
+                                         make 0x04004080 +| (($/<expression>.made +& 0x00003f80) +>  7) if $/<expression>.made +& 0xffffc07f == 0x00004000;
+                                         make 0x04005000 +| (($/<expression>.made +& 0x00001fc0) +>  6) if $/<expression>.made +& 0xffffe03f == 0x00002000;
+                                         make 0x04005080 +| (($/<expression>.made +& 0x00000fe0) +>  5) if $/<expression>.made +& 0xfffff01f == 0x00001000;
+                                         make 0x04006000 +| (($/<expression>.made +& 0x000007f0) +>  4) if $/<expression>.made +& 0xfffff80f == 0x00000800;
+                                         make 0x04006080 +| (($/<expression>.made +& 0x000003f8) +>  3) if $/<expression>.made +& 0xfffffc07 == 0x00000400;
+                                         make 0x04007000 +| (($/<expression>.made +& 0x000001fc) +>  2) if $/<expression>.made +& 0xfffffe03 == 0x00000200;
+                                         make 0x04007080 +| (($/<expression>.made +& 0x000000fe) +>  1) if $/<expression>.made +& 0xffffff01 == 0x00000100;
+                                       }
+                                     }
+  regex instruction:sym<thumb_arimm> { $<mnemonic>=@thumb_instr_arimm <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> <thumb_imm>
+                                       my $opcode = %instructions<thumb><arimm><hash>{~$/<mnemonic>};
+                                       $opcode +|= $/<arm_cond>.ast;
+                                       make ( ($opcode,) );
+                                     }
 }
 
 sub mkexp {

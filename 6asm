@@ -2286,10 +2286,21 @@ my %constantsize = '.db' => 1,
   %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
 
+# .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   for %instructions{$isa}.keys -> $key {
+#    my $name = %instructions{$isa}{$key}<array>;
     @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
   }
+  $instructionset = %instructionset{$isa};
+}
+
+# .arch -- assemble instructions for this architecture -- can change on the fly
+%directive<.arch> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $m = Assembler.subparse($rest,
+			  :actions(Assembler::Actions),
+			  :rule(<id>));
+  my $isa = ~$m[0];
   $instructionset = %instructionset{$isa};
 }
 

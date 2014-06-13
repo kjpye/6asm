@@ -2283,17 +2283,12 @@ my %constantsize = '.db' => 1,
 		       :rule(<expression>));
   my $value = +$m.made<value>;
   format_listing(-1, '', $label, $opcode, $rest);
-#say ".instruction: $isa $instr_type $opc $value";
   %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
 
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  #say %instructions;
   for %instructions{$isa}.keys -> $key {
-    my $arrayname = %instructions{$isa}{$key}<array>;
-    my $vals = %instructions{$isa}{$key}<hash>.keys.join(' ');
-    #say "\@$arrayname = <$vals>";
-    EVAL "\@$arrayname = <$vals>";
+    @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
   }
   $instructionset = %instructionset{$isa};
 }

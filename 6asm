@@ -128,20 +128,21 @@ my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
 
 # Variables required for standard ARM instruction set
 
-my @arm_instr_inh;      make_hash('arm', 'inh');
-my @arm_instr_mul;      make_hash('arm', 'mul');
-my @arm_instr_mla;      make_hash('arm', 'mla');
-my @arm_instr_mull;     make_hash('arm', 'mull');
-my @arm_instr_sds;      make_hash('arm', 'sds');
-my @arm_instr_brx;      make_hash('arm', 'brx');
-my @arm_instr_hdt;      make_hash('arm', 'hdt');
-my @arm_instr_sdt;      make_hash('arm', 'sdt');
-my @arm_instr_bdt;      make_hash('arm', 'bdt');
+my @armfull_instr_inh;      make_hash('armfull', 'inh');
+my @armfull_instr_mul;      make_hash('armfull', 'mul');
+my @armfull_instr_mla;      make_hash('armfull', 'mla');
+my @armfull_instr_mull;     make_hash('armfull', 'mull');
+my @armfull_instr_sds;      make_hash('armfull', 'sds');
+my @armfull_instr_brx;      make_hash('armfull', 'brx');
+my @armfull_instr_hdt;      make_hash('armfull', 'hdt');
+my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
+my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
 
 # Variables required for ARM thumb instruction sets
 
 my @thumb_instr_inh;    make_hash('thumb', 'inh');
 my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
+my @thumb_instr_arreg;  make_hash('thumb', 'arreg');
 
 sub mkexp {
   my ($value, $def) = @_;
@@ -1559,17 +1560,17 @@ grammar Armfull is Arm {
                                         }
                                       }
   regex arm_t                         { 't'?                                                                                     }
-  regex instruction:sym<arm_inh>      { $<mnemonic>=@arm_instr_inh  <arm_cond>               <.ws>
+  regex instruction:sym<arm_inh>      { $<mnemonic>=@armfull_instr_inh  <arm_cond>               <.ws>
                                         {
-                                          my $opcode = %instructions<arm><inh><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><inh><hash>{~$/<mnemonic>};
                                           my $cond = $/<arm_cond>.made;
                                           $opcode +|= $cond;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mul>      { $<mnemonic>=@arm_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>
+  regex instruction:sym<arm_mul>      { $<mnemonic>=@armfull_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>
                                         {
-                                          my $opcode = %instructions<arm><mul><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><mul><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_setcond>.made +< 20;
                                           $opcode +|= $/<arm_reg>[0].made +< 16;
@@ -1578,9 +1579,9 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mla>      { $<mnemonic>=@arm_instr_mla  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+  regex instruction:sym<arm_mla>      { $<mnemonic>=@armfull_instr_mla  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
                                         {
-                                          my $opcode = %instructions<arm><mla><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><mla><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_setcond>.made +< 20;
                                           $opcode +|= $/<arm_reg>[0].made +< 16;
@@ -1590,9 +1591,9 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mull>     { $<mnemonic>=@arm_instr_mull <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+  regex instruction:sym<arm_mull>     { $<mnemonic>=@armfull_instr_mull <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
                                         {
-                                          my $opcode = %instructions<arm><mull><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><mull><hash>{~$/<mnemonic>};
                                       # TODO: check for valid register combinations
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_setcond>.made +< 20;;
@@ -1603,9 +1604,9 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_sds>      { $<mnemonic>=@arm_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']'
+  regex instruction:sym<arm_sds>      { $<mnemonic>=@armfull_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']'
                                         {
-                                          my $opcode = %instructions<arm><sds><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><sds><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_byte>.made +< 22;
                                           $opcode +|= $/<arm_reg>[0].made +< 12;
@@ -1614,33 +1615,33 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_brx>      { $<mnemonic>=@arm_instr_brx  <arm_cond>               <.ws> <arm_reg>
+  regex instruction:sym<arm_brx>      { $<mnemonic>=@armfull_instr_brx  <arm_cond>               <.ws> <arm_reg>
                                         {
-                                          my $opcode = %instructions<arm><brx><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><brx><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_reg>.made;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_hdt>      { $<mnemonic>=@arm_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>
+  regex instruction:sym<arm_hdt>      { $<mnemonic>=@armfull_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>
                                         {
-                                          my $opcode = %instructions<arm><hdt><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><hdt><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_hdtaddr>.made;
                                           $opcode +|= $/<arm_sbh>.made;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_sdt>      { $<mnemonic>=@arm_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>
+  regex instruction:sym<arm_sdt>      { $<mnemonic>=@armfull_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>
                                         {
-                                          my $opcode = %instructions<arm><sdt><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<armfull><sdt><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
                                           $opcode +|= $/<arm_byte>.made +< 22;
                                           $opcode +|= $/<arm_sdtaddr>.made;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_bdt>      { $<mnemonic>=@arm_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')?
+  regex instruction:sym<arm_bdt>      { $<mnemonic>=@armfull_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')?
                                         {
                                         }
                                       }
@@ -1648,6 +1649,7 @@ grammar Armfull is Arm {
 }
 
 %instructionset<armfull> = Armfull.new();
+%instructionset<arm> = Armfull.new();
 
 grammar Thumb is Arm {
   token thumb_width                  { [ '.' (<[nNwW]>) ]?
@@ -1705,9 +1707,26 @@ grammar Thumb is Arm {
                                      }
   regex instruction:sym<thumb_arimm> { $<mnemonic>=@thumb_instr_arimm <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> <thumb_imm>
                                        {
+# Only legal for ARMv7-M processors
                                          my $opcode = %instructions<thumb><arimm><hash>{~$/<mnemonic>};
+                                         my $src = $/<src>.made;
+                                         my $dest = $/<dest>.made // $src;
+                                         error_listing "Illegal register usage" if $src = 13 | 15 || $dest = 13 | 15;
+                                         $opcode +|= $dest +< 8;
+                                         $opcode +|= $src +< 16;
+                                         $opcode +|= $/<setcond>.made;
                                          $opcode +|= $/<thumb_imm>.made;
-                                         make ( ($opcode,) );
+                                         my $ophigh = $opcode +>16 +& 0x0000ffff;
+                                         my $oplow  = $opcode      +& 0x0000ffff;
+                                         make ( ($ophigh, $oplow) );
+                                       }
+                                     }
+  regex arm_shift                    { # nothing { make 0}
+                                       | <comma> [ ( 'lsl' | 'lsr' | 'asr' | 'ror' ) ['#' <expression>]? ] { make $/<expression>.made +& 0x1f; } # TODO encode shift type
+                                       | <comma> 'rrx' { make 0x60; }
+                                     }
+  regex instruction:sym<thumb_arreg> { $<mnemonic>=@thumb_instr_arreg <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
+                                       {
                                        }
                                      }
 }
@@ -2289,7 +2308,6 @@ my %constantsize = '.db' => 1,
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   for %instructions{$isa}.keys -> $key {
-#    my $name = %instructions{$isa}{$key}<array>;
     @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
   }
   $instructionset = %instructionset{$isa};
@@ -2301,6 +2319,7 @@ my %constantsize = '.db' => 1,
 			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $isa = ~$m[0];
+say "Changing to $isa instruction set";
   $instructionset = %instructionset{$isa};
 }
 

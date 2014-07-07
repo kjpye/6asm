@@ -25,7 +25,7 @@
 	.def sp = r14 ; perhaps
 
 ;	.list
- .isa arm
+ .isa armfull
  .instruction inh     undef  0x06000010
  .instruction mla     mla    0x00200090
  .instruction mul     mul    0x00000090
@@ -41,5 +41,15 @@
  .instruction sdt     str    0x04000000
  .instruction bdt     ldm    0x08100000
  .instruction bdt     stm    0x08000000
- .list
  .assemble
+
+ .isa thumb
+ .instruction arimm adc 0xf1400000
+ .instruction arreg adc.n 0x4140
+ .instruction arreg adc.w 0xfb400000
+ .isa armfull
+ .assemble
+
+ .arch armfull
+
+ .list

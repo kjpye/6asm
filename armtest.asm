@@ -39,3 +39,6 @@ place
  stmfd sp!,{r0-r3,r14}
  bl place
  ldmed sp!,{r0-r3,r15}
+
+ .arch thumb
+ adc r1,r3,#0x234

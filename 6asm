@@ -126,199 +126,23 @@ my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
 my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
 my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
 
-# Variables required for ARM
+# Variables required for standard ARM instruction set
 
-my @arm_instr_inh;      make_hash('arm', 'inh');
-my @arm_instr_mul;      make_hash('arm', 'mul');
-my @arm_instr_mla;      make_hash('arm', 'mla');
-my @arm_instr_mull;     make_hash('arm', 'mull');
-my @arm_instr_sds;      make_hash('arm', 'sds');
-my @arm_instr_brx;      make_hash('arm', 'brx');
-my @arm_instr_hdt;      make_hash('arm', 'hdt');
-my @arm_instr_sdt;      make_hash('arm', 'sdt');
-my @arm_instr_bdt;      make_hash('arm', 'bdt');
+my @armfull_instr_inh;      make_hash('armfull', 'inh');
+my @armfull_instr_mul;      make_hash('armfull', 'mul');
+my @armfull_instr_mla;      make_hash('armfull', 'mla');
+my @armfull_instr_mull;     make_hash('armfull', 'mull');
+my @armfull_instr_sds;      make_hash('armfull', 'sds');
+my @armfull_instr_brx;      make_hash('armfull', 'brx');
+my @armfull_instr_hdt;      make_hash('armfull', 'hdt');
+my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
+my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
 
-grammar Assembler {
+# Variables required for ARM thumb instruction sets
 
-# basic rules for expressions
-
-    token identifier              { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb>   }
-    token localref                { (\d\d?) ( <[fb]> )                                         }
-    token plusminus               { < + - >?                                                   }
-    proto token number            { <*>                                                        }
-    token number:sym<decimal>     { <plusminus> ( <[0..9]>+ )                                  }
-    token number:sym<binary>      { '0' <[bB]> <[01]>+                                         }
-    token number:sym<octal>       { '0' <[oO]> <[0..7]>+                                       }
-    token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+                             }
-    token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+)                            }
-    proto rule term               { <*>                                                        }
-    rule term:sym<localref>       { <localref>                                                 }
-    rule term:sym<number>         { <number>                                                   }
-    rule term:sym<funcall>        { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')'     }
-    rule term:sym<identifier>     { <identifier>                                               }
-    rule term:sym<pexpr>          {'(' <expression> ')'                                        }
-    token addoper                 { '+' | '-'                                                  }
-    token muloper                 { '*' | '/' | '%' | '<<' | '>>'                              }
-    rule mulexpr                  { <term> [ <muloper> <term> ]*                               }
-    rule expression               { [ <mulexpr> [ <addoper> <mulexpr> ]* ]                     }
-    proto token string            { <*>                                                        }
-    token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \'                         } # FIXME
-    rule stringexpression         { <string>                                                   }
-    proto regex instruction       { <*>                                                        }
-    token comma                   { <.ws>? ',' <.ws>?                                          }
-
-# Rules for AVR
-
-  rule avr_bit                       { <expression>                                                                             }
-  token avr_reg                      { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
-  token avr_regpair                  { <[rR]> ( \d+ ) ':' <[rR]>? ( \d+ )                                                       }
-  regex instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> ',' <avr_reg> <ws>                              }
-  regex instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> ',' <avr_regpair> <ws>                      }
-  regex instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> ',' <avr_reg> <ws>                              }
-  regex instruction:sym<avr_rr3>     { $<mnemonic>=@avr_instr_rr3     <avr_reg> ',' <avr_reg> <ws>                              }
-  regex instruction:sym<avr_rr4>     { $<mnemonic>=@avr_instr_rr4     <avr_reg> ',' <avr_reg> <.ws>                             }
-  regex instruction:sym<avr_r2>      { $<mnemonic>=@avr_instr_r2      <avr_reg> <ws>                                            }
-  regex instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <avr_reg> <ws>                                            }
-  regex instruction:sym<avr_inh>     { $<mnemonic>=@avr_instr_inh     <ws>                                                      }
-  regex instruction:sym<avr_iw>      { $<mnemonic>=@avr_instr_iw      <ws> <avr_regpair> ',' <expression> <ws>                  }
-  regex instruction:sym<avr_iw2>     { $<mnemonic>=@avr_instr_iw      <ws> <avr_reg> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_ir>      { $<mnemonic>=@avr_instr_ir      <ws> <avr_reg> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_irc>     { $<mnemonic>=@avr_instr_irc     <ws> <avr_reg> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_sreg>    { $<mnemonic>=@avr_instr_sreg    <ws> <avr_bit> <ws>                                       }
-  regex instruction:sym<avr_tbit>    { $<mnemonic>=@avr_instr_tbit    <ws> <avr_reg> ',' <avr_bit> <ws>                         }
-  regex instruction:sym<avr_brb>     { $<mnemonic>=@avr_instr_brb     <ws> <avr_bit> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_branch>  { $<mnemonic>=@avr_instr_branch  <ws> <expression> <ws>                                    }
-  regex instruction:sym<avr_lbranch> { $<mnemonic>=@avr_instr_lbranch <ws> <expression> <ws>                                    }
-  regex instruction:sym<avr_long>    { $<mnemonic>=@avr_instr_long    <ws> <expression> <ws>                                    }
-  regex instruction:sym<avr_lds>     { $<mnemonic>=@avr_instr_lds     <ws> <avr_reg> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_sts>     { $<mnemonic>=@avr_instr_sts     <ws> <expression> ',' <avr_reg> <ws>                      }
-  regex instruction:sym<avr_bio>     { $<mnemonic>=@avr_instr_bio     <ws> <expression> ',' <avr_bit> <ws>                      }
-  regex instruction:sym<avr_i4>      { $<mnemonic>=@avr_instr_i4      <ws> <expression> <ws>                                    }
-  regex instruction:sym<avr_rx>      { $<mnemonic>=@avr_instr_rx      <ws> <avr_reg> ',' <[xX]> <!before '+'> <ws>              }
-  regex instruction:sym<avr_xr>      { $<mnemonic>=@avr_instr_xr      <ws> <[xX]> ',' <avr_reg> <ws>                            }
-  regex instruction:sym<avr_rxplus>  { $<mnemonic>=@avr_instr_rxplus  <ws> <avr_reg> ',' <[xX]>'+' <ws>                         }
-  regex instruction:sym<avr_xrplus>  { $<mnemonic>=@avr_instr_xrplus  <ws> <[xX]>'+' ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_rxminus> { $<mnemonic>=@avr_instr_rxminus <ws> <avr_reg> ',' '-'<[xX]> <ws>                         }
-  regex instruction:sym<avr_xrminus> { $<mnemonic>=@avr_instr_xrminus <ws> '-'<[xX]> ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_ry>      { $<mnemonic>=@avr_instr_ry      <ws> <avr_reg> ',' <[yY]> <!before '+'> <ws>              }
-  regex instruction:sym<avr_yr>      { $<mnemonic>=@avr_instr_yr      <ws> <[yY]> ',' <avr_reg> <ws>                            }
-  regex instruction:sym<avr_ryplus>  { $<mnemonic>=@avr_instr_ryplus  <ws> <avr_reg> ',' <[yY]>'+' <!before <expression> > <ws> }
-  regex instruction:sym<avr_yrplus>  { $<mnemonic>=@avr_instr_yrplus  <ws> <[yY]>'+' ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_ryminus> { $<mnemonic>=@avr_instr_ryminus <ws> <avr_reg> ',' '-'<[yY]> <ws>                         }
-  regex instruction:sym<avr_yrminus> { $<mnemonic>=@avr_instr_yrminus <ws> '-'<[yY]> ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_ryq>     { $<mnemonic>=@avr_instr_ryq     <ws> <avr_reg> ',' <[yY]> '+' <expression> <ws>           }
-  regex instruction:sym<avr_yrq>     { $<mnemonic>=@avr_instr_yrq     <ws> <[yY]> '+' <expression> ',' <avr_reg> <ws>           }
-  regex instruction:sym<avr_rz>      { $<mnemonic>=@avr_instr_rz      <ws> <avr_reg> ',' <[zZ]> <!before '+' > <ws>             }
-  regex instruction:sym<avr_stzr>    { $<mnemonic>=@avr_instr_stzr    <ws> <[zZ]> ',' <avr_reg> <ws>                            }
-  regex instruction:sym<avr_rzplus>  { $<mnemonic>=@avr_instr_rzplus  <ws> <avr_reg> ',' <[zZ]>'+' <ws>                         }
-  regex instruction:sym<avr_zrplus>  { $<mnemonic>=@avr_instr_zrplus  <ws> <[zZ]>'+' ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_rzminus> { $<mnemonic>=@avr_instr_rzminus <ws> <avr_reg> ',' '-'<[zZ]> <ws>                         }
-  regex instruction:sym<avr_zrminus> { $<mnemonic>=@avr_instr_zrminus <ws> '-'<[zZ]> ',' <avr_reg> <ws>                         }
-  regex instruction:sym<avr_rzq>     { $<mnemonic>=@avr_instr_rzq     <ws> <avr_reg> ',' <[zZ]> '+' <expression> <ws>           }
-  regex instruction:sym<avr_zrq>     { $<mnemonic>=@avr_instr_zrq     <ws> <[zZ]> '+' <expression> ',' <avr_reg> <ws>           }
-  regex instruction:sym<avr_zr>      { $<mnemonic>=@avr_instr_zr      <ws> <[zZ]> ',' <avr_reg> <ws>                            }
-  regex instruction:sym<avr_zplus>   { $<mnemonic>=@avr_instr_zplus   <ws> <avr_reg> ',' <[zZ]>'+' <ws>                         }
-  regex instruction:sym<avr_noz>     { $<mnemonic>=@avr_instr_noz     <ws>                                                      }
-  regex instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> ',' <expression> <ws>                      }
-  regex instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> ',' <avr_reg> <ws>                      }
-
-# Rules for PIC
-
-  token pic10_bit                     { <expression>                                                                             }
-  token pic10_d                       { <expression>                                                                             }
-  token pic10_f                       { <expression>                                                                             }
-  regex instruction:sym<pic10_inh>    { $<mnemonic>=@pic10_instr_inh     <.ws>                                                   }
-  regex instruction:sym<pic10_byte>   { $<mnemonic>=@pic10_instr_byte    <.ws> <pic10_f> <comma> <pic10_d>                       }
-  regex instruction:sym<pic10_bytes>  { $<mnemonic>=@pic10_instr_bytes   <.ws> <pic10_f>                                         }
-  regex instruction:sym<pic10_bit>    { $<mnemonic>=@pic10_instr_bit     <.ws> <pic10_f> <comma> <pic10_bit>                     }
-  regex instruction:sym<pic10_lit>    { $<mnemonic>=@pic10_instr_lit     <.ws> <expression>                                      }
-  regex instruction:sym<pic10_goto>   { $<mnemonic>=@pic10_instr_goto    <.ws> <expression>                                      }
-  regex instruction:sym<pic10_tris>   { $<mnemonic>=@pic10_instr_tris    <.ws> <pic10_f>                                         }
-
-  token pic18_a                       { <expression>                                                                             } 
-  token pic18_d                       { <expression>                                                                             } 
-  token pic18_f                       { <expression>                                                                             } 
-  token pic18_bit                     { <expression>                                                                             } 
-  regex instruction:sym<pic18_inh>     { $<mnemonic>=@pic18_instr_inh     <.ws>                                                     }
-  regex instruction:sym<pic18_bytefda> { $<mnemonic>=@pic18_instr_bytefda <.ws> <pic18_f> ',' <pic18_d> ',' <pic18_a> <ws>                }
-  regex instruction:sym<pic18_bytefa>  { $<mnemonic>=@pic18_instr_bytefa  <.ws> <pic18_f> ',' <pic18_a> <ws>                            }
-  regex instruction:sym<pic18_byteff>  { $<mnemonic>=@pic18_instr_byteff  <.ws> <expression> ',' <expression> <ws>                  }
-  regex instruction:sym<pic18_bitm>    { $<mnemonic>=@pic18_instr_bit     <.ws> <pic18_f> ',' <pic18_bit> ',' <pic18_a> <ws>              }
-  regex instruction:sym<pic18_branch>  { $<mnemonic>=@pic18_instr_branch  <.ws> <expression>                                        }
-  regex instruction:sym<pic18_lbranch> { $<mnemonic>=@pic18_instr_lbranch <.ws> <expression>                                        }
-  regex instruction:sym<pic18_call>    { $<mnemonic>=@pic18_instr_call    <.ws> <expression> [ ',' <expression> ] ?                 }
-  regex instruction:sym<pic18_ret>     { $<mnemonic>=@pic18_instr_ret     <.ws> <expression> ?                                      }
-  regex instruction:sym<pic18_lit>     { $<mnemonic>=@pic18_instr_lit     <.ws> <expression>                                        }
-  regex instruction:sym<pic18_bsr>     { $<mnemonic>=@pic18_instr_bsr     <.ws> <expression>                                        }
-  regex instruction:sym<pic18_tblrd>   { $<mnemonic>=@pic18_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')                                }
-
-# Rules for mc6809
-
-  token mc6809_acc                    { < a b >                                                                                  }
-  token mc6809_acc16                  { 'd'                                                                                      }
-  token mc6809_reg16                  { < x y u s >                                                                              }
-  token mc6809_anyreg                 { < a b cc dp x y u s d pc >                                                               }
-  proto regex mc6809_idx              { <*>                                                                                      }
-  regex mc6809_idx:sym<off>           { <expression> ',' <mc6809_reg16>                                                          }
-  regex mc6809_idx:sym<accoff>        { < a b d > ',' <mc6809_reg16>                                                             }
-  regex mc6809_idx:sym<postinc>       { ',' <mc6809_reg16> ('+' ** 0..2)                                                         }
-  regex mc6809_idx:sym<predec>        { ',' ('-' ** 1..2) <mc6809_reg16>                                                         }
-  regex mc6809_idx:sym<pcrel>         { <expression> ',pcr'                                                                      }
-  regex instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>                                                     }
-  regex instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>                                    }
-  regex instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>                                   }
-  regex instruction:sym<mc6809_dir>   { $<mnemonic>=@mc6809_instr_die <.ws> '<' <expression> <!before ',' >                      }
-  regex instruction:sym<mc6809_ind1>  { $<mnemonic>=@mc6809_instr_die <.ws> <mc6809_idx>                                         }
-  regex instruction:sym<mc6809_ind2>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <mc6809_idx> ']'                                 }
-  regex instruction:sym<mc6809_ind3>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <expression> ']'                                 }
-  regex instruction:sym<mc6809_ext>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression> <!before ',' >                          }
-  regex instruction:sym<mc6809_br>    { $<mnemonic>=@mc6809_instr_br  <.ws> <expression>                                         }
-  regex instruction:sym<mc6809_lbr>   { $<mnemonic>=@mc6809_instr_lbr <.ws> <expression>                                         }
-  regex instruction:sym<mc6809_tfr>   { $<mnemonic>=@mc6809_instr_tfr <.ws> <mc6809_anyreg> <.ws>? ',' <.ws>? <mc6809_anyreg>    }
-  regex instruction:sym<mc6809_psh>   { $<mnemonic>=@mc6809_instr_psh <.ws> <mc6809_anyreg>+ % ','                               }
-
-# Rules for ARM
-
-  token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?                                                            }
-  #token arm_reg                      { <[rR]> <expression>                                                                      }
-  regex arm_rrange                    { <arm_reg> [ '-' <arm_reg> ]?                                                             }
-  regex arm_rlist                     { '{' <arm_rrange>+ % <comma> '}'                                                          }
-  token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?                                        }
-  token arm_setcond                   { 's'?                                                                                     }
-  token arm_byte                      { 'b'?                                                                                     }
-  proto regex arm_shift               { <*>                                                                                      }
-  regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                                     }
-  regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                            }
-  regex arm_shift:sym<rrx>            { 'rrx' <arm_reg>                                                                          }
-  regex arm_bdttype                   { < fd ed fa ea ia ib da db >                                                              }
-  proto regex arm_hdtaddr             { <*>                                                                                      }
-  regex arm_hdtaddr:sym<expr>         { <expression>                                                                             }
-  regex arm_hdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >                                                     }
-  regex arm_hdtaddr:sym<preimm>       { '[' <arm_reg> <comma> '#' <expression> ']' ('!'?)                                        }
-  regex arm_hdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ']' ('!'?)                                   }
-  regex arm_hdtaddr:sym<postimm>      { '[' <arm_reg> ']' <comma> '#' <expression>                                               }
-  regex arm_hdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg>                                         }
-  proto regex arm_sdtaddr             { <*>                                                                                      }
-  regex arm_sdtaddr:sym<expr>         { <expression>                                                                             }
-  regex arm_sdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >                                                     }
-  regex arm_sdtaddr:sym<preimm>       { '[' <arm_reg> <comma> '#' <expression> ']' ('!'?)                                        }
-  regex arm_sdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ( <comma> <arm_shift> )? ']' ('!'?)          }
-  regex arm_sdtaddr:sym<postimm>      { '[' <arm_reg> ']' <comma> '#' <expression>                                               }
-  regex arm_sdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg> ( <comma> <arm_shift> )?                }
-  regex arm_sbh                       { < h sb sh >                                                                              }
-  #regex arm_b                         { 'b'?                                                                                    }
-  regex arm_t                         { 't'?                                                                                     }
-  regex instruction:sym<arm_inh>      { $<mnemonic>=@arm_instr_inh  <arm_cond>               <.ws>                               }
-  regex instruction:sym<arm_mul>      { $<mnemonic>=@arm_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>   }
-  regex instruction:sym<arm_mla>      { $<mnemonic>=@arm_instr_mla  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>   }
-  regex instruction:sym<arm_mull>     { $<mnemonic>=@arm_instr_mull <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>   }
-  regex instruction:sym<arm_sds>      { $<mnemonic>=@arm_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']' }
-  regex instruction:sym<arm_brx>      { $<mnemonic>=@arm_instr_brx  <arm_cond>               <.ws> <arm_reg>                     }
-  regex instruction:sym<arm_hdt>      { $<mnemonic>=@arm_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>       }
-  regex instruction:sym<arm_sdt>      { $<mnemonic>=@arm_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>       }
-  regex instruction:sym<arm_bdt>      { $<mnemonic>=@arm_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')? }
-
-}
+my @thumb_instr_inh;    make_hash('thumb', 'inh');
+my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
+my @thumb_instr_arreg;  make_hash('thumb', 'arreg');
 
 sub mkexp {
   my ($value, $def) = @_;
@@ -326,1210 +150,1591 @@ sub mkexp {
   return {value => $value, def => $def};
 }
 
+grammar Assembler {
+
+# basic rules for expressions
+
+    token id                      { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
+    token identifier              { <id>
+                                    {
+#say "Found identifier: ", $/;
+                                      my $sym = ~$/<id>;
+                                      my $lcsym = $sym.lc;
+                                      if %symbol{$lcsym}.defined {
+                                        my $val = %symbol{$sym.lc}<value>;
+                                        make mkexp($val, 1);
+                                      } else {
+                                        error_listing "*** Undefined symbol \"$sym\"";
+                                        make mkexp(0, 0);
+                                      }
+                                    }
+                                  }
+    token localref                { (\d\d?) ( <[fFbB]> )
+                                    {
+                                      my $value;
+                                      my $def = 1; # assume backwards ref
+                                      my $index = +$/[0];
+                                      my $index2 = @local_pointer[$index];
+                                      if ~$/[1] eq 'f' | 'F' {
+                                        ++$index2;
+                                        $def = 0;
+                                      }
+                                  #say "In method local_ref: index is $index ($index2)";
+                                      if $index2 < 0 {
+                                        $value = 0; # Should be error
+                                      } else {
+                                        $value = 0;
+                                        $value = @local_symbol[$index][$index2] if @local_symbol[$index][$index2].defined;
+                                      }
+                                      make mkexp($value, $def);
+                                    }
+                                  }
+    token plusminus               { < + - >?                        { make $/ eq '-' ?? -1 !! 1;            } }
+    proto token number            { <*>                                                                       }
+    token number:sym<decimal>     { <plusminus> ( <[0..9]>+ )       { make $/<plusminus>.made * :10(~$/[0]); } }
+    token number:sym<binary>      { '0' <[bB]> <[01]>+              { make :2(~$/);                         } }
+    token number:sym<octal>       { '0' <[oO]> <[0..7]>+            { make :8(~$/);                         } }
+    token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+  { make :16(~$/);                        } }
+    token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+) { make :16(~$/[0]);                     } }
+    proto rule term               { <*>                                                                       }
+    rule term:sym<localref>       { <localref>                      { make $/<localref>.made;                } }
+    rule term:sym<number>         { <number>                        { make mkexp($/<number>.made, 1);        } }
+    rule term:sym<funcall>        { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')'
+                                    {
+                                      my $def = $/<expression>.made<def>;
+                                      if $/<identifier>.lc eq 'low' {
+                                        make mkexp($/<expression>.made<value> +& 0xff, $def);
+                                      }
+                                      if $/<identifier>.lc eq 'high' {
+                                        make mkexp( ($/<expression>.made<value> +> 8) +& 0xff, $def);
+                                      }
+                                    }
+                                  }
+    rule term:sym<identifier>     { <identifier>                    { make $/<identifier>.made;             } }
+    rule term:sym<pexpr>          {'(' <expression> ')'             { make $/<expression>.made;             } }
+    token addoper                 { '+' | '-'                                                                 }
+    token muloper                 { '*' | '/' | '%' | '<<' | '>>'                                             }
+    rule mulexpr                  { <term> [ <muloper> <term> ]*
+                                    {
+                                      my $value = +$/<term>[0].made<value>;
+                                      my $def   = +$/<term>[0].made<def>;
+                                      if ?$/<muloper> {
+                                        for 0 .. (+$/<muloper> - 1) -> $index {
+	                                  my $oper = ~$/<muloper>[$index];
+	                                  if $oper ~~ '*' {
+	                                    $value *= $/<term>[$index + 1].made<value>;
+	                                  } elsif $oper ~~ '/' {
+	                                    $value /= $/<term>[$index + 1].made<value>;
+	                                  } elsif $oper ~~ '%' {
+	                                    $value %= $/<term>[$index + 1].made<value>;
+	                                  } elsif $oper ~~ '<<' {
+	                                    $value +<= $/<term>[$index + 1].made<value>;
+	                                  } elsif $oper ~~ '>>' {
+	                                    $value +>= $/<term>[$index + 1].made<value>;
+	                                  } else {
+	                                    error_listing "Illegal operator";
+	                                  }
+                                          $def &= $/<term>[$index + 1].made<def>
+                                        }
+                                      }
+                                      make mkexp($value, $def);
+                                    }
+                                  }
+    rule expression               { [ <mulexpr> [ <addoper> <mulexpr> ]* ]
+                                    {
+                                      my $value = $/<mulexpr>[0].made<value>;
+                                      my $def   = $/<mulexpr>[0].made<def>;
+                                      if ?$/<addoper> {
+                                        for 0 .. (+$<addoper> - 1) -> $index {
+	                                  my $oper = ~$/<addoper>[$index];
+	                                  if $oper ~~ '+' {
+	                                    $value += $/<mulexpr>[$index + 1].made<value>;
+	                                  } else {
+	                                    $value -= $/<mulexpr>[$index + 1].made<value>;
+	                                  }
+                                          $def &= $/<mulexpr>[$index + 1].made<def>;
+                                        }
+                                      }
+                                      make mkexp($value, $def);
+                                    }
+                                  }
+    proto token string            { <*>                                                                       }
+    token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \' { make ~$/[0];                       } }
+    rule stringexpression         { <string>                           { make ~$/<string>.made;              } }
+    proto regex instruction       { <*>                                                                       }
+    token comma                   { <.ws>? ',' <.ws>?                                                         }
+}
+
+my %instructionset;
+%instructionset<assembler> = Assembler.new();
+my $instructionset = %instructionset<assembler>;
+
+# Rules for AVR
+
+grammar Avr is Assembler {
+  rule avr_bit                       { <expression>
+                                       { ##### should be avr specific
+                                         my $val = $/<expression>.made;
+                                         if 0 <= $val <= 7 {
+                                           make $val;
+                                         } else {
+                                          error_listing '*** Bit number out of range';
+                                          make 0;
+                                         }
+                                       }
+                                     }
+  token avr_reg                      { <ws>? <wb> <[rR]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my  $reg = $/[0];
+#say "Found avr_reg: ", $/;
+                                         if $/[1].defined {
+                                           my $offset = $/[1];
+                                           $reg += $offset;
+                                         }
+                                         if ! (0 <= $reg <= 31) {
+                                           error_listing '*** Registers must be in range r0 to r31';
+                                           $reg = 0;
+                                         }
+                                         make $reg;
+                                       }
+                                     }
+  token avr_regpair                  { <[rR]> ( \d+ ) ':' <[rR]>? ( \d+ )
+                                       {
+                                         my $r1 = $/[0];
+                                         my $r2 = $/[1];
+                                         error_listing ('*** Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
+                                         make $r2;
+                                       }
+                                     }
+  regex instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rr><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<avr_reg>[0].made;
+                                         my $r2 = +$/<avr_reg>[1].made;
+                                         $opcode +|= ($r1 +< 4) +& 0x1f0;
+                                         $opcode +|=  $r2       +& 0x0f;
+                                         $opcode +|= ($r2 +< 5) +& 0x200;
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> <comma> <avr_regpair> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<regpair>[0].made;
+                                         my $r2 = +$/<regpair>[1].made;
+                                         $opcode +|= ($r1 +< 3) +& 0x00f0;
+                                         $opcode +|= ($r2 +> 1) +& 0x000f;
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> <comma> <avr_reg> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<avr_reg>[0].made;
+                                         my $r2 = +$/<avr_reg>[1].made;
+                                         $opcode +|= ($r1 +< 3) +& 0x00f0;
+                                         $opcode +|= ($r2 +> 1) +& 0x000f;
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_rr3>     { $<mnemonic>=@avr_instr_rr3     <avr_reg> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rr3><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<avr_reg>[0].made;
+                                         my $r2 = +$/<avr_reg>[1].made;
+                                         if ( (16 <= $r1 < 24) && (16 <= $r2 < 24) ) {
+                                           $opcode +|= ($r1 +< 4) +& 0x0070;
+                                           $opcode +|=  $r2       +& 0x0007;
+                                         } else {
+                                           error_listing '*** Registers must be in range 16 to 23';
+                                         }
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_rr4>     { $<mnemonic>=@avr_instr_rr4     <avr_reg> <comma> <avr_reg> <.ws> 
+                                       {
+                                         my $opcode = %instructions<avr><rr4><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<avr_reg>[0].made;
+                                         my $r2 = +$/<avr_reg>[1].made;
+                                         if ( (16 <= $r1 < 32) && (16 <= $r2 < 32) ) {
+                                           $opcode +|= ($r1 +< 4) +& 0x00f0;
+                                           $opcode +|=  $r2       +& 0x000f;
+                                         } else {
+                                           error_listing '*** Registers must be in range 16 to 31';
+                                         }
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_r2>      { $<mnemonic>=@avr_instr_r2   <avr_reg> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><r2><hash>{~$/<mnemonic>};
+                                         my $r1 = +$/<avr_reg>.made;
+                                         $opcode +|= ($r1 +< 4) +& 0x1f0;
+                                         $opcode +|=  $r1       +& 0x0f;
+                                         $opcode +|= ($r1 +< 5) +& 0x200;
+                                         make( ($opcode,) ); # don't remove the comma!
+                                       }
+                                     }
+  regex instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <avr_reg> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><r><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_inh>     { $<mnemonic>=@avr_instr_inh     <ws>
+                                       {
+                                         my $opcode = %instructions<avr><inh><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_iw>      { $<mnemonic>=@avr_instr_iw      <ws> <avr_regpair> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
+                                         my $reg = $/<regpair>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         if ($reg < 24) || ($reg +& 1) {
+                                           error_listing('*** Register must be r25:r24, r27:r26, r29:r28 or r31:r30');
+                                           $reg = 24;
+                                         }
+                                         $opcode +|= ($reg +< 1) +& 0x0030;
+                                         $opcode +|=  $val       +& 0x000f;
+                                         $opcode +|= ($val +< 2) +& 0x00c0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_iw2>     { $<mnemonic>=@avr_instr_iw      <ws> <avr_reg> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         if ($reg < 24) || ($reg +& 1) {
+                                           error_listing('*** Register must be r24, r26, r28 or r30');
+                                           $reg = 24;
+                                         }
+                                         $opcode +|= ($reg +< 1) +& 0x0030;
+                                         $opcode +|=  $val       +& 0x000f;
+                                         $opcode +|= ($val +< 2) +& 0x00c0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_ir>      { $<mnemonic>=@avr_instr_ir     <ws> <avr_reg> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><ir><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         if $reg < 16 {
+                                           error_listing('*** Register must be r16 - r31');
+                                           $reg = 16;
+                                         }
+                                         $opcode +|= ($reg +< 4) +& 0x00f0;
+                                         $opcode +|=  $val       +& 0x000f;
+                                         $opcode +|= ($val +< 4) +& 0x0f00;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_irc>     { $<mnemonic>=@avr_instr_irc     <ws> <avr_reg> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><irc><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value> +^ 0xff;
+                                         if $reg < 16 {
+                                           error_listing('*** Register must be r16 - r31');
+                                           $reg = 16;
+                                         }
+                                         $opcode +|= ($reg +< 4) +& 0x00f0;
+                                         $opcode +|=  $val       +& 0x000f;
+                                         $opcode +|= ($val +< 4) +& 0x0f00;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_sreg>    { $<mnemonic>=@avr_instr_sreg    <ws> <avr_bit> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><sreg><hash>{~$/<mnemonic>};
+                                         my $bit = $/<avr_bit>.made;
+                                         $opcode +|= ($bit +< 4) +& 0x0070;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_tbit>    { $<mnemonic>=@avr_instr_tbit    <ws> <avr_reg> <comma> <avr_bit> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><tbit><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $bit = $/<avr_bit>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         $opcode +|=  $bit       +& 0x0007;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_brb>     { $<mnemonic>=@avr_instr_brb     <ws> <avr_bit> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><brb><hash>{~$/<mnemonic>};
+                                         my $bit = $/<avr_bit>.made;
+                                         my $target = $/<expression>.made<value>;
+                                         my $offset = $target - $pc - 1;
+                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+                                         $opcode +|= ($offset +< 3) +& 0x03f0;
+                                         $opcode +|=  $bit          +& 0x0007;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_branch>  { $<mnemonic>=@avr_instr_branch  <ws> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><branch><hash>{~$/<mnemonic>};
+                                         my $target = $/<expression>.made<value>;
+                                         my $offset = $target - $pc - 1;
+                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+                                         $opcode +|= ($offset +< 3) +& 0x03f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_lbranch> { $<mnemonic>=@avr_instr_lbranch <ws> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><lbranch><hash>{~$/<mnemonic>};
+                                         my $target = $/<expression>.made<value>;
+                                         my $offset = $target - $pc - 1;
+                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
+                                         $opcode +|= $offset +& 0x0fff;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_long>    { $<mnemonic>=@avr_instr_long    <ws> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><long><hash>{~$/<mnemonic>};
+                                         my $target = $/<expression>.made<value>;
+                                         $opcode +|= ($target +> 16) +& 0x0001;
+                                         $opcode +|= ($target +> 13) +& 0x01f0;
+                                         make ( ($opcode,($target +& 0xffff)) );
+                                       }
+                                     }
+  regex instruction:sym<avr_lds>     { $<mnemonic>=@avr_instr_lds     <ws> <avr_reg> <comma> <expression> <ws> 
+                                       {
+                                       # TODO: Handle 7-bit address variant
+                                         my $opcode = %instructions<avr><lds><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $addr = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,($addr +& 0xffff)) );
+                                       }
+                                     }
+  regex instruction:sym<avr_sts>     { $<mnemonic>=@avr_instr_sts     <ws> <expression> <comma> <avr_reg> <ws> 
+                                       {
+                                       # TODO: Handle 7-bit address variant
+                                         my $opcode = %instructions<avr><sts><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $addr = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,($addr +& 0xffff)) );
+                                       }
+                                     }
+  regex instruction:sym<avr_bio>     { $<mnemonic>=@avr_instr_bio     <ws> <expression> <comma> <avr_bit> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><bio><hash>{~$/<mnemonic>};
+                                         my $bit = $/<avr_bit>.made;
+                                         my $reg = $/<expression>.made<value>;
+                                         error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
+                                         $opcode +|=  $bit       +& 0x0007;
+                                         $opcode +|= ($reg +< 3) +& 0x00f8;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_i4>      { $<mnemonic>=@avr_instr_i4      <ws> <expression> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><i4><hash>{~$/<mnemonic>};
+                                         my $round = $/<expression>.made<value>;
+                                         error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
+                                         $opcode +|= ($round +< 4) +& 0x00f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rx>      { $<mnemonic>=@avr_instr_rx      <ws> <avr_reg> <comma> <[xX]> <!before '+'> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rx><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_xr>      { $<mnemonic>=@avr_instr_xr      <ws> <[xX]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><xr><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rxplus>  { $<mnemonic>=@avr_instr_rxplus  <ws> <avr_reg> <comma> <[xX]>'+' <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rxplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_xrplus>  { $<mnemonic>=@avr_instr_xrplus  <ws> <[xX]>'+' <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><xrplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rxminus> { $<mnemonic>=@avr_instr_rxminus <ws> <avr_reg> <comma> '-'<[xX]> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rxminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_xrminus> { $<mnemonic>=@avr_instr_xrminus <ws> '-'<[xX]> <comma> <avr_reg> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><xrminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_ry>      { $<mnemonic>=@avr_instr_ry      <ws> <avr_reg> <comma> <[yY]> <!before '+'> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><ry><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_yr>      { $<mnemonic>=@avr_instr_yr      <ws> <[yY]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><yr><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_ryplus>  { $<mnemonic>=@avr_instr_ryplus  <ws> <avr_reg> <comma> <[yY]>'+' <!before <expression> > <ws>
+                                       {
+                                         my $opcode = %instructions<avr><ryplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_yrplus>  { $<mnemonic>=@avr_instr_yrplus  <ws> <[yY]>'+' <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><yrplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_ryminus> { $<mnemonic>=@avr_instr_ryminus <ws> <avr_reg> <comma> '-'<[yY]> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><ryminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_yrminus> { $<mnemonic>=@avr_instr_yrminus <ws> '-'<[yY]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><yrminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_ryq>     { $<mnemonic>=@avr_instr_ryq     <ws> <avr_reg> <comma> <[yY]> '+' <expression> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><ryq><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|=  $val       +& 0x0007;
+                                           $opcode +|= ($val +< 7) +& 0x0c00;
+                                           $opcode +|= ($val +< 8) +& 0x1000;
+                                         } else {
+                                           error_listing '*** Offset must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_yrq>     { $<mnemonic>=@avr_instr_yrq     <ws> <[yY]> '+' <expression> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><yrq><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|=  $val       +& 0x0007;
+                                           $opcode +|= ($val +< 7) +& 0x0c00;
+                                           $opcode +|= ($val +< 8) +& 0x1000;
+                                         } else {
+                                           error_listing '*** Offset must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rz>      { $<mnemonic>=@avr_instr_rz      <ws> <avr_reg> <comma> <[zZ]> <!before '+' > <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rz><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_stzr>    { $<mnemonic>=@avr_instr_stzr    <ws> <[zZ]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><stzr><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rzplus>  { $<mnemonic>=@avr_instr_rzplus  <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rzplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_zrplus>  { $<mnemonic>=@avr_instr_zrplus  <ws> <[zZ]>'+' <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><zrplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rzminus> { $<mnemonic>=@avr_instr_rzminus <ws> <avr_reg> <comma> '-'<[zZ]> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rzminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_zrminus> { $<mnemonic>=@avr_instr_zrminus <ws> '-'<[zZ]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><zrminus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_rzq>     { $<mnemonic>=@avr_instr_rzq     <ws> <avr_reg> <comma> <[zZ]> '+' <expression> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><rzq><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|=  $val       +& 0x0007;
+                                           $opcode +|= ($val +< 7) +& 0x0c00;
+                                           $opcode +|= ($val +< 8) +& 0x1000;
+                                         } else {
+                                           error_listing '*** Offset must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_zrq>     { $<mnemonic>=@avr_instr_zrq     <ws> <[zZ]> '+' <expression> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><zrq><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|=  $val       +& 0x0007;
+                                           $opcode +|= ($val +< 7) +& 0x0c00;
+                                           $opcode +|= ($val +< 8) +& 0x1000;
+                                         } else {
+                                           error_listing '*** Offset must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_zr>      { $<mnemonic>=@avr_instr_zr      <ws> <[zZ]> <comma> <avr_reg> <ws>
+                                       {
+                                         my $opcode = %instructions<avr><zr><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_zplus>   { $<mnemonic>=@avr_instr_zplus   <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
+                                       {
+                                         my $opcode = %instructions<avr><zplus><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         $opcode +|= ($reg +< 4) +& 0x01f0;
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_noz>     { $<mnemonic>=@avr_instr_noz     <ws>
+                                       {
+                                         my $opcode = %instructions<avr><noz><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> <comma> <expression> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><i6r><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|= ($reg +< 4) +& 0x01f0;
+                                           $opcode +|=  $val       +& 0x000f;
+                                           $opcode +|= ($val +< 4) +& 0x0f00;
+                                         } else {
+                                           error_listing '*** Location must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> <comma> <avr_reg> <ws> 
+                                       {
+                                         my $opcode = %instructions<avr><out><hash>{~$/<mnemonic>};
+                                         my $reg = $/<avr_reg>.made;
+                                         my $val = $/<expression>.made<value>;
+                                         if 0 <= $val <= 63 {
+                                           $opcode +|= ($reg +< 4) +& 0x01f0;
+                                           $opcode +|=  $val       +& 0x000f;
+                                           $opcode +|= ($val +< 4) +& 0x0f00;
+                                         } else {
+                                           error_listing '*** Location must be 0 to 63';
+                                         }
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+}
+
+%instructionset<avr> = Avr.new();
+
+# Rules for PIC
+
+grammar Pic10 is Assembler {
+  token pic10_bit                     { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 7) {
+                                            error_listing '*** bit number must be between 0 and 7';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token pic10_d                       { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 1) {
+                                            error_listing '*** D must be 0 or 1';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token pic10_f                       { <expression> 
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 31) {
+                                            error_listing '*** Registers must be in range 0 to 31';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  regex instruction:sym<pic10_inh>    { $<mnemonic>=@pic10_instr_inh     <.ws>
+                                        {
+                                          my $opcode = %instructions<pic10><inh><hash>{~$/<mnemonic>};
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_byte>   { $<mnemonic>=@pic10_instr_byte    <.ws> <pic10_f> <comma> <pic10_d>
+                                        {
+                                          my $opcode = %instructions<pic10><byte><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<pic10_f>.made;
+                                          $opcode +|= $/<pic10_d>.made +< 5;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_bytes>  { $<mnemonic>=@pic10_instr_bytes   <.ws> <pic10_f>
+                                        {
+                                          my $opcode = %instructions<pic10><bytes><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<pic10_f>.made;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_bit>    { $<mnemonic>=@pic10_instr_bit     <.ws> <pic10_f> <comma> <pic10_bit>
+                                        {
+                                          my $opcode = %instructions<pic10><bit><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<pic10_f>.made;
+                                          $opcode +|= $/<pic10_bit>.made +< 5;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_lit>    { $<mnemonic>=@pic10_instr_lit     <.ws> <expression>
+                                        {
+                                          my $opcode = %instructions<pic10><lit><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<expression>.made<value> +& 0xff;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_goto>   { $<mnemonic>=@pic10_instr_goto    <.ws> <expression>
+                                        {
+                                          my $opcode = %instructions<pic10><goto><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<expression>.made<value> +& 0x1ff;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<pic10_tris>   { $<mnemonic>=@pic10_instr_tris    <.ws> <pic10_f>
+                                        {
+                                          my $opcode = %instructions<pic10><tris><hash>{~$/<mnemonic>};
+                                          my $file = +$/<pic10_f>.made;
+                                          if $file != 6 | 7 {
+                                            error_listing 'Register file for this instruction must be 6 or 7';
+                                            $file = 6;
+                                          }
+                                          $opcode +|= $file;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+                                    }
+
+%instructionset<pic10> = Pic10.new();
+
+grammar Pic18 is Assembler {
+  token pic18_a                       { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 1) {
+                                            error_listing '*** A must be 0 or 1';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token pic18_d                       { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 1) {
+                                            error_listing '*** D must be 0 or 1';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token pic18_f                       { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 255) {
+                                            error_listing '*** Registers must be in range 0 to 255';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token pic18_bit                     { <expression>
+                                        {
+                                          my  $reg = +$/;
+                                          if ! (0 <= $reg <= 7) {
+                                            error_listing '*** bit number must be between 0 and 7';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  regex instruction:sym<pic18_inh>     { $<mnemonic>=@pic18_instr_inh     <.ws>
+                                         {
+                                           my $opcode = %instructions<pic18><inh><hash>{~$/<mnemonic>};
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_bytefda> { $<mnemonic>=@pic18_instr_bytefda <.ws> <pic18_f> <comma> <pic18_d> <comma> <pic18_a> <ws>
+                                         {
+                                           my $opcode = %instructions<pic18><bytefda><hash>{~$/<mnemonic>};
+                                           my $f = $/<pic18_f>.made;
+                                           my $d = $/<pic18_d>.made;
+                                           my $a = $/<pic18_a>.made;
+                                           $opcode +|= $f;
+                                           $opcode +|= $a +< 8;
+                                           $opcode +|= $d +< 9;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_bytefa>  { $<mnemonic>=@pic18_instr_bytefa  <.ws> <pic18_f> <comma> <pic18_a> <ws>
+                                         {
+                                           my $opcode = %instructions<pic18><bytefa><hash>{~$/<mnemonic>};
+                                           my $f = $/<pic18_f>.made;
+                                           my $a = $/<pic18_a>.made;
+                                           $opcode +|= $f;
+                                           $opcode +|= $a +< 8;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_byteff>  { $<mnemonic>=@pic18_instr_byteff  <.ws> <expression> <comma> <expression> <ws>
+                                         {
+                                           my $opcode = %instructions<pic18><byteff><hash>{~$/<mnemonic>};
+                                           my $fs = $/<expression>[0].made<value> +& 0x0fff;
+                                           my $fd = $/<expression>[1].made<value> +& 0x0fff;
+                                           $opcode +|= $fs;
+                                           make ( ($opcode, 0xf000 +| $fd) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_bitm>    { $<mnemonic>=@pic18_instr_bit     <.ws> <pic18_f> <comma> <pic18_bit> <comma> <pic18_a> <ws>
+                                         {
+                                           my $opcode = %instructions<pic18><bit><hash>{~$/<mnemonic>};
+                                           my $f = $/<pic18_f>.made;
+                                           my $b = $/<pic18_bit>.made;
+                                           my $a = $/<pic18_a>.made;
+                                           $opcode +|= $f;
+                                           $opcode +|= $a +< 8;
+                                           $opcode +|= $b +< 9;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_branch>  { $<mnemonic>=@pic18_instr_branch  <.ws> <expression>
+                                         {
+                                           my $opcode = %instructions<pic18><branch><hash>{~$/<mnemonic>};
+                                           my $target = $/<expression>.made<value>;
+                                           my $offset = $target - $pc - 1;
+                                           if ($offset < -128 || $offset > 127) {
+                                           }
+                                           $offset +&= 0xff;
+                                           $opcode +|= $offset;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_lbranch> { $<mnemonic>=@pic18_instr_lbranch <.ws> <expression>
+                                         {
+                                           my $opcode = %instructions<pic18><lbranch><hash>{~$/<mnemonic>};
+                                           my $target = $/<expression>.made<value>;
+                                           my $offset = $target - $pc - 1;
+                                           if ($offset < -1024 || $offset > 1023) {
+                                           }
+                                           $offset +&= 0x3ff;
+                                           $opcode +|= $offset;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_call>    { $<mnemonic>=@pic18_instr_call    <.ws> <expression> [ <comma> <expression> ] ?
+                                         {
+                                           my $opcode = %instructions<pic18><call><hash>{~$/<mnemonic>};
+                                           my $target = $/<expression>[0].made<value>;
+                                           $target +&= 0x0fffff;
+                                           $opcode +|= $target +& 0x0fff;
+                                           $opcode +|= 0x0100 if defined $/<expression>[1] && $/<expression>[1].made<value> != 0;
+                                           make ( ($opcode, 0xf000 + ($target +> 12)) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_ret>     { $<mnemonic>=@pic18_instr_ret     <.ws> <expression> ?
+                                         {
+                                           my $opcode = %instructions<pic18><ret><hash>{~$/<mnemonic>};
+                                           $opcode +|= 0x0001 if defined $/<expression> && $/<expression>.made<value> != 0;
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_lit>     { $<mnemonic>=@pic18_instr_lit     <.ws> <expression>
+                                         {
+                                           my $opcode = %instructions<pic18><lit><hash>{~$/<mnemonic>};
+                                           my $imm = $/<expression>.made<value>;
+                                           $imm +&= 0xff;
+                                           make ( ($opcode +| $imm,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_bsr>     { $<mnemonic>=@pic18_instr_bsr     <.ws> <expression>
+                                         {
+                                           my $opcode = %instructions<pic18><bsr><hash>{~$/<mnemonic>};
+                                           my $imm = $/<expression>.made<value>;
+                                           $imm +&= 0x0f;
+                                           make ( ($opcode +| $imm,) );
+                                         }
+                                       }
+  regex instruction:sym<pic18_tblrd>   { $<mnemonic>=@pic18_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')
+                                         {
+                                           my $opcode = %instructions<pic18><tblrd><hash>{~$/<mnemonic>};
+                                           my $type = ~$/[0];
+                                           $opcode +|= 0x0001 if $type eq '*+';
+                                           $opcode +|= 0x0002 if $type eq '*-';
+                                           $opcode +|= 0x0003 if $type eq '+*';
+                                           make ( ($opcode,) );
+                                         }
+                                       }
+}
+
+%instructionset<pic18> = Pic18.new();
+
+# Rules for mc6809
+
+grammar Mc6809 is Assembler {
+  token mc6809_acc                    { < a b >
+                                        {
+                                          my  $acc = ~$/;
+                                          make $acc eq 'a' ?? 0 !! 1;
+                                        }
+                                      }
+  token mc6809_acc16                  { 'd'                                                                                      }
+  token mc6809_reg16                  { < x y u s >
+                                        {
+                                          my  $acc = ~$/;
+                                          my %mc6809_reg16 = ('x' => 0, 'y' => 1, 'u' => 2, 's' => 3);
+                                          make %mc6809_reg16{$acc};
+                                        }
+                                      }
+  token mc6809_anyreg                 { < a b cc dp x y u s d pc >
+                                        {
+                                          my $reg = ~$/;
+                                          my %mc6809_anyreg = ('d' => 0, 'x' => 1, 'y' => 2, 'u' => 3, 's' => 4, 'pc' => 5, 'a' => 8, 'b' => 9, 'cc' => 10, 'dp' => 11);
+                                          make %mc6809_anyreg{$reg};
+                                        }
+                                      }
+  proto regex mc6809_idx              { <*>                                                                                      }
+  regex mc6809_idx:sym<off>           { <expression> <comma> <mc6809_reg16>
+                                        {
+                                          my $def = $/<expression>.made<def>;
+                                          my $value = $/<expression>.made<value>;
+                                          my $reg = $/<mc6809_reg16>.made;
+                                          my $made = 0;
+                                          if $def {
+                                            if $value == 0 {
+                                              make ( (0x84 +| $reg +< 5, ));
+                                              $made = 1;
+                                            } elsif -16 <= $value <= 15 {
+                                              make ( (0x00 +| ($reg +< 5) +| $value +& 0x1f, ));
+                                              $made = 1;
+                                            } elsif -128 <= $value <= 127 {
+                                              my $postbyte = 0x88;
+                                              $postbyte +|= $reg +< 5;
+                                              make ( ( $postbyte, $value ) );
+                                              $made = 1;
+                                            }
+                                          } 
+                                          if ! $made {
+                                            make ( (0x89 +| ($reg +< 5), ($value +> 8), ($value +& 0xff)));
+                                          }
+                                        }
+                                      }
+  regex mc6809_idx:sym<accoff>        { < a b d > <comma> <mc6809_reg16>                                                             }
+  regex mc6809_idx:sym<postinc>       { <comma> <mc6809_reg16> ('+' ** 0..2)
+                                        {
+                                          my $reg = $/<mc6809_reg16>.made;
+                                          my $postinc = ~$/[0].chars;
+                                          my $postbyte = 0x84;
+                                          $postbyte = 0x80 if $postinc == 1;
+                                          $postbyte = 0x81 if $postinc == 2;
+                                          make ( ($postbyte +| ($reg +< 5), ));
+                                        }
+                                      }
+  regex mc6809_idx:sym<predec>        { <comma> ('-' ** 1..2) <mc6809_reg16>
+                                        {
+                                          my $reg = $/<mc6809_reg16>.made;
+                                          my $postinc = ~$/[0].chars;
+                                          my $postbyte = 0x84;
+                                          $postbyte = 0x82 if $postinc == 1;
+                                          $postbyte = 0x83 if $postinc == 2;
+                                          make ( ($postbyte +| ($reg +< 5), ));
+                                        }
+                                      }
+  regex mc6809_idx:sym<pcrel>         { <expression> ',pcr'
+                                        {
+                                          my $target = $/<expression>.made<value>;
+                                          my $def    = $/<expression>.made<def>;
+                                          my $offset = $target - $pc; # fix for instruction length
+                                          # assume 16-bit offset for now
+                                          make ( (0x8d, $offset +> 8, $offset) );
+                                        }
+                                      }
+  regex instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>
+                                        {
+                                          my $opcode = %instructions<mc6809><inh><hash>{~$/<mnemonic>};
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff) );
+                                          } else {
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>
+                                        {
+                                          my $opcode = %instructions<mc6809><imm8><hash>{~$/<mnemonic>};
+                                          my $imm = +$/<expression>.made<value> +& 0xff;
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
+                                          } else {
+                                            make ( ($opcode, $imm) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>
+                                        {
+                                          my $opcode = %instructions<mc6809><imm16><hash>{~$/<mnemonic>};
+                                          my $imm = +$/<expression>.made<value> +& 0xffff;
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
+                                          } else {
+                                            make ( ($opcode, $imm +> 8, $imm +& 0xff) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_dir>   { $<mnemonic>=@mc6809_instr_die <.ws> '<' <expression> <!before <comma> >
+                                        {
+                                          my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+                                          $opcode +|= 0x10; # direct addressing mode
+                                          $opcode +&= 0x8f if $opcode +& 0xf0 == 0x40; # ugh -- so much for orthogonality
+                                          my $imm = +$/<expression>.made<value> +& 0xff;
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
+                                          } else {
+                                            make ( ($opcode, $imm) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_ind1>  { $<mnemonic>=@mc6809_instr_die <.ws> <mc6809_idx>
+                                        {
+                                          my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+                                          $opcode +|= 0x20; # indexed addressing mode
+                                          my @postbytes = $/<mc6809_idx>.made;
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
+                                          } else {
+                                            make ( ($opcode, @postbytes) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_ind2>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <mc6809_idx> ']'
+                                        {
+                                          my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+                                          $opcode +|= 0x20; # indexed addressing mode
+                                          my @postbytes = $/<mc6809_idx>.made;
+                                          @postbytes[0] +|= 0x10; # set indirect bit -- TODO fix 5 bit offsets
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
+                                          } else {
+                                            make ( ($opcode, @postbytes) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_ind3>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <expression> ']'
+                                        {
+                                          my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+                                          $opcode +|= 0x20; # indexed addressing mode
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff, 0x9f, +$/<expression>.made<value> +> 8, +$/<expression>.made<value> +& 0xff) );
+                                          } else {
+                                            make ( ($opcode, 0x9f, +$/<expression>.made<value> +> 8, +$/<expression>.made<value> +& 0xff) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_ext>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression> <!before <comma> >
+                                        {
+                                          my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
+                                          my $imm = $/<expression>.made<value> +& 0xffff;
+                                          my $def = $/<expression>.made<def>;
+                                          if $def && ($imm +> 8) == %param<dp> {
+	                                      # use direct addressing
+                                            $opcode +|= 0x10; # direct addressing mode
+                                            $opcode +&= 0x8f if $opcode +& 0xf0 == 0x40; # ugh -- so much for orthogonality
+                                            my $imm = +$/<expression>.made<value> +& 0xff;
+                                            if ($opcode > 0xff) {
+                                              make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
+                                            } else {
+                                              make ( ($opcode, $imm) );
+                                            }
+                                          } else {
+                                            $opcode +|= 0x30; # extended addressing mode
+                                            if ($opcode > 0xff) {
+                                              make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
+                                            } else {
+                                              make ( ($opcode, $imm +> 8, $imm +& 0xff) );
+                                            }
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_br>    { $<mnemonic>=@mc6809_instr_br  <.ws> <expression>
+                                        {
+                                          my $opcode = %instructions<mc6809><br><hash>{~$/<mnemonic>};
+                                          my $imm = +$/<expression>.made<value> +& 0xffff;
+                                          my $offset = $imm - ($pc + 2);
+                                          if ($opcode > 0xff) {
+                                            --$offset;
+                                            make ( ($opcode +> 8, $opcode +& 0xff, $offset +& 0xff) );
+                                          } else {
+                                            make ( ($opcode, $offset +& 0xff) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_lbr>   { $<mnemonic>=@mc6809_instr_lbr <.ws> <expression>
+                                        {
+                                          my $opcode = %instructions<mc6809><lbr><hash>{~$/<mnemonic>};
+                                          my $imm = +$/<expression>.made<value> +& 0xffff;
+                                          my $offset = $imm - ($pc + 2);
+                                          if ($opcode > 0xff) {
+                                            --$offset;
+                                            make ( ($opcode +> 8, $opcode +& 0xff, ($offset +> 8) +& 0xff, $offset +& 0xff) );
+                                          } else {
+                                            make ( ($opcode, ($offset +> 8) +& 0xff, $offset +& 0xff) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc6809_tfr>   { $<mnemonic>=@mc6809_instr_tfr <.ws> <mc6809_anyreg> <.ws>? <comma> <.ws>? <mc6809_anyreg>
+                                        {
+                                          my $opcode = %instructions<mc6809><tfr><hash>{~$/<mnemonic>};
+                                          my $postbyte = ($/<mc6809_anyreg>[0].made +< 4) +| $/<mc6809_anyreg>[1].made;
+                                          make ( ($opcode, $postbyte) );
+                                        }
+                                      }
+  regex instruction:sym<mc6809_psh>   { $<mnemonic>=@mc6809_instr_psh <.ws> <mc6809_anyreg>+ % <comma>
+                                        {
+                                          my $opcode = %instructions<mc6809><psh><hash>{~$/<mnemonic>};
+                                          my $postbyte = 0;
+                                          for @($/<mc6809_anyreg>) -> $reg {
+                                            if $reg eq 'd' {
+                                              if $postbyte +& 0x06 {
+                                                 error_listing "*** Register d conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x06;
+                                            }
+                                            if $reg eq 'x' {
+                                              if $postbyte +& 0x10 {
+                                                 error_listing "*** Register x conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x10;
+                                            }
+                                            if $reg eq 'y' {
+                                              if $postbyte +& 0x20 {
+                                                 error_listing "*** Register y conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x20;
+                                            }
+                                            if $reg eq 'u' | 's' {
+                                              if $postbyte +& 0x40 {
+                                                 error_listing "*** Register u/s conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x40;
+                                            }
+                                            if $reg eq 'pc' {
+                                              if $postbyte +& 0x80 {
+                                                 error_listing "*** Register pc conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x80;
+                                            }
+                                            if $reg eq 'a' {
+                                              if $postbyte +& 0x02 {
+                                                 error_listing "*** Register a conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x02;
+                                            }
+                                            if $reg eq 'b' {
+                                              if $postbyte +& 0x04 {
+                                                 error_listing "*** Register b conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x04;
+                                            }
+                                            if $reg eq 'cc' {
+                                              if $postbyte +& 0x01 {
+                                                 error_listing "*** Register cc conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x01;
+                                            }
+                                            if $reg eq 'dp' {
+                                              if $postbyte +& 0x08 {
+                                                 error_listing "*** Register dp conflicts with previous register specification";
+                                              }
+                                              $postbyte +|= 0x08;
+                                            }
+                                          }
+                                          make ( ($opcode, $postbyte) );
+                                        }
+                                      }
+}
+
+%instructionset<mc6809> = Mc6809.new();
+
+# Rules for ARM
+
+grammar Arm is Assembler {
+  token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?
+                                        {
+                                          my $reg = +$/[0];
+                                          if $/[1].defined {
+                                            $reg += $/[1];
+                                          }
+                                          if ! (0 <= $reg <= 15) {
+                                            error_listing '*** Registers must be in range r0 to r15';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  regex arm_rrange                    { <arm_reg> [ '-' <arm_reg> ]?
+                                        {
+                                          my $regs = 0;
+                                          my $start = +$/<arm_reg>[0].made;
+                                          my $end   = ($/<arm_reg>[1].defined) ?? +$/<arm_reg>[1].made !! $start;
+                                          for $start..$end -> $r {
+                                            $regs +|= 1 +< $r;
+                                          }
+                                          make ($regs);
+                                        }
+                                      }
+  regex arm_rlist                     { '{' <arm_rrange>+ % <comma> '}'
+                                        {
+                                          my $regs = 0;
+                                          for @($/<arm_reg>) -> $r {
+                                            $regs +|= $r.made;
+                                          }
+                                          make ($regs);
+                                        }
+                                      }
+  token arm_cond                      { < eq ne cs cc mi pl vs vc hi ls ge lt gt le al >?
+                                        {
+                                          my %arm_cond = ('eq' => 0, 'ne' => 1, 'cs' => 2, 'cc' => 3, 'mi' => 4, 'pl' => 5, 'vs' => 6, 'vc' => 7, 'hi' => 8, 'ls' => 9, 'ge' => 10, 'lt' => 11, 'gt' => 12, 'le' => 13, 'al' => 14, '' => 14);
+                                          my $cond = 14; # default to "always"
+                                          $cond = %arm_cond{~$/} if ~$/.defined;
+                                          make ($cond +<= 28); # shift to where the instruction will use it
+                                        }
+                                      }
+  token arm_setcond                   { 's'?
+                                        {
+                                          my $setcond = (~$/ eq 's') ?? 0x01 !! 0x00;
+                                          make ($setcond);
+                                        }
+                                      }
+  token arm_byte                      { 'b'?
+                                        {
+                                          my $byte    = (~$/ eq 'b') ?? 0x01 !! 0x00;
+                                          make ($byte);
+                                        }
+                                      }
+}
+
+grammar Armfull is Arm {
+  proto regex arm_shift               { <*>                                                                                      }
+  regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                                     }
+  regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                            }
+  regex arm_shift:sym<rrx>            { 'rrx' <arm_reg>                                                                          }
+  regex arm_bdttype                   { < fd ed fa ea ia ib da db >                                                              }
+  proto regex arm_hdtaddr             { <*>                                                                                      }
+  regex arm_hdtaddr:sym<expr>         { <expression>
+                                        {
+                                          my $offset = $/<expression>.made - $pc - 8;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                            make (0x01cf0090 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                          } else {
+                                            make (0x014f0090 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                          }
+                                        }
+                                      }
+  regex arm_hdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >
+                                        {
+                                          make (0x01400090 +| $/<arm_reg>.made +< 16;);
+                                        }
+                                      }
+  regex arm_hdtaddr:sym<preimm>       { '[' <arm_reg> <comma> '#' <expression> ']' ('!'?)
+                                        {
+                                          my $offset = $/<expression>.made;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          my $postbyte = 0x01400090;
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>.made +< 16;
+                                          make ($postbyte +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                        }
+                                      }
+  regex arm_hdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ']' ('!'?)
+                                        {
+                                          my $postbyte = 0x01000090;
+                                          if ($/<plusminus>.made > 0) {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= 1 +< 21 if $/[0] eq '!';
+                                          $postbyte +|= $/<arm_reg>[0].made +< 16;
+                                          $postbyte +|= $/<arm_reg>[1].made;
+                                          make ($postbyte);
+                                        }
+                                      }
+  regex arm_hdtaddr:sym<postimm>      { '[' <arm_reg> ']' <comma> '#' <expression>
+                                        {
+                                          my $offset = $/<expression>.made;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          my $postbyte = 0x01400090;
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>.made +< 16;
+                                          make ($postbyte +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                        }
+                                      }
+  regex arm_hdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg>
+                                        {
+                                          my $postbyte = 0x00000090;
+                                          if ($/<plusminus>.made > 0) {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>[0].made +< 16;
+                                          $postbyte +|= $/<arm_reg>[1].made;
+                                          make ($postbyte);
+                                        }
+                                      }
+  proto regex arm_sdtaddr             { <*>                                                                                      }
+  regex arm_sdtaddr:sym<expr>         { <expression>
+                                        {
+                                          my $offset = $/<expression>.made - $pc - 8;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                            make (0x01800000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                          } else {
+                                            make (0x01000000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
+                                          }
+                                        }
+                                      }
+  regex arm_sdtaddr:sym<reg>          { '[' <arm_reg> ']' <!before <comma> >
+                                        {
+                                          make (0x01000000 +| $/<arm_reg>.made +< 16;);
+                                        }
+                                      }
+  regex arm_sdtaddr:sym<preimm>       { '[' <arm_reg> <comma> '#' <expression> ']' ('!'?)
+                                        {
+                                          my $offset = $/<expression>.made;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          my $postbyte = 0x03000000;
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                          } else {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>.made +< 16;
+                                          $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
+                                          make ($postbyte);
+                                        }
+                                      }
+  regex arm_sdtaddr:sym<preind>       { '[' <arm_reg> <comma> <plusminus> <arm_reg> ( <comma> <arm_shift> )? ']' ('!'?)
+                                        {
+                                          my $postbyte = 0x03000090;
+                                          if ($/<plusminus>.made > 0) {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= 1 +< 21 if $/[0] eq '!';
+                                          $postbyte +|= $/<arm_reg>[0].made +< 16;
+                                          $postbyte +|= $/<arm_reg>[1].made;
+                                          make ($postbyte);
+                                        }
+                                      }
+  regex arm_sdtaddr:sym<postimm>      { '[' <arm_reg> ']' <comma> '#' <expression>
+                                        {
+                                          my $offset = $/<expression>.made;
+                                      # TODO Check for offset more than 8 bits either direction
+                                          my $postbyte = 0x00000000;
+                                          if ($offset < 0) {
+                                            $offset = -$offset;
+                                          } else {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>.made +< 16;
+                                          $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
+                                          make ($postbyte);
+                                        }
+                                      }
+  regex arm_sdtaddr:sym<postind>      { '[' <arm_reg> ']' <comma>  <plusminus> <arm_reg> ( <comma> <arm_shift> )?
+                                        {
+                                          my $postbyte = 0x00000000;
+                                          if ($/<plusminus>.made > 0) {
+                                            $postbyte +|= 0x00800000;
+                                          }
+                                          $postbyte +|= $/<arm_reg>[0].made +< 16;
+                                          $postbyte +|= $/<arm_reg>[1].made;
+                                          make ($postbyte);
+                                        }
+                                      }
+  regex arm_sbh                       { < h sb sh >
+                                        {
+                                          my %arm_sbh = ('h' => 0xb0, 'sb' => 0xd0, 'sh' => 0xf0, '' => 0xb0);
+                                          make (%arm_sbh{~$/});
+                                        }
+                                      }
+  regex arm_t                         { 't'?                                                                                     }
+  regex instruction:sym<arm_inh>      { $<mnemonic>=@armfull_instr_inh  <arm_cond>               <.ws>
+                                        {
+                                          my $opcode = %instructions<armfull><inh><hash>{~$/<mnemonic>};
+                                          my $cond = $/<arm_cond>.made;
+                                          $opcode +|= $cond;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_mul>      { $<mnemonic>=@armfull_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>
+                                        {
+                                          my $opcode = %instructions<armfull><mul><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_setcond>.made +< 20;
+                                          $opcode +|= $/<arm_reg>[0].made +< 16;
+                                          $opcode +|= $/<arm_reg>[1].made;
+                                          $opcode +|= $/<arm_reg>[2].made +< 8;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_mla>      { $<mnemonic>=@armfull_instr_mla  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+                                        {
+                                          my $opcode = %instructions<armfull><mla><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_setcond>.made +< 20;
+                                          $opcode +|= $/<arm_reg>[0].made +< 16;
+                                          $opcode +|= $/<arm_reg>[1].made;
+                                          $opcode +|= $/<arm_reg>[2].made +< 8;
+                                          $opcode +|= $/<arm_reg>[3].made +< 12;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_mull>     { $<mnemonic>=@armfull_instr_mull <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+                                        {
+                                          my $opcode = %instructions<armfull><mull><hash>{~$/<mnemonic>};
+                                      # TODO: check for valid register combinations
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_setcond>.made +< 20;;
+                                          $opcode +|= $/<arm_reg>[0].made +< 12;
+                                          $opcode +|= $/<arm_reg>[1].made +< 16;
+                                          $opcode +|= $/<arm_reg>[2].made;
+                                          $opcode +|= $/<arm_reg>[3].made +< 8;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_sds>      { $<mnemonic>=@armfull_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']'
+                                        {
+                                          my $opcode = %instructions<armfull><sds><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_byte>.made +< 22;
+                                          $opcode +|= $/<arm_reg>[0].made +< 12;
+                                          $opcode +|= $/<arm_reg>[1].made;
+                                          $opcode +|= $/<arm_reg>[2].made +< 16;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_brx>      { $<mnemonic>=@armfull_instr_brx  <arm_cond>               <.ws> <arm_reg>
+                                        {
+                                          my $opcode = %instructions<armfull><brx><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_reg>.made;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_hdt>      { $<mnemonic>=@armfull_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>
+                                        {
+                                          my $opcode = %instructions<armfull><hdt><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_hdtaddr>.made;
+                                          $opcode +|= $/<arm_sbh>.made;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_sdt>      { $<mnemonic>=@armfull_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>
+                                        {
+                                          my $opcode = %instructions<armfull><sdt><hash>{~$/<mnemonic>};
+                                          $opcode +|= $/<arm_cond>.made;
+                                          $opcode +|= $/<arm_byte>.made +< 22;
+                                          $opcode +|= $/<arm_sdtaddr>.made;
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+  regex instruction:sym<arm_bdt>      { $<mnemonic>=@armfull_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')?
+                                        {
+                                        }
+                                      }
+
+}
+
+%instructionset<armfull> = Armfull.new();
+%instructionset<arm> = Armfull.new();
+
+grammar Thumb is Arm {
+  token thumb_width                  { [ '.' (<[nNwW]>) ]?
+                                       { if $/[0].defined {
+                                           if $/[0] ~~ /<[nN]>/ {
+                                             make 16;
+                                           } else {
+                                             make 32;
+                                           }
+                                         } else {
+                                           make 0;
+                                         }
+                                       }
+                                     }
+  token thumb_imm                    { '#' <expression>
+                                       {
+                                         make 0 if $/<expression>.made == 0; # the simplest case
+                                         make $/<expression> if $/<expression> +& 0xffffff00 == 0; # also easy (and makes the previous case superfluous!)
+                                         make (0x00001000 +| ($/<expression>.made +& 0x000000ff))
+                                           if (($/<expression> +& 0xff00ff00 == 0)
+                                           && (($/<expression>.made +&0x000000ff) == (($/<expression>.made +> 16) +& 0x000000ff)));
+                                         make (0x00002000 +| (($/<expression>.made +> 8) +& 0x000000ff))
+                                           if (($/<expression> +& 0x00ff00ff == 0)
+                                           && (($/<expression>.made +&0x0000ff00) == (($/<expression>.made +> 16) +& 0x0000ff00)));
+                                         make (0x00003000 +| ($/<expression>.made +& 0x000000ff))
+                                           if (($/<expression>.made +&0x000000ff) == (($/<expression>.made +>  8) +& 0x000000ff))
+                                           && (($/<expression>.made +&0x000000ff) == (($/<expression>.made +> 16) +& 0x000000ff))
+                                           && (($/<expression>.made +&0x000000ff) == (($/<expression>.made +> 24) +& 0x000000ff));
+                                         make 0x00004000 +| (($/<expression>.made +& 0x7f000000) +> 24) if $/<expression>.made +& 0x80ffffff == 0x80000000;
+                                         make 0x00004080 +| (($/<expression>.made +& 0x3f800000) +> 23) if $/<expression>.made +& 0xc07fffff == 0x40000000;
+                                         make 0x00005000 +| (($/<expression>.made +& 0x1fc00000) +> 22) if $/<expression>.made +& 0xe03fffff == 0x20000000;
+                                         make 0x00005080 +| (($/<expression>.made +& 0x0fe00000) +> 21) if $/<expression>.made +& 0xf01fffff == 0x10000000;
+                                         make 0x00006000 +| (($/<expression>.made +& 0x07f00000) +> 20) if $/<expression>.made +& 0xf80fffff == 0x08000000;
+                                         make 0x00006080 +| (($/<expression>.made +& 0x03f80000) +> 19) if $/<expression>.made +& 0xfc07ffff == 0x04000000;
+                                         make 0x00007000 +| (($/<expression>.made +& 0x01fc0000) +> 18) if $/<expression>.made +& 0xfe03ffff == 0x02000000;
+                                         make 0x00007080 +| (($/<expression>.made +& 0x00fe0000) +> 17) if $/<expression>.made +& 0xff01ffff == 0x01000000;
+                                         make 0x04000000 +| (($/<expression>.made +& 0x007f0000) +> 16) if $/<expression>.made +& 0xff80ffff == 0x00800000;
+                                         make 0x04000080 +| (($/<expression>.made +& 0x003f8000) +> 15) if $/<expression>.made +& 0xffc07fff == 0x00400000;
+                                         make 0x04001000 +| (($/<expression>.made +& 0x001fc000) +> 14) if $/<expression>.made +& 0xffe03fff == 0x00200000;
+                                         make 0x04001080 +| (($/<expression>.made +& 0x000fe000) +> 13) if $/<expression>.made +& 0xfff01fff == 0x00100000;
+                                         make 0x04002000 +| (($/<expression>.made +& 0x0007f000) +> 12) if $/<expression>.made +& 0xfff80fff == 0x00080000;
+                                         make 0x04002080 +| (($/<expression>.made +& 0x0003f800) +> 11) if $/<expression>.made +& 0xfffc07ff == 0x00040000;
+                                         make 0x04003000 +| (($/<expression>.made +& 0x0001fc00) +> 10) if $/<expression>.made +& 0xfffe03ff == 0x00020000;
+                                         make 0x04003080 +| (($/<expression>.made +& 0x0000fe00) +>  9) if $/<expression>.made +& 0xffff01ff == 0x00010000;
+                                         make 0x04004000 +| (($/<expression>.made +& 0x00007f00) +>  8) if $/<expression>.made +& 0xffff80ff == 0x00008000;
+                                         make 0x04004080 +| (($/<expression>.made +& 0x00003f80) +>  7) if $/<expression>.made +& 0xffffc07f == 0x00004000;
+                                         make 0x04005000 +| (($/<expression>.made +& 0x00001fc0) +>  6) if $/<expression>.made +& 0xffffe03f == 0x00002000;
+                                         make 0x04005080 +| (($/<expression>.made +& 0x00000fe0) +>  5) if $/<expression>.made +& 0xfffff01f == 0x00001000;
+                                         make 0x04006000 +| (($/<expression>.made +& 0x000007f0) +>  4) if $/<expression>.made +& 0xfffff80f == 0x00000800;
+                                         make 0x04006080 +| (($/<expression>.made +& 0x000003f8) +>  3) if $/<expression>.made +& 0xfffffc07 == 0x00000400;
+                                         make 0x04007000 +| (($/<expression>.made +& 0x000001fc) +>  2) if $/<expression>.made +& 0xfffffe03 == 0x00000200;
+                                         make 0x04007080 +| (($/<expression>.made +& 0x000000fe) +>  1) if $/<expression>.made +& 0xffffff01 == 0x00000100;
+### TODO Fail otherwise
+                                       }
+                                     }
+  regex instruction:sym<thumb_arimm> { $<mnemonic>=@thumb_instr_arimm <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> <thumb_imm>
+                                       {
+# Only legal for ARMv7-M processors
+                                         my $opcode = %instructions<thumb><arimm><hash>{~$/<mnemonic>};
+                                         my $src = $/<src>.made;
+                                         my $dest = $/<dest>.made // $src;
+                                         error_listing "Illegal register usage" if $src = 13 | 15 || $dest = 13 | 15;
+                                         $opcode +|= $dest +< 8;
+                                         $opcode +|= $src +< 16;
+                                         $opcode +|= $/<setcond>.made;
+                                         $opcode +|= $/<thumb_imm>.made;
+                                         my $ophigh = $opcode +>16 +& 0x0000ffff;
+                                         my $oplow  = $opcode      +& 0x0000ffff;
+                                         make ( ($ophigh, $oplow) );
+                                       }
+                                     }
+  regex arm_shift                    { # nothing { make 0}
+                                       | <comma> [ ( 'lsl' | 'lsr' | 'asr' | 'ror' ) ['#' <expression>]? ] { make $/<expression>.made +& 0x1f; } # TODO encode shift type
+                                       | <comma> 'rrx' { make 0x60; }
+                                     }
+  regex instruction:sym<thumb_arreg> { $<mnemonic>=@thumb_instr_arreg <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
+                                       {
+                                       }
+                                     }
+}
+
+%instructionset<thumb> = Thumb.new();
+
 class Assembler::Actions {
 
-# Generic actions
-
-  method localref($/) {
-    my $value;
-    my $def = 1; # assume backwards ref
-    my $index = +$/[0];
-    my $index2 = @local_pointer[$index];
-    if ~$/[1] eq 'f' {
-      ++$index2;
-      $def = 0;
-    }
-#say "In method local_ref: index is $index ($index2)";
-    if $index2 < 0 {
-      $value = 0; # Should be error
-    } else {
-      $value = @local_symbol[$index][$index2];
-    }
-    make mkexp($value, $def);
-  }
-  method number:sym<binary>($/)   { make :2(~$/); }
-  method number:sym<octal>($/)    { make :8(~$/); }
-  method number:sym<hex>($/)      { make :16(~$/); }
-  method number:sym<hex2>($/)     { make :16(~$/[0]); }
-  method number:sym<decimal>($/)  { make $/<plusminus>.ast * :10(~$/[0]); }
-  method term:sym<identifier>($/) {
-    my $sym = ~$/<identifier>;
-    my $lcsym = $sym.lc;
-    if %symbol{$lcsym}.defined {
-      my $val = %symbol{$sym.lc}<value>;
-      make mkexp($val, 1);
-    } else {
-      error_listing "*** Undefined symbol \"$sym\"";
-      make mkexp(0, 0);
-    }
-say "Found identifier $lcsym";
-  }
-  method term:sym<number>($/)     { make mkexp($/<number>.ast, 1); }
-  method term:sym<expression>($/) { make $/<expression>.ast; }
-  method term:sym<localref>($/)   { make $/<localref>.ast; }
-  method term:sym<pexpr>($/)      { make $/<expression>.ast; }
-  method term:sym<funcall>($/)    {
-    my $def = $/<expression>.ast<def>;
-    if $/<identifier>.lc eq 'low' {
-      make mkexp($/<expression>.ast<value> +& 0xff, $def);
-    }
-    if $/<identifier>.lc eq 'high' {
-      make mkexp( ($/<expression>.ast<value> +> 8) +& 0xff, $def);
-    }
-  }
-  method expression($/) {
-    my $value = $/<mulexpr>[0].ast<value>;
-    my $def   = $/<mulexpr>[0].ast<def>;
-    if ?$/<addoper> {
-      for 0 .. (+$<addoper> - 1) -> $index {
-	my $oper = ~$/<addoper>[$index];
-	if $oper ~~ '+' {
-	  $value += $/<mulexpr>[$index + 1].ast<value>;
-	} else {
-	  $value -= $/<mulexpr>[$index + 1].ast<value>;
-	}
-        $def &= $/<mulexpr>[$index + 1].ast<def>;
-      }
-    }
-    make mkexp($value, $def);
-  }
-  method mulexpr($/) {
-    my $value = +$/<term>[0].ast<value>;
-    my $def   = +$/<term>[0].ast<def>;
-    if ?$/<muloper> {
-      for 0 .. (+$/<muloper> - 1) -> $index {
-	my $oper = ~$/<muloper>[$index];
-	if $oper ~~ '*' {
-	  $value *= $/<term>[$index + 1].ast<value>;
-	} elsif $oper ~~ '/' {
-	  $value /= $/<term>[$index + 1].ast<value>;
-	} elsif $oper ~~ '%' {
-	  $value %= $/<term>[$index + 1].ast<value>;
-	} elsif $oper ~~ '<<' {
-	  $value +<= $/<term>[$index + 1].ast<value>;
-	} elsif $oper ~~ '>>' {
-	  $value +>= $/<term>[$index + 1].ast<value>;
-	} else {
-	  error_listing "Illegal operator";
-	}
-        $def &= $/<term>[$index + 1].ast<def>
-      }
-    }
-    make mkexp($value, $def);
-  }
-  method string:sym<singlequote>($/) { make ~$/[0]; }
-  method stringexpression($/) { make ~$/<string>.ast; }
-  method plusminus($/) { make $/ eq '-' ?? -1 !! 1; }
-
-  method bit($/) { ##### should be avr specific
-    my $val = $/<expression>.ast;
-    if 0 <= $val <= 7 {
-      make $val;
-    } else {
-     error_listing '*** Bit number out of range';
-     make 0;
-    }
-  }
-
-# AVR specific methods
-
-  method avr_reg($/) {
-    my  $reg = $/[0];
-    if $/[1].defined {
-      my $offset = $/[1];
-      $reg += $offset;
-    }
-    if ! (0 <= $reg <= 31) {
-      error_listing '*** Registers must be in range r0 to r31';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method avr_regpair($/) {
-    my $r1 = $/[0];
-    my $r2 = $/[1];
-    error_listing ('*** Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
-    make $r2;
-  }
-  method instruction:sym<avr_rr>($/) {
-    my $opcode = %instructions<avr><rr><hash>{~$/<mnemonic>};
-    my $r1 = +$/<avr_reg>[0].ast;
-    my $r2 = +$/<avr_reg>[1].ast;
-    $opcode +|= ($r1 +< 4) +& 0x1f0;
-    $opcode +|=  $r2       +& 0x0f;
-    $opcode +|= ($r2 +< 5) +& 0x200;
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_ww1>($/) {
-    my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
-    my $r1 = +$/<regpair>[0].ast;
-    my $r2 = +$/<regpair>[1].ast;
-    $opcode +|= ($r1 +< 3) +& 0x00f0;
-    $opcode +|= ($r2 +> 1) +& 0x000f;
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_ww2>($/) {
-    my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
-    my $r1 = +$/<avr_reg>[0].ast;
-    my $r2 = +$/<avr_reg>[1].ast;
-    $opcode +|= ($r1 +< 3) +& 0x00f0;
-    $opcode +|= ($r2 +> 1) +& 0x000f;
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_rr3>($/) {
-    my $opcode = %instructions<avr><rr3><hash>{~$/<mnemonic>};
-    my $r1 = +$/<avr_reg>[0].ast;
-    my $r2 = +$/<avr_reg>[1].ast;
-    if ( (16 <= $r1 < 24) && (16 <= $r2 < 24) ) {
-      $opcode +|= ($r1 +< 4) +& 0x0070;
-      $opcode +|=  $r2       +& 0x0007;
-    } else {
-      error_listing '*** Registers must be in range 16 to 23';
-    }
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_rr4>($/) {
-    my $opcode = %instructions<avr><rr4><hash>{~$/<mnemonic>};
-    my $r1 = +$/<avr_reg>[0].ast;
-    my $r2 = +$/<avr_reg>[1].ast;
-    if ( (16 <= $r1 < 32) && (16 <= $r2 < 32) ) {
-      $opcode +|= ($r1 +< 4) +& 0x00f0;
-      $opcode +|=  $r2       +& 0x000f;
-    } else {
-      error_listing '*** Registers must be in range 16 to 31';
-    }
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_r2>($/) {
-    my $opcode = %instructions<avr><r2><hash>{~$/<mnemonic>};
-    my $r1 = +$/<avr_reg>.ast;
-    $opcode +|= ($r1 +< 4) +& 0x1f0;
-    $opcode +|=  $r1       +& 0x0f;
-    $opcode +|= ($r1 +< 5) +& 0x200;
-    make( ($opcode,) ); # don't remove the comma!
-  }
-  method instruction:sym<avr_iw>($/) {
-    my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
-    my $reg = $/<regpair>.ast;
-    my $val = $/<expression>.ast<value>;
-    if ($reg < 24) || ($reg +& 1) {
-      error_listing('*** Register must be r25:r24, r27:r26, r29:r28 or r31:r30');
-      $reg = 24;
-    }
-    $opcode +|= ($reg +< 1) +& 0x0030;
-    $opcode +|=  $val       +& 0x000f;
-    $opcode +|= ($val +< 2) +& 0x00c0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_iw2>($/) {
-    my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    if ($reg < 24) || ($reg +& 1) {
-      error_listing('*** Register must be r24, r26, r28 or r30');
-      $reg = 24;
-    }
-    $opcode +|= ($reg +< 1) +& 0x0030;
-    $opcode +|=  $val       +& 0x000f;
-    $opcode +|= ($val +< 2) +& 0x00c0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_ir>($/) {
-    my $opcode = %instructions<avr><ir><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    if $reg < 16 {
-      error_listing('*** Register must be r16 - r31');
-      $reg = 16;
-    }
-    $opcode +|= ($reg +< 4) +& 0x00f0;
-    $opcode +|=  $val       +& 0x000f;
-    $opcode +|= ($val +< 4) +& 0x0f00;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_i6r>($/) {
-    my $opcode = %instructions<avr><i6r><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    if 0 <= $val <= 63 {
-      $opcode +|= ($reg +< 4) +& 0x01f0;
-      $opcode +|=  $val       +& 0x000f;
-      $opcode +|= ($val +< 4) +& 0x0f00;
-    } else {
-      error_listing '*** Location must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_out>($/) {
-    my $opcode = %instructions<avr><out><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    if 0 <= $val <= 63 {
-      $opcode +|= ($reg +< 4) +& 0x01f0;
-      $opcode +|=  $val       +& 0x000f;
-      $opcode +|= ($val +< 4) +& 0x0f00;
-    } else {
-      error_listing '*** Location must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_irc>($/) {
-    my $opcode = %instructions<avr><irc><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value> +^ 0xff;
-    if $reg < 16 {
-      error_listing('*** Register must be r16 - r31');
-      $reg = 16;
-    }
-    $opcode +|= ($reg +< 4) +& 0x00f0;
-    $opcode +|=  $val       +& 0x000f;
-    $opcode +|= ($val +< 4) +& 0x0f00;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_r>($/) {
-    my $opcode = %instructions<avr><r><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-# TODO -- what was this for?
-#    if ! %avr_instr_r_reg & (1 +< $reg) {
-#      error_listing "Invalid use of register $reg";
-#    }
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_inh>($/) {
-    my $opcode = %instructions<avr><inh><hash>{~$/<mnemonic>};
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_sreg>($/) {
-    my $opcode = %instructions<avr><sreg><hash>{~$/<mnemonic>};
-    my $bit = $/<avr_bit>.ast;
-    $opcode +|= ($bit +< 4) +& 0x0070;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_tbit>($/) {
-    my $opcode = %instructions<avr><tbit><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $bit = $/<avr_bit>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    $opcode +|=  $bit       +& 0x0007;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_brb>($/) {
-    my $opcode = %instructions<avr><brb><hash>{~$/<mnemonic>};
-    my $bit = $/<avr_bit>.ast;
-    my $target = $/<expression>.ast<value>;
-    my $offset = $target - $pc - 1;
-    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
-    $opcode +|= ($offset +< 3) +& 0x03f0;
-    $opcode +|=  $bit          +& 0x0007;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_branch>($/) {
-    my $opcode = %instructions<avr><branch><hash>{~$/<mnemonic>};
-    my $target = $/<expression>.ast<value>;
-    my $offset = $target - $pc - 1;
-    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
-    $opcode +|= ($offset +< 3) +& 0x03f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_lbranch>($/) {
-    my $opcode = %instructions<avr><lbranch><hash>{~$/<mnemonic>};
-    my $target = $/<expression>.ast<value>;
-    my $offset = $target - $pc - 1;
-    error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
-    $opcode +|= $offset +& 0x0fff;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_long>($/) {
-    my $opcode = %instructions<avr><long><hash>{~$/<mnemonic>};
-    my $target = $/<expression>.ast<value>;
-    $opcode +|= ($target +> 16) +& 0x0001;
-    $opcode +|= ($target +> 13) +& 0x01f0;
-    make ( ($opcode,($target +& 0xffff)) );
-  }
-  method instruction:sym<avr_lds>($/) {
-# TODO: Handle 7-bit address variant
-    my $opcode = %instructions<avr><lds><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $addr = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,($addr +& 0xffff)) );
-  }
-  method instruction:sym<avr_sts>($/) {
-# TODO: Handle 7-bit address variant
-    my $opcode = %instructions<avr><sts><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $addr = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,($addr +& 0xffff)) );
-  }
-  method instruction:sym<avr_bio>($/) {
-    my $opcode = %instructions<avr><bio><hash>{~$/<mnemonic>};
-    my $bit = $/<avr_bit>.ast;
-    my $reg = $/<expression>.ast<value>;
-    error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
-    $opcode +|=  $bit       +& 0x0007;
-    $opcode +|= ($reg +< 3) +& 0x00f8;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_i4>($/) {
-    my $opcode = %instructions<avr><i4><hash>{~$/<mnemonic>};
-    my $round = $/<expression>.ast<value>;
-    error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
-    $opcode +|= ($round +< 4) +& 0x00f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rx>($/) {
-    my $opcode = %instructions<avr><rx><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_xr>($/) {
-    my $opcode = %instructions<avr><xr><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rxplus>($/) {
-    my $opcode = %instructions<avr><rxplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_xrplus>($/) {
-    my $opcode = %instructions<avr><xrplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rxminus>($/) {
-    my $opcode = %instructions<avr><rxminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_xrminus>($/) {
-    my $opcode = %instructions<avr><xrminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_ry>($/) {
-    my $opcode = %instructions<avr><ry><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_yr>($/) {
-    my $opcode = %instructions<avr><yr><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_ryplus>($/) {
-    my $opcode = %instructions<avr><ryplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_yrplus>($/) {
-    my $opcode = %instructions<avr><yrplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_ryminus>($/) {
-    my $opcode = %instructions<avr><ryminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_yrminus>($/) {
-    my $opcode = %instructions<avr><yrminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_ryq>($/) {
-    my $opcode = %instructions<avr><ryq><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    if 0 <= $val <= 63 {
-      $opcode +|=  $val       +& 0x0007;
-      $opcode +|= ($val +< 7) +& 0x0c00;
-      $opcode +|= ($val +< 8) +& 0x1000;
-    } else {
-      error_listing '*** Offset must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_yrq>($/) {
-    my $opcode = %instructions<avr><yrq><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    if 0 <= $val <= 63 {
-      $opcode +|=  $val       +& 0x0007;
-      $opcode +|= ($val +< 7) +& 0x0c00;
-      $opcode +|= ($val +< 8) +& 0x1000;
-    } else {
-      error_listing '*** Offset must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rz>($/) {
-    my $opcode = %instructions<avr><rz><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_stzr>($/) {
-    my $opcode = %instructions<avr><stzr><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rzplus>($/) {
-    my $opcode = %instructions<avr><rzplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_zrplus>($/) {
-    my $opcode = %instructions<avr><zrplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rzminus>($/) {
-    my $opcode = %instructions<avr><rzminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_zrminus>($/) {
-    my $opcode = %instructions<avr><zrminus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_rzq>($/) {
-    my $opcode = %instructions<avr><rzq><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    if 0 <= $val <= 63 {
-      $opcode +|=  $val       +& 0x0007;
-      $opcode +|= ($val +< 7) +& 0x0c00;
-      $opcode +|= ($val +< 8) +& 0x1000;
-    } else {
-      error_listing '*** Offset must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_zrq>($/) {
-    my $opcode = %instructions<avr><zrq><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    my $val = $/<expression>.ast<value>;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    if 0 <= $val <= 63 {
-      $opcode +|=  $val       +& 0x0007;
-      $opcode +|= ($val +< 7) +& 0x0c00;
-      $opcode +|= ($val +< 8) +& 0x1000;
-    } else {
-      error_listing '*** Offset must be 0 to 63';
-    }
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_z>($/) {
-    my $opcode = %instructions<avr><z><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_zr>($/) {
-    my $opcode = %instructions<avr><zr><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_zplus>($/) {
-    my $opcode = %instructions<avr><zplus><hash>{~$/<mnemonic>};
-    my $reg = $/<avr_reg>.ast;
-    $opcode +|= ($reg +< 4) +& 0x01f0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<avr_noz>($/) {
-    my $opcode = %instructions<avr><noz><hash>{~$/<mnemonic>};
-    make ( ($opcode,) );
-  }
-
-# PIC-specific methods
-
-# PIC10
-  method pic10_f($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 31) {
-      error_listing '*** Registers must be in range 0 to 31';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method pic10_d($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 1) {
-      error_listing '*** D must be 0 or 1';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method pic10_bit($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 7) {
-      error_listing '*** bit number must be between 0 and 7';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method instruction:sym<pic10_inh>($/) {
-    my $opcode = %instructions<pic10><inh><hash>{~$/<mnemonic>};
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_byte>($/) {
-    my $opcode = %instructions<pic10><byte><hash>{~$/<mnemonic>};
-    $opcode +|= $/<pic10_f>.ast;
-    $opcode +|= $/<pic10_d>.ast +< 5;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_bytes>($/) {
-    my $opcode = %instructions<pic10><bytes><hash>{~$/<mnemonic>};
-    $opcode +|= $/<pic10_f>.ast;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_tris>($/) {
-    my $opcode = %instructions<pic10><tris><hash>{~$/<mnemonic>};
-    my $file = +$/<pic10_f>.ast;
-    if $file != 6 | 7 {
-      error_listing 'Register file for this instruction must be 6 or 7';
-      $file = 6;
-    }
-    $opcode +|= $file;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_bit>($/) {
-    my $opcode = %instructions<pic10><bit><hash>{~$/<mnemonic>};
-    $opcode +|= $/<pic10_f>.ast;
-    $opcode +|= $/<pic10_bit>.ast +< 5;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_lit>($/) {
-    my $opcode = %instructions<pic10><lit><hash>{~$/<mnemonic>};
-    $opcode +|= $/<expression>.ast<value> +& 0xff;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic10_goto>($/) {
-    my $opcode = %instructions<pic10><goto><hash>{~$/<mnemonic>};
-    $opcode +|= $/<expression>.ast<value> +& 0x1ff;
-    make ( ($opcode,) );
-  }
-
-# PIC18
-  method pic18_f($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 255) {
-      error_listing '*** Registers must be in range 0 to 255';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method pic18_d($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 1) {
-      error_listing '*** D must be 0 or 1';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method pic18_a($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 1) {
-      error_listing '*** A must be 0 or 1';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method pic18_bit($/) {
-    my  $reg = +$/;
-    if ! (0 <= $reg <= 7) {
-      error_listing '*** bit number must be between 0 and 7';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method instruction:sym<pic18_bytefda>($/) {
-    my $opcode = %instructions<pic18><bytefda><hash>{~$/<mnemonic>};
-    my $f = $/<pic18_f>.ast;
-    my $d = $/<pic18_d>.ast;
-    my $a = $/<pic18_a>.ast;
-    $opcode +|= $f;
-    $opcode +|= $a +< 8;
-    $opcode +|= $d +< 9;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_bytefa>($/) {
-    my $opcode = %instructions<pic18><bytefa><hash>{~$/<mnemonic>};
-    my $f = $/<pic18_f>.ast;
-    my $a = $/<pic18_a>.ast;
-    $opcode +|= $f;
-    $opcode +|= $a +< 8;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_byteff>($/) {
-    my $opcode = %instructions<pic18><byteff><hash>{~$/<mnemonic>};
-    my $fs = $/<expression>[0].ast<value> +& 0x0fff;
-    my $fd = $/<expression>[1].ast<value> +& 0x0fff;
-    $opcode +|= $fs;
-    make ( ($opcode, 0xf000 +| $fd) );
-  }
-  method instruction:sym<pic18_bitm>($/) {
-    my $opcode = %instructions<pic18><bit><hash>{~$/<mnemonic>};
-    my $f = $/<pic18_f>.ast;
-    my $b = $/<pic18_bit>.ast;
-    my $a = $/<pic18_a>.ast;
-    $opcode +|= $f;
-    $opcode +|= $a +< 8;
-    $opcode +|= $b +< 9;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_inh>($/) {
-    my $opcode = %instructions<pic18><inh><hash>{~$/<mnemonic>};
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_branch>($/) {
-    my $opcode = %instructions<pic18><branch><hash>{~$/<mnemonic>};
-    my $target = $/<expression>.ast<value>;
-    my $offset = $target - $pc - 1;
-    if ($offset < -128 || $offset > 127) {
-    }
-    $offset +&= 0xff;
-    $opcode +|= $offset;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_lbranch>($/) {
-    my $opcode = %instructions<pic18><lbranch><hash>{~$/<mnemonic>};
-    my $target = $/<expression>.ast<value>;
-    my $offset = $target - $pc - 1;
-    if ($offset < -1024 || $offset > 1023) {
-    }
-    $offset +&= 0x3ff;
-    $opcode +|= $offset;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_call>($/) {
-    my $opcode = %instructions<pic18><call><hash>{~$/<mnemonic>};
-    my $target = $/<expression>[0].ast<value>;
-    $target +&= 0x0fffff;
-    $opcode +|= $target +& 0x0fff;
-    $opcode +|= 0x0100 if defined $/<expression>[1] && $/<expression>[1].ast<value> != 0;
-    make ( ($opcode, 0xf000 + ($target +> 12)) );
-  }
-  method instruction:sym<pic18_ret>($/) {
-    my $opcode = %instructions<pic18><ret><hash>{~$/<mnemonic>};
-    $opcode +|= 0x0001 if defined $/<expression> && $/<expression>.ast<value> != 0;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<pic18_lit>($/) {
-    my $opcode = %instructions<pic18><lit><hash>{~$/<mnemonic>};
-    my $imm = $/<expression>.ast<value>;
-    $imm +&= 0xff;
-    make ( ($opcode +| $imm,) );
-  }
-  method instruction:sym<pic18_bsr>($/) {
-    my $opcode = %instructions<pic18><bsr><hash>{~$/<mnemonic>};
-    my $imm = $/<expression>.ast<value>;
-    $imm +&= 0x0f;
-    make ( ($opcode +| $imm,) );
-  }
-  method instruction:sym<pic18_tblrd>($/) {
-    my $opcode = %instructions<pic18><tblrd><hash>{~$/<mnemonic>};
-    my $type = ~$/[0];
-    $opcode +|= 0x0001 if $type eq '*+';
-    $opcode +|= 0x0002 if $type eq '*-';
-    $opcode +|= 0x0003 if $type eq '+*';
-    make ( ($opcode,) );
-  }
-
-# mc6809-specific methods 
-  method mc6809_acc($/) {
-    my  $acc = ~$/;
-    make $acc eq 'a' ?? 0 !! 1;
-  }
-  method mc6809_reg16($/) {
-    my  $acc = ~$/;
-    my %mc6809_reg16 = ('x' => 0, 'y' => 1, 'u' => 2, 's' => 3);
-    make %mc6809_reg16{$acc};
-  }
-  method mc6809_anyreg($/) {
-    my $reg = ~$/;
-    my %mc6809_anyreg = ('d' => 0, 'x' => 1, 'y' => 2, 'u' => 3, 's' => 4, 'pc' => 5, 'a' => 8, 'b' => 9, 'cc' => 10, 'dp' => 11);
-    make %mc6809_anyreg{$reg};
-  }
-  method mc6809_idx:sym<predec>($/) {
-    my $reg = $/<mc6809_reg16>.ast;
-    my $postinc = ~$/[0].chars;
-    my $postbyte = 0x84;
-    $postbyte = 0x82 if $postinc == 1;
-    $postbyte = 0x83 if $postinc == 2;
-    make ( ($postbyte +| ($reg +< 5), ));
-  }
-  method mc6809_idx:sym<postinc>($/) {
-    my $reg = $/<mc6809_reg16>.ast;
-    my $postinc = ~$/[0].chars;
-    my $postbyte = 0x84;
-    $postbyte = 0x80 if $postinc == 1;
-    $postbyte = 0x81 if $postinc == 2;
-    make ( ($postbyte +| ($reg +< 5), ));
-  }
-  method mc6809_idx:sym<pcrel>($/) {
-    my $target = $/<expression>.ast<value>;
-    my $def    = $/<expression>.ast<def>;
-    my $offset = $target - $pc; # fix for instruction length
-    # assume 16-bit offset for now
-    make ( (0x8d, $offset +> 8, $offset) );
-  }
-  method mc6809_idx:sym<off>($/) {
-    my $def = $/<expression>.ast<def>;
-    my $value = $/<expression>.ast<value>;
-    my $reg = $/<mc6809_reg16>.ast;
-    my $made = 0;
-    if $def {
-      if $value == 0 {
-        make ( (0x84 +| $reg +< 5, ));
-        $made = 1;
-      } elsif -16 <= $value <= 15 {
-        make ( (0x00 +| ($reg +< 5) +| $value +& 0x1f, ));
-        $made = 1;
-      } elsif -128 <= $value <= 127 {
-        my $postbyte = 0x88;
-        $postbyte +|= $reg +< 5;
-        make ( ( $postbyte, $value ) );
-        $made = 1;
-      }
-    } 
-    if ! $made {
-      make ( (0x89 +| ($reg +< 5), ($value +> 8), ($value +& 0xff)));
-    }
-  }
-  method instruction:sym<mc6809_inh>($/) {
-    my $opcode = %instructions<mc6809><inh><hash>{~$/<mnemonic>};
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff) );
-    } else {
-      make ( ($opcode,) );
-    }
-  }
-  method instruction:sym<mc6809_imm8>($/) {
-    my $opcode = %instructions<mc6809><imm8><hash>{~$/<mnemonic>};
-    my $imm = +$/<expression>.ast<value> +& 0xff;
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
-    } else {
-      make ( ($opcode, $imm) );
-    }
-  }
-  method instruction:sym<mc6809_imm16>($/) {
-    my $opcode = %instructions<mc6809><imm16><hash>{~$/<mnemonic>};
-    my $imm = +$/<expression>.ast<value> +& 0xffff;
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
-    } else {
-      make ( ($opcode, $imm +> 8, $imm +& 0xff) );
-    }
-  }
-  method instruction:sym<mc6809_br>($/) {
-    my $opcode = %instructions<mc6809><br><hash>{~$/<mnemonic>};
-    my $imm = +$/<expression>.ast<value> +& 0xffff;
-    my $offset = $imm - ($pc + 2);
-    if ($opcode > 0xff) {
-      --$offset;
-      make ( ($opcode +> 8, $opcode +& 0xff, $offset +& 0xff) );
-    } else {
-      make ( ($opcode, $offset +& 0xff) );
-    }
-  }
-  method instruction:sym<mc6809_lbr>($/) {
-    my $opcode = %instructions<mc6809><lbr><hash>{~$/<mnemonic>};
-    my $imm = +$/<expression>.ast<value> +& 0xffff;
-    my $offset = $imm - ($pc + 2);
-    if ($opcode > 0xff) {
-      --$offset;
-      make ( ($opcode +> 8, $opcode +& 0xff, ($offset +> 8) +& 0xff, $offset +& 0xff) );
-    } else {
-      make ( ($opcode, ($offset +> 8) +& 0xff, $offset +& 0xff) );
-    }
-  }
-  method instruction:sym<mc6809_ext>($/) {
-    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
-    my $imm = $/<expression>.ast<value> +& 0xffff;
-    my $def = $/<expression>.ast<def>;
-    if $def && ($imm +> 8) == %param<dp> {
-	# use direct addressing
-      $opcode +|= 0x10; # direct addressing mode
-      $opcode +&= 0x8f if $opcode +& 0xf0 == 0x40; # ugh -- so much for orthogonality
-      my $imm = +$/<expression>.ast<value> +& 0xff;
-      if ($opcode > 0xff) {
-        make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
-      } else {
-        make ( ($opcode, $imm) );
-      }
-    } else {
-      $opcode +|= 0x30; # extended addressing mode
-      if ($opcode > 0xff) {
-        make ( ($opcode +> 8, $opcode +& 0xff, $imm +> 8, $imm +& 0xff) );
-      } else {
-        make ( ($opcode, $imm +> 8, $imm +& 0xff) );
-      }
-    }
-  }
-  method instruction:sym<mc6809_dir>($/) {
-    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
-    $opcode +|= 0x10; # direct addressing mode
-    $opcode +&= 0x8f if $opcode +& 0xf0 == 0x40; # ugh -- so much for orthogonality
-    my $imm = +$/<expression>.ast<value> +& 0xff;
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, $imm) );
-    } else {
-      make ( ($opcode, $imm) );
-    }
-  }
-  method instruction:sym<mc6809_ind1>($/) {
-    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
-    $opcode +|= 0x20; # indexed addressing mode
-    my @postbytes = $/<mc6809_idx>.ast;
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
-    } else {
-      make ( ($opcode, @postbytes) );
-    }
-  }
-  method instruction:sym<mc6809_ind2>($/) {
-    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
-    $opcode +|= 0x20; # indexed addressing mode
-    my @postbytes = $/<mc6809_idx>.ast;
-    @postbytes[0] +|= 0x10; # set indirect bit -- TODO fix 5 bit offsets
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
-    } else {
-      make ( ($opcode, @postbytes) );
-    }
-  }
-  method instruction:sym<mc6809_ind3>($/) {
-    my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
-    $opcode +|= 0x20; # indexed addressing mode
-    if ($opcode > 0xff) {
-      make ( ($opcode +> 8, $opcode +& 0xff, 0x9f, +$/<expression>.ast<value> +> 8, +$/<expression>.ast<value> +& 0xff) );
-    } else {
-      make ( ($opcode, 0x9f, +$/<expression>.ast<value> +> 8, +$/<expression>.ast<value> +& 0xff) );
-    }
-  }
-  method instruction:sym<mc6809_tfr>($/) {
-    my $opcode = %instructions<mc6809><tfr><hash>{~$/<mnemonic>};
-    my $postbyte = ($/<mc6809_anyreg>[0].ast +< 4) +| $/<mc6809_anyreg>[1].ast;
-    make ( ($opcode, $postbyte) );
-  }
-  method instruction:sym<mc6809_psh>($/) {
-    my $opcode = %instructions<mc6809><psh><hash>{~$/<mnemonic>};
-    my $postbyte = 0;
-    for @($/<mc6809_anyreg>) -> $reg {
-      if $reg eq 'd' {
-        if $postbyte +& 0x06 {
-           error_listing "*** Register d conflicts with previous register specification";
-        }
-        $postbyte +|= 0x06;
-      }
-      if $reg eq 'x' {
-        if $postbyte +& 0x10 {
-           error_listing "*** Register x conflicts with previous register specification";
-        }
-        $postbyte +|= 0x10;
-      }
-      if $reg eq 'y' {
-        if $postbyte +& 0x20 {
-           error_listing "*** Register y conflicts with previous register specification";
-        }
-        $postbyte +|= 0x20;
-      }
-      if $reg eq 'u' | 's' {
-        if $postbyte +& 0x40 {
-           error_listing "*** Register u/s conflicts with previous register specification";
-        }
-        $postbyte +|= 0x40;
-      }
-      if $reg eq 'pc' {
-        if $postbyte +& 0x80 {
-           error_listing "*** Register pc conflicts with previous register specification";
-        }
-        $postbyte +|= 0x80;
-      }
-      if $reg eq 'a' {
-        if $postbyte +& 0x02 {
-           error_listing "*** Register a conflicts with previous register specification";
-        }
-        $postbyte +|= 0x02;
-      }
-      if $reg eq 'b' {
-        if $postbyte +& 0x04 {
-           error_listing "*** Register b conflicts with previous register specification";
-        }
-        $postbyte +|= 0x04;
-      }
-      if $reg eq 'cc' {
-        if $postbyte +& 0x01 {
-           error_listing "*** Register cc conflicts with previous register specification";
-        }
-        $postbyte +|= 0x01;
-      }
-      if $reg eq 'dp' {
-        if $postbyte +& 0x08 {
-           error_listing "*** Register dp conflicts with previous register specification";
-        }
-        $postbyte +|= 0x08;
-      }
-    }
-    make ( ($opcode, $postbyte) );
-  }
-
-# ARM specific methods
-
-  method arm_reg($/) {
-    my $reg = +$/[0];
-    if $/[1].defined {
-      $reg += $/[1];
-    }
-    if ! (0 <= $reg <= 15) {
-      error_listing '*** Registers must be in range r0 to r15';
-      $reg = 0;
-    }
-    make $reg;
-  }
-  method arm_rrange($/) {
-say $/;
-    my $regs = 0;
-    my $start = +$/<arm_reg>[0].ast;
-    my $end   = ($/<arm_reg>[1].defined) ?? +$/<arm_reg>[1].ast !! $start;
-    for $start..$end -> $r {
-      $regs +|= 1 +< $r;
-    }
-say "rrange: $regs";
-    make ($regs);
-  }
-  method arm_rlist($/) {
-say $/;
-    my $regs = 0;
-    for @($/<arm_reg>) -> $r {
-say "rlist adding $r.ast";
-      $regs +|= $r.ast;
-    }
-say "rlist: $regs";
-    make ($regs);
-  }
-  method arm_cond($/) {
-    my %arm_cond = ('eq' => 0, 'ne' => 1, 'cs' => 2, 'cc' => 3, 'mi' => 4, 'pl' => 5, 'vs' => 6, 'vc' => 7, 'hi' => 8, 'ls' => 9, 'ge' => 10, 'lt' => 11, 'gt' => 12, 'le' => 13, 'al' => 14, '' => 14);
-    my $cond = 14; # default to "always"
-    $cond = %arm_cond{~$/} if ~$/.defined;
-    make ($cond +<= 28); # shift to where the instruction will use it
-  }
-  method arm_setcond($/) {
-    my $setcond = (~$/ eq 's') ?? 0x01 !! 0x00;
-    make ($setcond);
-  }
-  method arm_byte($/) {
-    my $byte    = (~$/ eq 'b') ?? 0x01 !! 0x00;
-    make ($byte);
-  }
-  method arm_sbh($/) {
-    my %arm_sbh = ('h' => 0xb0, 'sb' => 0xd0, 'sh' => 0xf0, '' => 0xb0);
-    make (%arm_sbh{~$/});
-  }
-  method instruction:sym<arm_inh>($/) {
-    my $opcode = %instructions<arm><inh><hash>{~$/<mnemonic>};
-    my $cond = $/<arm_cond>.ast;
-    $opcode +|= $cond;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<arm_mul>($/) {
-    my $opcode = %instructions<arm><mul><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_setcond>.ast +< 20;
-    $opcode +|= $/<arm_reg>[0].ast +< 16;
-    $opcode +|= $/<arm_reg>[1].ast;
-    $opcode +|= $/<arm_reg>[2].ast +< 8;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<arm_mla>($/) {
-    my $opcode = %instructions<arm><mla><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_setcond>.ast +< 20;
-    $opcode +|= $/<arm_reg>[0].ast +< 16;
-    $opcode +|= $/<arm_reg>[1].ast;
-    $opcode +|= $/<arm_reg>[2].ast +< 8;
-    $opcode +|= $/<arm_reg>[3].ast +< 12;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<arm_mull>($/) {
-    my $opcode = %instructions<arm><mull><hash>{~$/<mnemonic>};
-# TODO: check for valid register combinations
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_setcond>.ast +< 20;;
-    $opcode +|= $/<arm_reg>[0].ast +< 12;
-    $opcode +|= $/<arm_reg>[1].ast +< 16;
-    $opcode +|= $/<arm_reg>[2].ast;
-    $opcode +|= $/<arm_reg>[3].ast +< 8;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<arm_sds>($/) {
-    my $opcode = %instructions<arm><sds><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_byte>.ast +< 22;
-    $opcode +|= $/<arm_reg>[0].ast +< 12;
-    $opcode +|= $/<arm_reg>[1].ast;
-    $opcode +|= $/<arm_reg>[2].ast +< 16;
-    make ( ($opcode,) );
-  }
-  method instruction:sym<arm_brx>($/) {
-    my $opcode = %instructions<arm><brx><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_reg>.ast;
-    make ( ($opcode,) );
-  }
-  method arm_hdtaddr:sym<expr>($/) {
-    my $offset = $/<expression>.ast - $pc - 8;
-# TODO Check for offset more than 8 bits either direction
-    if ($offset < 0) {
-      $offset = -$offset;
-      make (0x01cf0090 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-    } else {
-      make (0x014f0090 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-    }
-  }
-  method arm_hdtaddr:sym<reg>($/) {
-    make (0x01400090 +| $/<arm_reg>.ast +< 16;);
-  }
-  method arm_hdtaddr:sym<preimm>($/) {
-    my $offset = $/<expression>.ast;
-# TODO Check for offset more than 8 bits either direction
-    my $postbyte = 0x01400090;
-    if ($offset < 0) {
-      $offset = -$offset;
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>.ast +< 16;
-    make ($postbyte +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-  }
-  method arm_hdtaddr:sym<preind>($/) {
-    my $postbyte = 0x01000090;
-    if ($/<plusminus>.ast > 0) {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= 1 +< 21 if $/[0] eq '!';
-    $postbyte +|= $/<arm_reg>[0].ast +< 16;
-    $postbyte +|= $/<arm_reg>[1].ast;
-    make ($postbyte);
-  }
-  method arm_hdtaddr:sym<postimm>($/) {
-    my $offset = $/<expression>.ast;
-# TODO Check for offset more than 8 bits either direction
-    my $postbyte = 0x01400090;
-    if ($offset < 0) {
-      $offset = -$offset;
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>.ast +< 16;
-    make ($postbyte +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-  }
-  method arm_hdtaddr:sym<postind>($/) {
-    my $postbyte = 0x00000090;
-    if ($/<plusminus>.ast > 0) {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>[0].ast +< 16;
-    $postbyte +|= $/<arm_reg>[1].ast;
-    make ($postbyte);
-  }
-  method instruction:sym<arm_hdt>($/) {
-    my $opcode = %instructions<arm><hdt><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_hdtaddr>.ast;
-    $opcode +|= $/<arm_sbh>.ast;
-    make ( ($opcode,) );
-  }
-  method arm_sdtaddr:sym<expr>($/) {
-    my $offset = $/<expression>.ast - $pc - 8;
-# TODO Check for offset more than 8 bits either direction
-    if ($offset < 0) {
-      $offset = -$offset;
-      make (0x01800000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-    } else {
-      make (0x01000000 +| (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f));
-    }
-  }
-  method arm_sdtaddr:sym<reg>($/) {
-    make (0x01000000 +| $/<arm_reg>.ast +< 16;);
-  }
-  method arm_sdtaddr:sym<preimm>($/) {
-    my $offset = $/<expression>.ast;
-# TODO Check for offset more than 8 bits either direction
-    my $postbyte = 0x03000000;
-    if ($offset < 0) {
-      $offset = -$offset;
-    } else {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>.ast +< 16;
-    $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
-    make ($postbyte);
-  }
-  method arm_sdtaddr:sym<preind>($/) {
-    my $postbyte = 0x03000090;
-    if ($/<plusminus>.ast > 0) {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= 1 +< 21 if $/[0] eq '!';
-    $postbyte +|= $/<arm_reg>[0].ast +< 16;
-    $postbyte +|= $/<arm_reg>[1].ast;
-    make ($postbyte);
-  }
-  method arm_sdtaddr:sym<postimm>($/) {
-    my $offset = $/<expression>.ast;
-# TODO Check for offset more than 8 bits either direction
-    my $postbyte = 0x00000000;
-    if ($offset < 0) {
-      $offset = -$offset;
-    } else {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>.ast +< 16;
-    $postbyte +|= (($offset +< 4) +& 0x0f00) +| ($offset +& 0x000f);
-    make ($postbyte);
-  }
-  method arm_sdtaddr:sym<postind>($/) {
-    my $postbyte = 0x00000000;
-    if ($/<plusminus>.ast > 0) {
-      $postbyte +|= 0x00800000;
-    }
-    $postbyte +|= $/<arm_reg>[0].ast +< 16;
-    $postbyte +|= $/<arm_reg>[1].ast;
-    make ($postbyte);
-  }
-  method instruction:sym<arm_sdt>($/) {
-    my $opcode = %instructions<arm><sdt><hash>{~$/<mnemonic>};
-    $opcode +|= $/<arm_cond>.ast;
-    $opcode +|= $/<arm_byte>.ast +< 22;
-    $opcode +|= $/<arm_sdtaddr>.ast;
-    make ( ($opcode,) );
-  }
 
 }
 
@@ -1647,9 +1852,12 @@ get_next_line {
       return (Str, Str, Str, Str);
     }
     if $current_macro_def {
-      if $line ~~ m/^<ws>\.endm<wb>/ {
+#say "Defining macro $current_macro_def: $line";
+      if $line ~~ /^<ws>\.endm<wb>/ {
+#say "Found endm";
 	$current_macro_def = '';
       } else {
+#say "Adding line to macro";
 	%macro{$current_macro_def}.push($line);
       }
       simple_listing($line);
@@ -1678,7 +1886,7 @@ get_next_line {
 	my $m = Assembler.subparse($expr,
 				:actions(Assembler::Actions),
 				:rule(<expression>));
-	if ?+$m.ast<value> {
+	if ?+$m.made<value> {
 	  ++$truedepth;
 	}
       }
@@ -1907,15 +2115,15 @@ my %constantsize = '.db' => 1,
   my $args = $rest;
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
+			  :rule(<id>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
   $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
-  my $value = +$m.ast<value>;
+  my $value = +$m.made<value>;
   format_listing(-1, '', $label, $opcode, $rest);
-  assign_symbol($symbol, +$m.ast, $pass);
+  assign_symbol($symbol, +$m.made, $pass);
 };
 
 %directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
@@ -1924,13 +2132,13 @@ my %constantsize = '.db' => 1,
   chomp $args;
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
+			  :rule(<id>));
   my $symbol = ~$m[0];
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws> \= <ws> //;
   $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
-		       :rule(<identifier>));
+		       :rule(<id>));
   my $value = ~$m[0];
   simple_listing ".def $symbol = $value";
   %define{$symbol} = $value;
@@ -1941,9 +2149,7 @@ say $rest;
   my $args = $rest;
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
-# my $m = $args ~~ / <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> /;
-say $m.perl;
+			  :rule(<id>));
   my $param = ~$m[0];
 say $param;
   $args = $args.substr(+$m.to); # remove identifier
@@ -1951,7 +2157,7 @@ say $param;
   $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
-  my $value = +$m.ast<value>;
+  my $value = +$m.made<value>;
   simple_listing ".param $param = $value";
   %param{$param} = $value;
 };
@@ -1968,7 +2174,7 @@ say $param;
 			    :actions(Assembler::Actions),
 			    :rule(<expression>));
     if ?$m {
-      my $value = $m.ast<value>;
+      my $value = $m.made<value>;
       format_listing($pc, sprintf($format, +$value), $label, $opcode, $rest);
       putword($pc*2, $value); # FIX
       if ($size == 4) {
@@ -2004,13 +2210,13 @@ say $param;
   my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<expression>));
-  $pc = +$m.ast<value>;
+  $pc = +$m.made<value>;
 };
 
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
+			  :rule(<id>));
   my $arg = ~$m[0];
   if ! %memspace{$arg}.defined {
     %memspace{$arg} = {};
@@ -2030,14 +2236,14 @@ say $param;
   my $args = $rest;
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
+			  :rule(<id>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
   $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   if ?$m {
-    my $value = +$m.ast<value>;
+    my $value = +$m.made<value>;
     format_listing(-1, '', $label, $opcode, $rest);
     @memspace[0]{$symbol} = $value;
   } else {
@@ -2045,7 +2251,7 @@ say $param;
   		       :actions(Assembler::Actions),
   		       :rule(<stringexpression>));
     if ?$m {
-      my $value = ~$m.ast;
+      my $value = ~$m.made;
       format_listing -1, '', $label, $opcode, $rest;
       @memspace[0]{$symbol} = $value;
     } else {
@@ -2070,7 +2276,7 @@ say $param;
   my $args = $rest;
   my $m = Assembler.subparse($args,
                           :actions(Assembler::Actions),
-                          :rule(<identifier>));
+                          :rule(<id>));
   if ?$m {
     $isa = ~$m[0];
   } else {
@@ -2085,30 +2291,38 @@ say $param;
   my $args = $rest;
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
-			  :rule(<identifier>));
+			  :rule(<id>));
   my $instr_type = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.subparse($args,
                        :actions(Assembler::Actions),
-		       :rule(<identifier>));
+		       :rule(<id>));
   my $opc = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.subparse($args,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
-  my $value = +$m.ast<value>;
+  my $value = +$m.made<value>;
   format_listing(-1, '', $label, $opcode, $rest);
-#say ".instruction: $isa $instr_type $opc $value";
   %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
 };
 
+# .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  #say %instructions;
-  for %instructions{$isa}.keys {
-    my $arrayname = %instructions{$isa}{$_}<array>;
-    EVAL "\@$arrayname = <%instructions{$isa}{$_}.keys>";
+  for %instructions{$isa}.keys -> $key {
+    @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
   }
+  $instructionset = %instructionset{$isa};
+}
 
+# .arch -- assemble instructions for this architecture -- can change on the fly
+%directive<.arch> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+  my $m = Assembler.subparse($rest,
+			  :actions(Assembler::Actions),
+			  :rule(<id>));
+  my $isa = ~$m[0];
+say "Changing to $isa instruction set";
+  $instructionset = %instructionset{$isa};
 }
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
@@ -2116,11 +2330,11 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $code = '';
   my $instruction_length = 0;
   if $opcode {
-    my $m = Assembler.subparse("$opcode $rest ",
+    my $m = $instructionset.subparse("$opcode $rest ",
 			    :actions(Assembler::Actions),
 			    :rule(<instruction>));
     if $m {
-      $words = $m.ast;
+      $words = $m.made;
       my $nybbles = ((@memspace[0]<width> + 3) / 4);
       my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
 #say $words.perl;
@@ -2227,7 +2441,7 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
+  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

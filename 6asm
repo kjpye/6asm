@@ -40,115 +40,14 @@ sub make_hash(Str $isa, Str $instr) {
   %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
 }
 
-# Variables required for AVR
-
-my @avr_instr_inh;      make_hash('avr', 'inh');
-my @avr_instr_rr;       make_hash('avr', 'rr');
-my @avr_instr_ww;       make_hash('avr', 'ww');
-my @avr_instr_rr3;      make_hash('avr', 'rr3');
-my @avr_instr_rr4;      make_hash('avr', 'rr4');
-my @avr_instr_r2;       make_hash('avr', 'r2');
-my @avr_instr_r;        make_hash('avr', 'r');
-my @avr_instr_r_reg;    make_hash('avr', 'r_reg');
-my @avr_instr_iw;       make_hash('avr', 'iw');
-my @avr_instr_ir;       make_hash('avr', 'ir');
-my @avr_instr_i6r;      make_hash('avr', 'i6r');
-my @avr_instr_out;      make_hash('avr', 'out');
-my @avr_instr_irc;      make_hash('avr', 'irc');
-my @avr_instr_sreg;     make_hash('avr', 'sreg');
-my @avr_instr_tbit;     make_hash('avr', 'tbit');
-my @avr_instr_brb;      make_hash('avr', 'brb');
-my @avr_instr_branch;   make_hash('avr', 'branch');
-my @avr_instr_lbranch;  make_hash('avr', 'lbranch');
-my @avr_instr_long;     make_hash('avr', 'long');
-my @avr_instr_lds;      make_hash('avr', 'lds');
-my @avr_instr_sts;      make_hash('avr', 'sts');
-my @avr_instr_bio;      make_hash('avr', 'bio');
-my @avr_instr_i4;       make_hash('avr', 'i4');
-my @avr_instr_rx;       make_hash('avr', 'rx');
-my @avr_instr_xr;       make_hash('avr', 'xr');
-my @avr_instr_rxplus;   make_hash('avr', 'rxplus');
-my @avr_instr_xrplus;   make_hash('avr', 'xrplus');
-my @avr_instr_rxminus;  make_hash('avr', 'rxminus');
-my @avr_instr_xrminus;  make_hash('avr', 'xrminus');
-my @avr_instr_ry;       make_hash('avr', 'ry');
-my @avr_instr_yr;       make_hash('avr', 'yr');
-my @avr_instr_ryplus;   make_hash('avr', 'ryplus');
-my @avr_instr_yrplus;   make_hash('avr', 'yrplus');
-my @avr_instr_ryminus;  make_hash('avr', 'ryminus');
-my @avr_instr_yrminus;  make_hash('avr', 'yrminus');
-my @avr_instr_ryq;      make_hash('avr', 'ryq');
-my @avr_instr_yrq;      make_hash('avr', 'yrq');
-my @avr_instr_rz;       make_hash('avr', 'rz');
-my @avr_instr_stzr;     make_hash('avr', 'stzr');
-my @avr_instr_rzplus;   make_hash('avr', 'rzplus');
-my @avr_instr_zrplus;   make_hash('avr', 'zrplus');
-my @avr_instr_rzminus;  make_hash('avr', 'rzminus');
-my @avr_instr_zrminus;  make_hash('avr', 'zrminus');
-my @avr_instr_rzq;      make_hash('avr', 'rzq');
-my @avr_instr_zrq;      make_hash('avr', 'zrq');
-my @avr_instr_z;        make_hash('avr', 'z');
-my @avr_instr_zr;       make_hash('avr', 'zr');
-my @avr_instr_zplus;    make_hash('avr', 'zplus');
-my @avr_instr_noz;      make_hash('avr', 'noz');
-
-# Variables required for PIC
-
-my @pic10_instr_inh;      make_hash('pic10', 'inh');
-my @pic10_instr_byte;     make_hash('pic10', 'byte');
-my @pic10_instr_bytes;    make_hash('pic10', 'bytes');
-my @pic10_instr_bit;      make_hash('pic10', 'bit');
-my @pic10_instr_lit;      make_hash('pic10', 'lit');
-my @pic10_instr_goto;     make_hash('pic10', 'goto');
-my @pic10_instr_tris;     make_hash('pic10', 'tris');
-
-my @pic18_instr_inh;      make_hash('pic18', 'inh');
-my @pic18_instr_bytefda;  make_hash('pic18', 'bytefda');
-my @pic18_instr_bytefa;   make_hash('pic18', 'bytefa');
-my @pic18_instr_byteff;   make_hash('pic18', 'byteff');
-my @pic18_instr_bit;      make_hash('pic18', 'bit');
-my @pic18_instr_branch;   make_hash('pic18', 'branch');
-my @pic18_instr_lbranch;  make_hash('pic18', 'lbranch');
-my @pic18_instr_call;     make_hash('pic18', 'call');
-my @pic18_instr_ret;      make_hash('pic18', 'ret');
-my @pic18_instr_lit;      make_hash('pic18', 'lit');
-my @pic18_instr_bsr;      make_hash('pic18', 'bsr');
-my @pic18_instr_tblrd;    make_hash('pic18', 'tblrd');
-
-# Variables required for mc6809
-
-my @mc6809_instr_inh;   make_hash('mc6809', 'inh');
-my @mc6809_instr_imm8;  make_hash('mc6809', 'imm8');
-my @mc6809_instr_imm16; make_hash('mc6809', 'imm16');
-my @mc6809_instr_die;   make_hash('mc6809', 'die');
-my @mc6809_instr_br;    make_hash('mc6809', 'br');
-my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
-my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
-my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
-
-# Variables required for standard ARM instruction set
-
-my @armfull_instr_inh;      make_hash('armfull', 'inh');
-my @armfull_instr_mul;      make_hash('armfull', 'mul');
-my @armfull_instr_mla;      make_hash('armfull', 'mla');
-my @armfull_instr_mull;     make_hash('armfull', 'mull');
-my @armfull_instr_sds;      make_hash('armfull', 'sds');
-my @armfull_instr_brx;      make_hash('armfull', 'brx');
-my @armfull_instr_hdt;      make_hash('armfull', 'hdt');
-my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
-my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
-
-# Variables required for ARM thumb instruction sets
-
-my @thumb_instr_inh;    make_hash('thumb', 'inh');
-my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
-my @thumb_instr_arreg;  make_hash('thumb', 'arreg');
-
 sub mkexp {
   my ($value, $def) = @_;
   #say "Making expression from $value, $def";
   return {value => $value, def => $def};
 }
+
+# The basic Assembler grammar
+#	This is inherited by the grammars for particular architectures
 
 grammar Assembler {
 
@@ -269,6 +168,57 @@ my %instructionset;
 %instructionset<assembler> = Assembler.new();
 my $instructionset = %instructionset<assembler>;
 
+# Variables required for AVR
+
+my @avr_instr_inh;      make_hash('avr', 'inh');
+my @avr_instr_rr;       make_hash('avr', 'rr');
+my @avr_instr_ww;       make_hash('avr', 'ww');
+my @avr_instr_rr3;      make_hash('avr', 'rr3');
+my @avr_instr_rr4;      make_hash('avr', 'rr4');
+my @avr_instr_r2;       make_hash('avr', 'r2');
+my @avr_instr_r;        make_hash('avr', 'r');
+my @avr_instr_r_reg;    make_hash('avr', 'r_reg');
+my @avr_instr_iw;       make_hash('avr', 'iw');
+my @avr_instr_ir;       make_hash('avr', 'ir');
+my @avr_instr_i6r;      make_hash('avr', 'i6r');
+my @avr_instr_out;      make_hash('avr', 'out');
+my @avr_instr_irc;      make_hash('avr', 'irc');
+my @avr_instr_sreg;     make_hash('avr', 'sreg');
+my @avr_instr_tbit;     make_hash('avr', 'tbit');
+my @avr_instr_brb;      make_hash('avr', 'brb');
+my @avr_instr_branch;   make_hash('avr', 'branch');
+my @avr_instr_lbranch;  make_hash('avr', 'lbranch');
+my @avr_instr_long;     make_hash('avr', 'long');
+my @avr_instr_lds;      make_hash('avr', 'lds');
+my @avr_instr_sts;      make_hash('avr', 'sts');
+my @avr_instr_bio;      make_hash('avr', 'bio');
+my @avr_instr_i4;       make_hash('avr', 'i4');
+my @avr_instr_rx;       make_hash('avr', 'rx');
+my @avr_instr_xr;       make_hash('avr', 'xr');
+my @avr_instr_rxplus;   make_hash('avr', 'rxplus');
+my @avr_instr_xrplus;   make_hash('avr', 'xrplus');
+my @avr_instr_rxminus;  make_hash('avr', 'rxminus');
+my @avr_instr_xrminus;  make_hash('avr', 'xrminus');
+my @avr_instr_ry;       make_hash('avr', 'ry');
+my @avr_instr_yr;       make_hash('avr', 'yr');
+my @avr_instr_ryplus;   make_hash('avr', 'ryplus');
+my @avr_instr_yrplus;   make_hash('avr', 'yrplus');
+my @avr_instr_ryminus;  make_hash('avr', 'ryminus');
+my @avr_instr_yrminus;  make_hash('avr', 'yrminus');
+my @avr_instr_ryq;      make_hash('avr', 'ryq');
+my @avr_instr_yrq;      make_hash('avr', 'yrq');
+my @avr_instr_rz;       make_hash('avr', 'rz');
+my @avr_instr_stzr;     make_hash('avr', 'stzr');
+my @avr_instr_rzplus;   make_hash('avr', 'rzplus');
+my @avr_instr_zrplus;   make_hash('avr', 'zrplus');
+my @avr_instr_rzminus;  make_hash('avr', 'rzminus');
+my @avr_instr_zrminus;  make_hash('avr', 'zrminus');
+my @avr_instr_rzq;      make_hash('avr', 'rzq');
+my @avr_instr_zrq;      make_hash('avr', 'zrq');
+my @avr_instr_z;        make_hash('avr', 'z');
+my @avr_instr_zr;       make_hash('avr', 'zr');
+my @avr_instr_zplus;    make_hash('avr', 'zplus');
+my @avr_instr_noz;      make_hash('avr', 'noz');
 # Rules for AVR
 
 grammar Avr is Assembler {
@@ -812,6 +762,28 @@ grammar Avr is Assembler {
 
 %instructionset<avr> = Avr.new();
 
+# Variables required for PIC
+
+my @pic10_instr_inh;      make_hash('pic10', 'inh');
+my @pic10_instr_byte;     make_hash('pic10', 'byte');
+my @pic10_instr_bytes;    make_hash('pic10', 'bytes');
+my @pic10_instr_bit;      make_hash('pic10', 'bit');
+my @pic10_instr_lit;      make_hash('pic10', 'lit');
+my @pic10_instr_goto;     make_hash('pic10', 'goto');
+my @pic10_instr_tris;     make_hash('pic10', 'tris');
+
+my @pic18_instr_inh;      make_hash('pic18', 'inh');
+my @pic18_instr_bytefda;  make_hash('pic18', 'bytefda');
+my @pic18_instr_bytefa;   make_hash('pic18', 'bytefa');
+my @pic18_instr_byteff;   make_hash('pic18', 'byteff');
+my @pic18_instr_bit;      make_hash('pic18', 'bit');
+my @pic18_instr_branch;   make_hash('pic18', 'branch');
+my @pic18_instr_lbranch;  make_hash('pic18', 'lbranch');
+my @pic18_instr_call;     make_hash('pic18', 'call');
+my @pic18_instr_ret;      make_hash('pic18', 'ret');
+my @pic18_instr_lit;      make_hash('pic18', 'lit');
+my @pic18_instr_bsr;      make_hash('pic18', 'bsr');
+my @pic18_instr_tblrd;    make_hash('pic18', 'tblrd');
 # Rules for PIC
 
 grammar Pic10 is Assembler {
@@ -1064,6 +1036,17 @@ grammar Pic18 is Assembler {
 }
 
 %instructionset<pic18> = Pic18.new();
+
+# Variables required for mc6809
+
+my @mc6809_instr_inh;   make_hash('mc6809', 'inh');
+my @mc6809_instr_imm8;  make_hash('mc6809', 'imm8');
+my @mc6809_instr_imm16; make_hash('mc6809', 'imm16');
+my @mc6809_instr_die;   make_hash('mc6809', 'die');
+my @mc6809_instr_br;    make_hash('mc6809', 'br');
+my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
+my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
+my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
 
 # Rules for mc6809
 
@@ -1351,7 +1334,67 @@ grammar Mc6809 is Assembler {
 
 %instructionset<mc6809> = Mc6809.new();
 
+# Variables required for 68hc11
+
+my @mc68hc11_instr_inh;   make_hash('mc68hc11', 'inh');
+my @mc68hc11_instr_br;    make_hash('mc68hc11', 'br');
+my @mc68hc11_instr_die;   make_hash('mc68hc11', 'die');
+
+grammar Mc68hc11 is Assembler {
+  token mc68hc11_acc                    { < a b >
+                                        {
+                                          my  $acc = ~$/;
+                                          make $acc eq 'a' ?? 0 !! 1;
+                                        }
+                                      }
+  token mc68hc11_acc16                  { 'd'                                                                                      }
+  token mc68hc11_reg16                  { < x y >
+                                        {
+                                          my  $acc = ~$/;
+                                          my %mc68hc11_reg16 = ('x' => 0, 'y' => 1);
+                                          make %mc68hc11_reg16{$acc};
+                                        }
+                                      }
+  proto regex mc6809_idx              { <*>                                                                                      }
+  regex mc6809_idx:sym<off>           { <expression> <comma> <mc68hc11_reg16>
+                                      }
+  regex instruction:sym<mc68hc11_inh> { $<mnemonic>=@mc68hc11_instr_inh
+                                        {
+                                          my $opcode = %instructions<mc68hc11><inh><hash>{~$/<mnemonic>};
+                                          if ($opcode > 0xff) {
+                                            make ( ($opcode +> 8, $opcode +& 0xff) );
+                                          } else {
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_br>    { $<mnemonic>=@mc68hc11_instr_br  <.ws> <expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><br><hash>{~$/<mnemonic>};
+                                          my $imm = +$/<expression>.made<value> +& 0xffff;
+                                          my $offset = $imm - ($pc + 2);
+                                          if ($opcode > 0xff) {
+                                            --$offset;
+                                            make ( ($opcode +> 8, $opcode +& 0xff, $offset +& 0xff) );
+                                          } else {
+                                            make ( ($opcode, $offset +& 0xff) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_dir> { $<mnemonic>=@mc68hc11_instr_die <.ws> '<' <expression>
+                                      }
+  regex instruction:sym<mc68hc11_ext> { $<mnemonic>=@mc68hc11_instr_die <.ws>     <expression>
+                                      }
+  regex instruction:sym<mc68hc11_ind> { $<mnemonic>=@mc68hc11_instr_die <.ws> <expression> <comma> <mc68hc11_reg16>
+                                      }
+}
+
+%instructionset<mc68hc11> = Mc68hc11.new();
+
 # Rules for ARM
+
+# Grammar Arm contains the stuff that is common to the full ARM instruction set and the thumb instruction sets
+#	It is inherited by the specific grammars
 
 grammar Arm is Assembler {
   token arm_reg                       { <[rR]> ( \d+ ) [ '+' (\d+) ]?
@@ -1408,6 +1451,18 @@ grammar Arm is Assembler {
                                         }
                                       }
 }
+
+# Variables required for standard ARM instruction set
+
+my @armfull_instr_inh;      make_hash('armfull', 'inh');
+my @armfull_instr_mul;      make_hash('armfull', 'mul');
+my @armfull_instr_mla;      make_hash('armfull', 'mla');
+my @armfull_instr_mull;     make_hash('armfull', 'mull');
+my @armfull_instr_sds;      make_hash('armfull', 'sds');
+my @armfull_instr_brx;      make_hash('armfull', 'brx');
+my @armfull_instr_hdt;      make_hash('armfull', 'hdt');
+my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
+my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
 
 grammar Armfull is Arm {
   proto regex arm_shift               { <*>                                                                                      }
@@ -1651,6 +1706,12 @@ grammar Armfull is Arm {
 %instructionset<armfull> = Armfull.new();
 %instructionset<arm> = Armfull.new();
 
+# Variables required for ARM thumb instruction sets
+
+my @thumb_instr_inh;    make_hash('thumb', 'inh');
+my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
+my @thumb_instr_arreg;  make_hash('thumb', 'arreg');
+
 grammar Thumb is Arm {
   token thumb_width                  { [ '.' (<[nNwW]>) ]?
                                        { if $/[0].defined {
@@ -1725,7 +1786,7 @@ grammar Thumb is Arm {
                                        | <comma> [ ( 'lsl' | 'lsr' | 'asr' | 'ror' ) ['#' <expression>]? ] { make $/<expression>.made +& 0x1f; } # TODO encode shift type
                                        | <comma> 'rrx' { make 0x60; }
                                      }
-  regex instruction:sym<thumb_arreg> { $<mnemonic>=@thumb_instr_arreg <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
+  regex instruction:sym<thumb_arreg> { $<mnemonic>=@thumb_instr_arreg <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
                                        {
                                        }
                                      }
@@ -1734,8 +1795,6 @@ grammar Thumb is Arm {
 %instructionset<thumb> = Thumb.new();
 
 class Assembler::Actions {
-
-
 }
 
 # Input routines
@@ -2329,7 +2388,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $instruction_length = 0;
   if $opcode {
     my $m = $instructionset.subparse("$opcode $rest ",
-			    :actions(Assembler::Actions),
+			    #:actions(Assembler::Actions),
 			    :rule(<instruction>));
     if $m {
       $words = $m.made;

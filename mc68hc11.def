@@ -1,0 +1,133 @@
+;	.nolist
+; Definitions for the MC68HC11 processor
+
+	.param codewidth = 11
+        .param pcwidth = 4
+
+	.pushmem ram
+	.defmem bottom = 0x0
+	.defmem top = 0xffff
+	.defmem width = 8
+	.defmem executable = 1
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 1
+	.defmem label = ''
+	.defmem pcwidth = 4
+	.popmem
+	
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+	.macro .setdp
+	.param dp = @0
+	.endm
+
+; setting default dp
+	.param dp = 0
+
+; instruction definitions
+ .isa mc68hc11
+ .instruction br  bcc  0x24
+ .instruction br  bcs  0x25
+ .instruction br  beq  0x27
+ .instruction br  bge  0x2c
+ .instruction br  bgt  0x2e
+ .instruction br  bhi  0x22
+ .instruction br  bhs  0x24
+ .instruction br  ble  0x2f
+ .instruction br  blo  0x25
+ .instruction br  bls  0x23
+ .instruction br  blt  0x2d
+ .instruction br  bmi  0x2b
+ .instruction br  bne  0x26
+ .instruction br  bpl  0x2a
+ .instruction br  bra  0x2d
+ .instruction br  brn  0x21
+ .instruction br  bsr  0x8d
+ .instruction br  bvc  0x2b
+ .instruction br  bvs  0x29
+ .instruction inh aba  0x1b
+ .instruction inh abx  0x3a
+ .instruction inh aby  0x183a
+ .instruction inh asla 0x48
+ .instruction inh aslb 0x58
+ .instruction inh asld 0x05
+ .instruction inh asra 0x47
+ .instruction inh asrb 0x57
+ .instruction inh cba  0x11
+ .instruction inh clc  0x0c
+ .instruction inh cli  0x0e
+ .instruction inh clra 0x4f
+ .instruction inh clrb 0x5f
+ .instruction inh clv  0x0a
+ .instruction inh coma 0x43
+ .instruction inh comb 0x53
+ .instruction inh daa  0x19
+ .instruction inh deca 0x4a
+ .instruction inh decb 0x5a
+ .instruction inh des  0x34
+ .instruction inh dex  0x09
+ .instruction inh dey  0x1809
+ .instruction inh fdiv 0x03
+ .instruction inh idiv 0x02
+ .instruction inh inca 0x4c
+ .instruction inh incb 0x5c
+ .instruction inh ins  0x31
+ .instruction inh inx  0x08
+ .instruction inh iny  0x1808
+ .instruction inh lsla 0x48
+ .instruction inh lslb 0x58
+ .instruction inh lsld 0x05
+ .instruction inh lsra 0x44
+ .instruction inh lsrb 0x54
+ .instruction inh lsrd 0x04
+ .instruction inh mul  0x3d
+ .instruction inh nega 0x40
+ .instruction inh negb 0x50
+ .instruction inh nop  0x01
+ .instruction inh psha 0x36
+ .instruction inh pshb 0x37
+ .instruction inh pshx 0x3c
+ .instruction inh pshy 0x183c
+ .instruction inh pula 0x32
+ .instruction inh pulb 0x33
+ .instruction inh pulx 0x38
+ .instruction inh puly 0x1838
+ .instruction inh rola 0x49
+ .instruction inh rolb 0x59
+ .instruction inh rora 0x46
+ .instruction inh rorb 0x56
+ .instruction inh rti  0x3b
+ .instruction inh rts  0x39
+ .instruction inh sba  0x10
+ .instruction inh sec  0x0d
+ .instruction inh sei  0x0f
+ .instruction inh sev  0x0b
+ .instruction inh stop 0xcf
+ .instruction inh swi  0x3f
+ .instruction inh tab  0x16
+ .instruction inh tap  0x06
+ .instruction inh tba  0x17
+ .instruction inh test 0x00
+ .instruction inh tpa  0x07
+ .instruction inh tsta 0x4d
+ .instruction inh tstb 0x5d
+ .instruction inh tsx  0x30
+ .instruction inh tsy  0x1830
+ .instruction inh txs  0x35
+ .instruction inh tys  0x1835
+ .instruction inh wai  0x3e
+ .instruction inh xgdx 0x8f
+ .instruction inh xgdy 0x188f
+ .assemble
+; IO register definitions
+
+;;        .set    portb ;; page 93 in data sheet
+
+;	.list

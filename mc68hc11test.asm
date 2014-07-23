@@ -8,22 +8,21 @@
 
  swi2
 
- anda #0x13
+ anda #$13
+# comment
  ldy  #123456
- lda  <0x34
+ ldaa  <0x34
 3
- lda 0x34
+ ldaa 0x34
  ldy 0x1234
- lsr <0x12
- lda ,s
- ldb 0,u
+ lsr 0x12
+ ldaa ,s
+ ldab 0,u
  aba
+ ldd 6,x
  ldd 6,y
  ldd 0x1234,u
- lda 123,x
- lda [0x1234]
- lda [23,y]
- lda 123,pcr
+ ldaa 123,x
  bra 3b
  lbra 3b
  lbhi 3b

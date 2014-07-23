@@ -2,6 +2,14 @@
 
 use v6;
 
+sub low (Int $val) {
+  return $val +& 0xff;
+}
+
+sub high (Int $val) {
+  return ($val +> 8) +& 0xff;
+}
+
 my %param = (codewidth => 9,
              pcwidth   => 8,
             );
@@ -53,7 +61,7 @@ grammar Assembler {
 
 # basic rules for expressions
 
-    token id                      { <wb> ( <[a..z A..Z _ $]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
+    token id                      { <wb> ( <[a..z A..Z _]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
     token identifier              { <id>
                                     {
 #say "Found identifier: ", $/;
@@ -95,6 +103,7 @@ grammar Assembler {
     token number:sym<octal>       { '0' <[oO]> <[0..7]>+            { make :8(~$/);                         } }
     token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+  { make :16(~$/);                        } }
     token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+) { make :16(~$/[0]);                     } }
+    token number:sym<pc>          {     '*'                         { make $pc;                             } }
     proto rule term               { <*>                                                                       }
     rule term:sym<localref>       { <localref>                      { make $/<localref>.made;                } }
     rule term:sym<number>         { <number>                        { make mkexp($/<number>.made, 1);        } }
@@ -1339,6 +1348,11 @@ grammar Mc6809 is Assembler {
 my @mc68hc11_instr_inh;   make_hash('mc68hc11', 'inh');
 my @mc68hc11_instr_br;    make_hash('mc68hc11', 'br');
 my @mc68hc11_instr_die;   make_hash('mc68hc11', 'die');
+my @mc68hc11_instr_imm8;  make_hash('mc68hc11', 'imm8');
+my @mc68hc11_instr_imm16; make_hash('mc68hc11', 'imm16');
+my @mc68hc11_instr_ei;    make_hash('mc68hc11', 'ei');
+my @mc68hc11_instr_bit;   make_hash('mc68hc11', 'bit');
+my @mc68hc11_instr_bbr;   make_hash('mc68hc11', 'bbr');
 
 grammar Mc68hc11 is Assembler {
   token mc68hc11_acc                    { < a b >
@@ -1348,23 +1362,20 @@ grammar Mc68hc11 is Assembler {
                                         }
                                       }
   token mc68hc11_acc16                  { 'd'                                                                                      }
-  token mc68hc11_reg16                  { < x y >
+  token mc68hc11_reg16                  { < x y X Y >
                                         {
                                           my  $acc = ~$/;
-                                          my %mc68hc11_reg16 = ('x' => 0, 'y' => 1);
-                                          make %mc68hc11_reg16{$acc};
+                                          my %mc68hc11_reg16 = ('x' => 0x20, 'y' => 0x1820);
+                                          make %mc68hc11_reg16{$acc.lc};
                                         }
-                                      }
-  proto regex mc6809_idx              { <*>                                                                                      }
-  regex mc6809_idx:sym<off>           { <expression> <comma> <mc68hc11_reg16>
                                       }
   regex instruction:sym<mc68hc11_inh> { $<mnemonic>=@mc68hc11_instr_inh
                                         {
                                           my $opcode = %instructions<mc68hc11><inh><hash>{~$/<mnemonic>};
                                           if ($opcode > 0xff) {
-                                            make ( ($opcode +> 8, $opcode +& 0xff) );
+                                            make ( (high($opcode), low($opcode)) );
                                           } else {
-                                            make ( ($opcode,) );
+                                            make ( (low($opcode),              ) );
                                           }
                                         }
                                       }
@@ -1375,17 +1386,143 @@ grammar Mc68hc11 is Assembler {
                                           my $offset = $imm - ($pc + 2);
                                           if ($opcode > 0xff) {
                                             --$offset;
-                                            make ( ($opcode +> 8, $opcode +& 0xff, $offset +& 0xff) );
+                                            make ( (high($opcode), low($opcode), low($offset)) );
                                           } else {
-                                            make ( ($opcode, $offset +& 0xff) );
+                                            make ( (               low($opcode), low($offset)) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_imm8> { $<mnemonic>=@mc68hc11_instr_imm8 <.ws> '#' <expression> <ws>
+                                        {
+                                          my $mnemonic = ~$/<mnemonic>;
+                                          my $opcode = %instructions<mc68hc11><imm8><hash>{$mnemonic};
+                                          my $imm = +$/<expression>.made<value>;
+                                          if $opcode > 0xff {
+                                            make ( (high($opcode), low($opcode), low($imm)) );
+                                          } else {
+                                            make ( (               low($opcode), low($imm)) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_imm16> { $<mnemonic>=@mc68hc11_instr_imm16 <.ws> '#' <expression> <ws>
+                                        {
+                                          my $mnemonic = ~$/<mnemonic>;
+                                          my $opcode = %instructions<mc68hc11><imm16><hash>{$mnemonic};
+                                          my $imm = +$/<expression>.made<value>;
+                                          if $opcode > 0xff {
+                                            make ( (high($opcode), low($opcode), high($imm), low($imm)) );
+                                          } else {
+                                            make ( (               low($opcode), high($imm), low($imm)) );
                                           }
                                         }
                                       }
   regex instruction:sym<mc68hc11_dir> { $<mnemonic>=@mc68hc11_instr_die <.ws> '<' <expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
+                                          my $target = $/<expression>.made<value>;
+                                          $opcode += 0x10;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), low($target)) );
+                                          } else {
+                                            make ( (               low($opcode), low($target)) );
+                                          }
+                                        }
                                       }
-  regex instruction:sym<mc68hc11_ext> { $<mnemonic>=@mc68hc11_instr_die <.ws>     <expression>
+  regex instruction:sym<mc68hc11_ext> { $<mnemonic>=@mc68hc11_instr_die <.ws>     <expression> <!before <comma> >
+                                        {
+                                          my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
+                                          my $target = $/<expression>.made<value>;
+                                          $opcode += 0x30;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), high($target), low($target)) );
+                                          } else {
+                                            make ( (               low($opcode), high($target), low($target)) );
+                                          }
+                                        }
                                       }
   regex instruction:sym<mc68hc11_ind> { $<mnemonic>=@mc68hc11_instr_die <.ws> <expression> <comma> <mc68hc11_reg16>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
+                                          my $index = $/<mc68hc11_reg16>.made;
+                                          my $offset = $/<expression>.made<value>;
+                                          $opcode += $index;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), low($offset)) );
+                                          } else {
+                                            make ( (               low($opcode), low($offset)) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_eiext> { $<mnemonic>=@mc68hc11_instr_ei <.ws>     <expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><ei><hash>{~$/<mnemonic>};
+                                          my $target = $/<expression>.made<value>;
+                                          $opcode += 0x30;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), high($target), low($target)) );
+                                          } else {
+                                            make ( (               low($opcode), high($target), low($target)) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_eiind> { $<mnemonic>=@mc68hc11_instr_ei <.ws> <expression> <comma> <mc68hc11_reg16>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><ei><hash>{~$/<mnemonic>};
+                                          my $index = $/<mc68hc11_reg16>.made;
+                                          my $offset = $/<expression>.made<value>;
+                                          $opcode += $index;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), low($offset)) );
+                                          } else {
+                                            make ( (               low($opcode), low($offset)) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_bitdir> { $<mnemonic>=@mc68hc11_instr_bit <.ws> <expression> <ws> $<mask>=<expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
+                                          my $mask = $/<mask>.made<value>;
+                                          my $addr = $/<expression>.made<value>;
+                                          $opcode += 0x00;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), low($addr), low($mask) ) );
+                                          } else {
+                                            make ( (               low($opcode), low($addr), low($mask) ) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_bitind> { $<mnemonic>=@mc68hc11_instr_bit <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <ws> $<mask>=<expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
+                                          my $index = $/<mc68hc11_reg16>.made;
+say $/<offset>.made;
+                                          my $offset = $/<offset>.made<value>;
+                                          my $mask = $/<mask>.made<value>;
+                                          $opcode += 0x08;
+                                          $opcode += $index;
+                                          if ($opcode > 0xff) {
+                                            make ( (high($opcode), low($opcode), low($offset), low($mask) ) );
+                                          } else {
+                                            make ( (               low($opcode), low($offset), low($mask) ) );
+                                          }
+                                        }
+                                      }
+  regex instruction:sym<mc68hc11_bbrind> { $<mnemonic>=@mc68hc11_instr_bit <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> $<mask>=<expression> $<target>=<expression>
+                                        {
+                                          my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
+                                          my $index = $/<mc68hc11_reg16>.made;
+                                          my $offset = $/<offset>.made<value>;
+                                          my $mask = $/<mask>.made<value>;
+                                          my $target = $/<target>.made<value> - ($pc + 4);
+                                          $opcode += 0x0c;
+                                          $opcode += $index;
+                                          if ($opcode > 0xff) {
+                                            $target -= 1; # allow for longer instruction
+                                            make ( (high($opcode), low($opcode), low($offset), low($mask), low($target)) );
+                                          } else {
+                                            make ( (               low($opcode), low($offset), low($mask), low($target) ) );
+                                          }
+                                        }
                                       }
 }
 
@@ -1922,7 +2059,7 @@ get_next_line {
       simple_listing($line);
       next;
     }
-    if $line ~~ m/^<ws>?[<[\#;]>.*]?$/ { # comments
+    if $line ~~ m/^<ws>?[<[\#;*]>.*]?$/ { # comments
       simple_listing($line);
       next;
     }
@@ -2130,7 +2267,7 @@ sub assign_symbol(Str $labelfield, $value, $pass) {
 # Here's where we define the assembler directives. They are ISA independent
 # Note that the code is a set of anonymous subroutines, stored in the %directive hash.
 
-my %constantsize = '.db' => 1,
+my %constantsize = '.db' => 1, 'fdb' => 1,
                    '.dw' => 2,
 		   '.dl' => 4;
 
@@ -2181,9 +2318,13 @@ my %constantsize = '.db' => 1,
 		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.made<value>;
+say ".set: $label $value";
   format_listing(-1, '', $label, $opcode, $rest);
-  assign_symbol($symbol, +$m.made, $pass);
+  assign_symbol($symbol, $value, $pass);
 };
+
+%directive<.equ> = %directive<.set>;
+%directive<equ> = %directive<.set>;
 
 %directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1; # not much point continuing; the name has already been substituted!
@@ -2219,8 +2360,6 @@ my %constantsize = '.db' => 1,
   %param{$param} = $value;
 };
 
-%directive<.equ> = %directive<.set>;
-
 %directive<.db> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $size = %constantsize{$opcode};
   my $format = sprintf("\%\%0\%dx", $size*2);
@@ -2250,8 +2389,8 @@ my %constantsize = '.db' => 1,
   }
 };
 
+%directive<fdb> = %directive<.db>;
 %directive<.dw> = %directive<.db>;
-
 %directive<.dl> = %directive<.db>;
 
 %directive<.end> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
@@ -2269,6 +2408,8 @@ my %constantsize = '.db' => 1,
 			  :rule(<expression>));
   $pc = +$m.made<value>;
 };
+
+%directive<org> = %directive<.org>;
 
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $m = Assembler.subparse($rest,
@@ -2394,7 +2535,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       $words = $m.made;
       my $nybbles = ((@memspace[0]<width> + 3) / 4);
       my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
-#say $words.perl;
+say $words.perl;
       for ^+$words -> $index {
         $code ~= sprintf($format, $words[$index]);
 	putword(($pc+$instruction_length)*2, $words[$index]);
@@ -2498,7 +2639,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

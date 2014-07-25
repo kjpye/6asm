@@ -138,7 +138,7 @@
  .instruction die cmpb 0xc1
  .instruction die cpd 0x1a83
  .instruction die cpx 0x8c
- .instruction die cpy 0x199c
+ .instruction die cpy 0x188c
  .instruction die eora 0x88
  .instruction die eorb 0xc8
  .instruction die jsr  0x8d
@@ -174,7 +174,7 @@
  .instruction imm8 cmpb 0xc1
  .instruction imm16 cpd 0x1a83
  .instruction imm16 cpx 0x8c
- .instruction imm16 cpy 0x199c
+ .instruction imm16 cpy 0x188c
  .instruction imm8 eora 0x88
  .instruction imm8 eorb 0xc8
  .instruction imm8 ldaa 0x86

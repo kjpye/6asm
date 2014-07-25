@@ -201,4 +201,6 @@
 
 ;;        .set    portb ;; page 93 in data sheet
 
+ .arch mc6809
+
 ;	.list

@@ -432,7 +432,7 @@ grammar Avr is Assembler {
                                          my $bit = $/<avr_bit>.made;
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+                                         error_listing "*** Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
                                          $opcode +|= ($offset +< 3) +& 0x03f0;
                                          $opcode +|=  $bit          +& 0x0007;
                                          make ( ($opcode,) );
@@ -443,7 +443,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><branch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 63 || $offset < -64;
+                                         error_listing "*** Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
                                          $opcode +|= ($offset +< 3) +& 0x03f0;
                                          make ( ($opcode,) );
                                        }
@@ -453,7 +453,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><lbranch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" if $offset > 2047 || $offset < -2048;
+                                         error_listing "*** Branch out of range (from $pc to $target)" unless -2048 <= $offset < 2048;
                                          $opcode +|= $offset +& 0x0fff;
                                          make ( ($opcode,) );
                                        }
@@ -492,7 +492,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><bio><hash>{~$/<mnemonic>};
                                          my $bit = $/<avr_bit>.made;
                                          my $reg = $/<expression>.made<value>;
-                                         error_listing '*** I/O register must be in range 0 to 31' if $reg < 0 || $reg >= 32;
+                                         error_listing '*** I/O register must be in range 0 to 31' unless 0 <= $reg < 32;
                                          $opcode +|=  $bit       +& 0x0007;
                                          $opcode +|= ($reg +< 3) +& 0x00f8;
                                          make ( ($opcode,) );
@@ -502,7 +502,7 @@ grammar Avr is Assembler {
                                        {
                                          my $opcode = %instructions<avr><i4><hash>{~$/<mnemonic>};
                                          my $round = $/<expression>.made<value>;
-                                         error_listing '*** Round must be in range 0 to 15' if $round < 0 || $round >= 16;
+                                         error_listing '*** Round must be in range 0 to 15' unless 0 <= $round < 16;
                                          $opcode +|= ($round +< 4) +& 0x00f0;
                                          make ( ($opcode,) );
                                        }
@@ -1365,7 +1365,7 @@ grammar Mc68hc11 is Assembler {
   token mc68hc11_reg16                  { < x y X Y >
                                         {
                                           my  $acc = ~$/;
-                                          my %mc68hc11_reg16 = ('x' => 0x20, 'y' => 0x1820);
+                                          my %mc68hc11_reg16 = ('x' => 0x00, 'y' => 0x1800);
                                           make %mc68hc11_reg16{$acc.lc};
                                         }
                                       }
@@ -1443,7 +1443,7 @@ grammar Mc68hc11 is Assembler {
   regex instruction:sym<mc68hc11_ind> { $<mnemonic>=@mc68hc11_instr_die <.ws> <expression> <comma> <mc68hc11_reg16>
                                         {
                                           my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
-                                          my $index = $/<mc68hc11_reg16>.made;
+                                          my $index = $/<mc68hc11_reg16>.made + 0x20;
                                           my $offset = $/<expression>.made<value>;
                                           $opcode += $index;
                                           if ($opcode > 0xff) {
@@ -1468,7 +1468,7 @@ grammar Mc68hc11 is Assembler {
   regex instruction:sym<mc68hc11_eiind> { $<mnemonic>=@mc68hc11_instr_ei <.ws> <expression> <comma> <mc68hc11_reg16>
                                         {
                                           my $opcode = %instructions<mc68hc11><ei><hash>{~$/<mnemonic>};
-                                          my $index = $/<mc68hc11_reg16>.made;
+                                          my $index = $/<mc68hc11_reg16>.made + 0x20;
                                           my $offset = $/<expression>.made<value>;
                                           $opcode += $index;
                                           if ($opcode > 0xff) {
@@ -1507,9 +1507,9 @@ say $/<offset>.made;
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_bbrind> { $<mnemonic>=@mc68hc11_instr_bit <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> $<mask>=<expression> $<target>=<expression>
+  regex instruction:sym<mc68hc11_bbrind> { $<mnemonic>=@mc68hc11_instr_bbr <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <.ws> $<mask>=<expression> <.ws> $<target>=<expression>
                                         {
-                                          my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
+                                          my $opcode = %instructions<mc68hc11><bbr><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made;
                                           my $offset = $/<offset>.made<value>;
                                           my $mask = $/<mask>.made<value>;
@@ -2267,8 +2267,8 @@ sub assign_symbol(Str $labelfield, $value, $pass) {
 # Here's where we define the assembler directives. They are ISA independent
 # Note that the code is a set of anonymous subroutines, stored in the %directive hash.
 
-my %constantsize = '.db' => 1, 'fdb' => 1,
-                   '.dw' => 2,
+my %constantsize = '.db' => 1, 'fsb' => 1,
+                   '.dw' => 2, 'fdb' => 2,
 		   '.dl' => 4;
 
 %directive<.byte> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
@@ -2312,15 +2312,18 @@ my %constantsize = '.db' => 1, 'fdb' => 1,
   my $m = Assembler.subparse($args,
 			  :actions(Assembler::Actions),
 			  :rule(<id>));
-  my $symbol = ~$m[0];
-  $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
-  $m = Assembler.subparse($args,
-		       :actions(Assembler::Actions),
-		       :rule(<expression>));
-  my $value = +$m.made<value>;
-say ".set: $label $value";
-  format_listing(-1, '', $label, $opcode, $rest);
-  assign_symbol($symbol, $value, $pass);
+  if $m {
+    my $symbol = ~$m[0];
+    $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
+    $m = Assembler.subparse($args,
+		         :actions(Assembler::Actions),
+		         :rule(<expression>));
+    my $value = +$m.made<value>;
+    format_listing(-1, '', $label, $opcode, $rest);
+    assign_symbol($symbol, $value, $pass);
+  } else {
+    error_listing "Unrecognised set statement";
+  }
 };
 
 %directive<.equ> = %directive<.set>;
@@ -2389,8 +2392,8 @@ say ".set: $label $value";
   }
 };
 
-%directive<fdb> = %directive<.db>;
 %directive<.dw> = %directive<.db>;
+%directive<fdb> = %directive<.db>;
 %directive<.dl> = %directive<.db>;
 
 %directive<.end> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
@@ -2639,7 +2642,7 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
+  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

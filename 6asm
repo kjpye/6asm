@@ -2,6 +2,12 @@
 
 use v6;
 
+my $debug = 0;
+
+sub debug (Str $message) {
+  say $message if $debug;
+}
+
 sub low (Int $val) {
   return $val +& 0xff;
 }
@@ -50,7 +56,7 @@ sub make_hash(Str $isa, Str $instr) {
 
 sub mkexp {
   my ($value, $def) = @_;
-  #say "Making expression from $value, $def";
+  #debug "Making expression from $value, $def";
   return {value => $value, def => $def};
 }
 
@@ -64,7 +70,7 @@ grammar Assembler {
     token id                      { <wb> ( <[a..z A..Z _]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
     token identifier              { <id>
                                     {
-#say "Found identifier: ", $/;
+                                      #say "Found identifier: ", $/ if $debug;
                                       my $sym = ~$/<id>;
                                       my $lcsym = $sym.lc;
                                       if %symbol{$lcsym}.defined {
@@ -86,7 +92,7 @@ grammar Assembler {
                                         ++$index2;
                                         $def = 0;
                                       }
-                                  #say "In method local_ref: index is $index ($index2)";
+                                      #debug "In method local_ref: index is $index ($index2)";
                                       if $index2 < 0 {
                                         $value = 0; # Should be error
                                       } else {
@@ -245,7 +251,7 @@ grammar Avr is Assembler {
   token avr_reg                      { <ws>? <wb> <[rR]> ( \d+ ) [ '+' (\d+) ]?
                                        {
                                          my  $reg = $/[0];
-#say "Found avr_reg: ", $/;
+                                         #debug "Found avr_reg: ", $/;
                                          if $/[1].defined {
                                            my $offset = $/[1];
                                            $reg += $offset;
@@ -1190,7 +1196,7 @@ grammar Mc6809 is Assembler {
                                           if ($opcode > 0xff) {
                                             make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
                                           } else {
-                                            make ( ($opcode, @postbytes) );
+                                            make ( @($opcode, @postbytes ) );
                                           }
                                         }
                                       }
@@ -1495,7 +1501,7 @@ grammar Mc68hc11 is Assembler {
                                         {
                                           my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made;
-say $/<offset>.made;
+                                          #debug $/<offset>.made.Str;
                                           my $offset = $/<offset>.made<value>;
                                           my $mask = $/<mask>.made<value>;
                                           $opcode += 0x08;
@@ -2145,7 +2151,8 @@ sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
   my $pcformat = '';
   my $pc_str;
   if $pc >= 0 {
-    $pcformat = ' ' x %param<pcwidth>
+    my $pcwidth = %param<pcwidth>;
+    $pcformat = ' ' x $pcwidth
       - +@memspace[0]<pcwidth> ~
 	'%0'
 	  ~ sprintf('%d.%dx ', +@memspace[0]<pcwidth>, +@memspace[0]<pcwidth>)
@@ -2405,7 +2412,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 };
 
 %directive<.org> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-  say ".org" unless $nolist;
+  say " .org" unless $nolist;
   my $m = Assembler.subparse($rest,
 			  :actions(Assembler::Actions),
 			  :rule(<expression>));
@@ -2413,6 +2420,15 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 };
 
 %directive<org> = %directive<.org>;
+
+#`[ We need some documentation. Here is as good a place as any to start
+
+  .pushmem id
+
+pushes the memory space with id "id" onto the memspace stack, creating it first if necessary.
+
+A memory space includes details of a range of usable memory, and includes things like start and end addresses, width, address length and whether it is readable, writable or executable.
+]
 
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $m = Assembler.subparse($rest,
@@ -2522,7 +2538,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $isa = ~$m[0];
-say "Changing to $isa instruction set";
+  debug "Changing to $isa instruction set";
   $instructionset = %instructionset{$isa};
 }
 
@@ -2538,7 +2554,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       $words = $m.made;
       my $nybbles = ((@memspace[0]<width> + 3) / 4);
       my $format = '%0' ~ sprintf("%d.%dx ", $nybbles, $nybbles);
-say $words.perl;
+      debug $words.perl;
       for ^+$words -> $index {
         $code ~= sprintf($format, $words[$index]);
 	putword(($pc+$instruction_length)*2, $words[$index]);
@@ -2633,6 +2649,10 @@ sub print_symbols () {
 
 # START HERE
 for @*ARGS -> $arg {
+  if ($arg eq '--debug') {
+    $debug = 1;
+    next;
+  }
   if $arg ~~ /^\-s/ {
     $s1file = ~$arg;
     $s1file ~~ s/^\-s//;

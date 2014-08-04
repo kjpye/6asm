@@ -1,0 +1,216 @@
+;	.nolist
+; Definitions for the MC68HC11 processor
+
+	.param codewidth = 11
+        .param pcwidth = 4
+
+	.pushmem ram
+	.defmem bottom = 0x0
+	.defmem top = 0xffff
+	.defmem width = 8
+	.defmem executable = 1
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 1
+	.defmem label = ''
+	.defmem pcwidth = 4
+	.popmem
+	
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.macro .dseg
+	.pushmem ram
+	.endm
+
+	.macro .setdp
+	.param dp = @0
+	.endm
+
+; setting default dp
+	.param dp = 0
+
+; instruction definitions
+ .isa mc68hc11
+ .instruction br  bcc  0x24
+ .instruction br  bcs  0x25
+ .instruction br  beq  0x27
+ .instruction br  bge  0x2c
+ .instruction br  bgt  0x2e
+ .instruction br  bhi  0x22
+ .instruction br  bhs  0x24
+ .instruction br  ble  0x2f
+ .instruction br  blo  0x25
+ .instruction br  bls  0x23
+ .instruction br  blt  0x2d
+ .instruction br  bmi  0x2b
+ .instruction br  bne  0x26
+ .instruction br  bpl  0x2a
+ .instruction br  bra  0x2d
+ .instruction br  brn  0x21
+ .instruction br  bsr  0x8d
+ .instruction br  bvc  0x2b
+ .instruction br  bvs  0x29
+ .instruction inh aba  0x1b
+ .instruction inh abx  0x3a
+ .instruction inh aby  0x183a
+ .instruction inh asla 0x48
+ .instruction inh aslb 0x58
+ .instruction inh asld 0x05
+ .instruction inh asra 0x47
+ .instruction inh asrb 0x57
+ .instruction inh cba  0x11
+ .instruction inh clc  0x0c
+ .instruction inh cli  0x0e
+ .instruction inh clra 0x4f
+ .instruction inh clrb 0x5f
+ .instruction inh clv  0x0a
+ .instruction inh coma 0x43
+ .instruction inh comb 0x53
+ .instruction inh daa  0x19
+ .instruction inh deca 0x4a
+ .instruction inh decb 0x5a
+ .instruction inh des  0x34
+ .instruction inh dex  0x09
+ .instruction inh dey  0x1809
+ .instruction inh fdiv 0x03
+ .instruction inh idiv 0x02
+ .instruction inh inca 0x4c
+ .instruction inh incb 0x5c
+ .instruction inh ins  0x31
+ .instruction inh inx  0x08
+ .instruction inh iny  0x1808
+ .instruction inh lsla 0x48
+ .instruction inh lslb 0x58
+ .instruction inh lsld 0x05
+ .instruction inh lsra 0x44
+ .instruction inh lsrb 0x54
+ .instruction inh lsrd 0x04
+ .instruction inh mul  0x3d
+ .instruction inh nega 0x40
+ .instruction inh negb 0x50
+ .instruction inh nop  0x01
+ .instruction inh psha 0x36
+ .instruction inh pshb 0x37
+ .instruction inh pshx 0x3c
+ .instruction inh pshy 0x183c
+ .instruction inh pula 0x32
+ .instruction inh pulb 0x33
+ .instruction inh pulx 0x38
+ .instruction inh puly 0x1838
+ .instruction inh rola 0x49
+ .instruction inh rolb 0x59
+ .instruction inh rora 0x46
+ .instruction inh rorb 0x56
+ .instruction inh rti  0x3b
+ .instruction inh rts  0x39
+ .instruction inh sba  0x10
+ .instruction inh sec  0x0d
+ .instruction inh sei  0x0f
+ .instruction inh sev  0x0b
+ .instruction inh stop 0xcf
+ .instruction inh swi  0x3f
+ .instruction inh tab  0x16
+ .instruction inh tap  0x06
+ .instruction inh tba  0x17
+ .instruction inh test 0x00
+ .instruction inh tpa  0x07
+ .instruction inh tsta 0x4d
+ .instruction inh tstb 0x5d
+ .instruction inh tsx  0x30
+ .instruction inh tsy  0x1830
+ .instruction inh txs  0x35
+ .instruction inh tys  0x1835
+ .instruction inh wai  0x3e
+ .instruction inh xgdx 0x8f
+ .instruction inh xgdy 0x188f
+ .instruction die adca 0x89
+ .instruction die adcb 0xc9
+ .instruction die adda 0x8b
+ .instruction die addb 0xcb
+ .instruction die addd 0xc3
+ .instruction die anda 0x84
+ .instruction die andb 0xc4
+ .instruction die bita 0x85
+ .instruction die bitb 0xc5
+ .instruction die cmpa 0x81
+ .instruction die cmpb 0xc1
+ .instruction die cpd 0x1a83
+ .instruction die cpx 0x8c
+ .instruction die cpy 0x188c
+ .instruction die eora 0x88
+ .instruction die eorb 0xc8
+ .instruction die jsr  0x8d
+ .instruction die ldaa 0x86
+ .instruction die ldab 0xc6
+ .instruction die ldd 0xcc
+ .instruction die lds 0x8e
+ .instruction die ldx 0xce
+ .instruction die ldy 0x18ce
+ .instruction die oraa 0x8a
+ .instruction die orab 0xca
+ .instruction die sbca 0x82
+ .instruction die sbcb 0xc2
+ .instruction die staa 0x87
+ .instruction die stab 0xc7
+ .instruction die std  0xcd
+ .instruction die sts  0x8f
+ .instruction die stx  0xcf
+ .instruction die sty  0x18cf
+ .instruction die suba 0x80
+ .instruction die subb 0xc0
+ .instruction die subd 0x83
+ .instruction imm8 adca 0x89
+ .instruction imm8 adcb 0xc9
+ .instruction imm8 adda 0x8b
+ .instruction imm8 addb 0xcb
+ .instruction imm16 addd 0xc3
+ .instruction imm8 anda 0x84
+ .instruction imm8 andb 0xc4
+ .instruction imm8 bita 0x85
+ .instruction imm8 bitb 0xc5
+ .instruction imm8 cmpa 0x81
+ .instruction imm8 cmpb 0xc1
+ .instruction imm16 cpd 0x1a83
+ .instruction imm16 cpx 0x8c
+ .instruction imm16 cpy 0x188c
+ .instruction imm8 eora 0x88
+ .instruction imm8 eorb 0xc8
+ .instruction imm8 ldaa 0x86
+ .instruction imm8 ldab 0xc6
+ .instruction imm16 ldd 0xcc
+ .instruction imm16 lds 0x8e
+ .instruction imm16 ldx 0xce
+ .instruction imm16 ldy 0x18ce
+ .instruction imm8 oraa 0x8a
+ .instruction imm8 orab 0xca
+ .instruction imm8 sbca 0x82
+ .instruction imm8 sbcb 0xc2
+ .instruction imm8 suba 0x80
+ .instruction imm8 subb 0xc0
+ .instruction imm16 subd 0x83
+ .instruction ei    asl 0x48
+ .instruction ei    asr 0x47
+ .instruction ei    clr 0x4f
+ .instruction ei    com 0x43
+ .instruction ei    dec 0x4a
+ .instruction ei    inc 0x4c
+ .instruction ei    jmp 0x4e
+ .instruction ei    lsl 0x48
+ .instruction ei    lsr 0x44
+ .instruction ei    neg 0x40
+ .instruction ei    rol 0x49
+ .instruction ei    ror 0x46
+ .instruction ei    tst 0x4d
+ .instruction bit   bclr 0x15
+ .instruction bit   bset 0x14
+ .instruction bbr   brclr 0x13
+ .instruction bbr   brset 0x12
+
+ .assemble
+; IO register definitions
+
+;;        .set    portb ;; page 93 in data sheet
+
+;	.list

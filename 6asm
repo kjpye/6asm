@@ -1937,6 +1937,40 @@ grammar Thumb is Arm {
 
 %instructionset<thumb> = Thumb.new();
 
+# MIPS32 architectures
+
+my @mips32_instr_inh;   make_hash('mips32', 'inh');
+
+grammar Mips32 is Assembler {
+  token mips32_reg                    { <[rR]> ( \d+ ) [ '+' (\d+) ]?
+                                        {
+                                          my $reg = +$/[0];
+                                          if $/[1].defined {
+                                            $reg += $/[1];
+                                          }
+                                          if ! (0 <= $reg <= 31) {
+                                            error_listing '*** Registers must be in range r0 to r31';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  regex instruction:sym<mips32_inh>      { $<mnemonic>=@mips32_instr_inh                 <.ws>
+                                        {
+                                          my $opcode = %instructions<mips32><inh><hash>{~$/<mnemonic>};
+                                          make ( ($opcode,) );
+                                        }
+                                      }
+}
+%instructionset<mips32> = Mips32.new();
+
+# Skeleton for new architectures
+
+#my @arch_instr_inh;   make_hash('arch', 'inh');
+#grammar Arch is Assembler {
+#}
+#%instructions<arch> = Arch.new();
+
 # Input routines
 
 # The default line input routine -- just return nothing to mark end of input
@@ -2662,7 +2696,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

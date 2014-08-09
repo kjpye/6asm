@@ -1,0 +1,37 @@
+
+ .nolist
+ .list
+
+        .param pcwidth = 8
+
+	.pushmem ram
+	.defmem bottom = 0
+	.defmem top = 0x3fffff
+	.defmem width = 32
+	.defmem executable = 1
+	.defmem writeable = 1
+	.defmem readable = 1
+	.defmem init = 1
+	.defmem label = ''
+	.defmem pcwidth = 8
+
+	.macro .cseg
+	.pushmem ram
+	.endm
+
+	.macro .ram
+	.pushmem ram
+	.endm
+	
+	.def pc = r15
+	.def sp = r14 ; perhaps
+
+;	.list
+ .isa mips32
+ .instruction inh break 0x0000000d
+
+ .assemble
+
+ .arch mips32
+
+ .list

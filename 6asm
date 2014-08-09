@@ -1937,13 +1937,49 @@ grammar Thumb is Arm {
 
 %instructionset<thumb> = Thumb.new();
 
-class Assembler::Actions {
+# MIPS32 architectures
+
+my @mips32_instr_inh;   make_hash('mips32', 'inh');
+
+grammar Mips32 is Assembler {
+  token mips32_reg                    { <[rR]> ( \d+ ) [ '+' (\d+) ]?
+                                        {
+                                          my $reg = +$/[0];
+                                          if $/[1].defined {
+                                            $reg += $/[1];
+                                          }
+                                          if ! (0 <= $reg <= 31) {
+                                            error_listing '*** Registers must be in range r0 to r31';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  regex instruction:sym<mips32_inh>      { $<mnemonic>=@mips32_instr_inh                 <.ws>
+                                        {
+                                          my $opcode = %instructions<mips32><inh><hash>{~$/<mnemonic>};
+                                          make ( ($opcode,) );
+                                        }
+                                      }
 }
+%instructionset<mips32> = Mips32.new();
+
+# Skeleton for new architectures
+
+#my @arch_instr_inh;   make_hash('arch', 'inh');
+#grammar Arch is Assembler {
+#}
+#%instructions<arch> = Arch.new();
 
 # Input routines
 
+# The default line input routine -- just return nothing to mark end of input
+
 my $input_line = sub { return Str; };
 my $line_number = 0;
+
+# Override the line input routine with a routine which reads the next line of
+# a file and restores the previous routine at end of file
 
 sub
 include_file(Str $filename) {
@@ -1973,6 +2009,9 @@ my $ifdepth = 0;
 my $truedepth = 0;
 my %define = ();
 
+# Override the line input routine with a routine which returns the next line of
+# a macro expansion and restores the previous routine at end of the macro
+
 sub
 expand_macro(Str $label, Str $opcode, Str $rest) {
   my $old_input_line = $input_line;
@@ -1998,7 +2037,7 @@ expand_macro(Str $label, Str $opcode, Str $rest) {
     }
     # interpolate the arguments
 #    say "Interpolating arguments ", @args.perl, " into $line\n";
-    while ($line ~~ m/\@(<digit>)/) {
+    while ($line ~~ /\@(<digit>)/) {
       my $value = @args[$/[0]];
       $line ~~ s/\@<digit>/{$value}/;
     }
@@ -2043,6 +2082,8 @@ parse_line(Str $line) {
   return ($label, $opcode, $orig_rest, $rest);
 }
 
+# Read the next line of input from wherever input is coming at the moment
+# Handle the line
 sub
 get_next_line {
   loop {
@@ -2054,39 +2095,40 @@ get_next_line {
       return (Str, Str, Str, Str);
     }
     if $current_macro_def {
-#say "Defining macro $current_macro_def: $line";
+      #debug "Defining macro $current_macro_def: $line";
       if $line ~~ /^<ws>\.endm<wb>/ {
-#say "Found endm";
+      #debug "Found endm";
 	$current_macro_def = '';
       } else {
-#say "Adding line to macro";
+      #debug "Adding line to macro";
 	%macro{$current_macro_def}.push($line);
       }
       simple_listing($line);
       next;
     }
-    if $line ~~ m/^<ws>?[<[\#;*]>.*]?$/ { # comments
+    #debug "Looking for comment: $line";
+    if $line ~~ / ^ <.ws>? [ <[\#;*]> .* ]? $ / { # comments
+      #debug "Found comment: $line";
       simple_listing($line);
       next;
     }
-    if $line ~~ m/^<ws>\.macro<ws>(\S+)/ {
+    if $line ~~ /^<ws>\.macro<ws>(\S+)/ {
       simple_listing($line);
       $current_macro_def = ~$/[0];
       %macro{$current_macro_def} = [];
       next;
     }
-    if $line ~~ m/^<ws>\.include<ws>(\S+)/ {
+    if $line ~~ /^<ws>\.include<ws>(\S+)/ {
       simple_listing($line);
       include_file(~$/[0]);
       next;
     }
-    if $line ~~ m/^<ws>  \.if <ws> / {
+    if $line ~~ /^<ws>  \.if <ws> / {
       if $ifdepth == $truedepth {
 	# only in this case do we care about the value of the expression
 	my $expr = $line;
 	$expr ~~ s/^<ws> '.if' <ws>//;
 	my $m = Assembler.subparse($expr,
-				:actions(Assembler::Actions),
 				:rule(<expression>));
 	if ?+$m.made<value> {
 	  ++$truedepth;
@@ -2095,7 +2137,7 @@ get_next_line {
       ++$ifdepth;
       next;
     }
-    if $line ~~ m/^<ws>\.else<wb>/ {
+    if $line ~~ /^<ws>\.else<wb>/ {
       if $ifdepth == $truedepth {
 	--$truedepth;
       } else {
@@ -2105,7 +2147,7 @@ get_next_line {
       }
       next;
     }
-    if $line ~~ m/^<ws>\.endif<wb>/ {
+    if $line ~~ /^<ws>\.endif<wb>/ {
       --$ifdepth;
       if $ifdepth < $truedepth {
 	$truedepth = $ifdepth;
@@ -2123,6 +2165,9 @@ get_next_line {
 }
 
 # Output
+
+# Here is the code which generates the various forms of output.
+# Currently listings and Motorola S1 format are available
 
 my $suppress_output = 1;
 my $nolist = 0;
@@ -2254,6 +2299,8 @@ sub write_s1($file) {
   say "S9030000FC";
 }
 
+# Create a new symbol and assign a value to it
+
 sub assign_symbol(Str $labelfield, $value, $pass) {
   my $label = $labelfield.lc;
   $label ~~ s/\:$//;
@@ -2317,13 +2364,11 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 %directive<.set> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
   my $m = Assembler.subparse($args,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   if $m {
     my $symbol = ~$m[0];
     $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
     $m = Assembler.subparse($args,
-		         :actions(Assembler::Actions),
 		         :rule(<expression>));
     my $value = +$m.made<value>;
     format_listing(-1, '', $label, $opcode, $rest);
@@ -2341,13 +2386,11 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   my $args = $rest;
   chomp $args;
   my $m = Assembler.subparse($args,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $symbol = ~$m[0];
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws> \= <ws> //;
   $m = Assembler.subparse($args,
-		       :actions(Assembler::Actions),
 		       :rule(<id>));
   my $value = ~$m[0];
   simple_listing ".def $symbol = $value";
@@ -2358,14 +2401,12 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 say $rest;
   my $args = $rest;
   my $m = Assembler.subparse($args,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $param = ~$m[0];
 say $param;
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws>? \= <ws>? //;
   $m = Assembler.subparse($args,
-		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.made<value>;
   simple_listing ".param $param = $value";
@@ -2379,7 +2420,6 @@ say $param;
   assign_symbol($label, $pc, $pass) if $label;
   loop {
     my $m = Assembler.subparse($args,
-			    :actions(Assembler::Actions),
 			    :rule(<expression>));
     if ?$m {
       my $value = $m.made<value>;
@@ -2390,7 +2430,7 @@ say $param;
       }
       $pc += $size div 2;
       $args = $args.substr(+$m.to);
-      $m = $args ~~ m/ ',' /;
+      $m = $args ~~ / ',' /;
       last unless ?$m;
       $args = $args.substr(+$m.to); 
     } else {
@@ -2416,7 +2456,6 @@ say $param;
 %directive<.org> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   say " .org" unless $nolist;
   my $m = Assembler.subparse($rest,
-			  :actions(Assembler::Actions),
 			  :rule(<expression>));
   $pc = +$m.made<value>;
 };
@@ -2434,7 +2473,6 @@ A memory space includes details of a range of usable memory, and includes things
 
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $m = Assembler.subparse($rest,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $arg = ~$m[0];
   if ! %memspace{$arg}.defined {
@@ -2454,12 +2492,10 @@ A memory space includes details of a range of usable memory, and includes things
 %directive<.defmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $args = $rest;
   my $m = Assembler.subparse($args,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $symbol = ~$m[0];
   $args ~~ s/^<-[=]>* <ws>? '=' <ws>? //;
   $m = Assembler.subparse($args,
-		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   if ?$m {
     my $value = +$m.made<value>;
@@ -2467,7 +2503,6 @@ A memory space includes details of a range of usable memory, and includes things
     @memspace[0]{$symbol} = $value;
   } else {
     $m = Assembler.subparse($args,
-  		       :actions(Assembler::Actions),
   		       :rule(<stringexpression>));
     if ?$m {
       my $value = ~$m.made;
@@ -2494,7 +2529,6 @@ A memory space includes details of a range of usable memory, and includes things
   return unless $pass == 1;
   my $args = $rest;
   my $m = Assembler.subparse($args,
-                          :actions(Assembler::Actions),
                           :rule(<id>));
   if ?$m {
     $isa = ~$m[0];
@@ -2503,23 +2537,19 @@ A memory space includes details of a range of usable memory, and includes things
   }
 }
 
-# .instruction inh     clt    0x94d8
-
+# The .instruction directive generates the data the parser uses to assemble code
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1;
   my $args = $rest;
   my $m = Assembler.subparse($args,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $instr_type = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.subparse($args,
-                       :actions(Assembler::Actions),
 		       :rule(<id>));
   my $opc = ~$m[0];
   $args ~~ s/^ <.ws>? \S+ <.ws>? //;
   $m = Assembler.subparse($args,
-		       :actions(Assembler::Actions),
 		       :rule(<expression>));
   my $value = +$m.made<value>;
   format_listing(-1, '', $label, $opcode, $rest);
@@ -2537,12 +2567,13 @@ A memory space includes details of a range of usable memory, and includes things
 # .arch -- assemble instructions for this architecture -- can change on the fly
 %directive<.arch> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   my $m = Assembler.subparse($rest,
-			  :actions(Assembler::Actions),
 			  :rule(<id>));
   my $isa = ~$m[0];
   debug "Changing to $isa instruction set";
   $instructionset = %instructionset{$isa};
 }
+
+# This code is called when the input line is not otherwise processed as a comment, macro definition, directive...
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $words = ();
@@ -2550,7 +2581,6 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
   my $instruction_length = 0;
   if $opcode {
     my $m = $instructionset.subparse("$opcode $rest ",
-			    #:actions(Assembler::Actions),
 			    :rule(<instruction>));
     if $m {
       $words = $m.made;
@@ -2572,6 +2602,10 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
 }
 
 my @files = ();
+
+# Make a pass over the input
+#
+# pass_number should be 1, and then 2
 
 sub do_pass(Int $pass_number) {
   $suppress_output = ($pass_number == 2) ?? 0 !! 1;
@@ -2664,13 +2698,12 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 
 do_pass(+2);
 
-#say "Assembly completed!!!";
 print_symbols();
 
 if $s1file {

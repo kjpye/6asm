@@ -1939,10 +1939,63 @@ grammar Thumb is Arm {
 
 # MIPS32 architectures
 
-my @mips32_instr_inh;   make_hash('mips32', 'inh');
+my @mips32_instr_inh;    make_hash('mips32', 'inh');
+my @mips32_instr_dst;    make_hash('mips32', 'dst');
+my @mips32_instr_dts;    make_hash('mips32', 'dts');
+my @mips32_instr_dtc;    make_hash('mips32', 'dtc');
+my @mips32_instr_td;     make_hash('mips32', 'td');
+my @mips32_instr_tdselq; make_hash('mips32', 'tdselq');
+my @mips32_instr_dt;     make_hash('mips32', 'dt');
+my @mips32_instr_d;      make_hash('mips32', 'd');
+my @mips32_instr_st;     make_hash('mips32', 'st');
+my @mips32_instr_dsd;    make_hash('mips32', 'dsd');
+my @mips32_instr_tsi;    make_hash('mips32', 'tsi');
+my @mips32_instr_ti;     make_hash('mips32', 'ti');
+my @mips32_instr_b16;    make_hash('mips32', 'b16');
+my @mips32_instr_sto;    make_hash('mips32', 'sto');
+my @mips32_instr_so;     make_hash('mips32', 'so');
+my @mips32_instr_si;     make_hash('mips32', 'si');
+my @mips32_instr_oob;    make_hash('mips32', 'oob');
+my @mips32_instr_hib;    make_hash('mips32', 'hib');
+my @mips32_instr_qt;     make_hash('mips32', 'qt');
+my @mips32_instr_ext;    make_hash('mips32', 'ext');
+my @mips32_instr_ins;    make_hash('mips32', 'ins');
+my @mips32_instr_j;      make_hash('mips32', 'j');
+my @mips32_instr_s;      make_hash('mips32', 's');
+my @mips32_instr_jalr;   make_hash('mips32', 'jalr');
+my @mips32_instr_tob;    make_hash('mips32', 'tob');
+my @mips32_instr_ftob;   make_hash('mips32', 'ftob');
+my @mips32_instr_ob;     make_hash('mips32', 'ob');
+my @mips32_instr_sys;    make_hash('mips32', 'sys');
+my @mips32_instr_cqo;    make_hash('mips32', 'cqo');
+my @mips32_instr_cqfst;  make_hash('mips32', 'cqfst');
+my @mips32_instr_func;   make_hash('mips32', 'func');
+my @mips32_instr_tisq;   make_hash('mips32', 'tisq');
+my @mips32_instr_fds;    make_hash('mips32', 'fds');
+my @mips32_instr_fdst;   make_hash('mips32', 'fdst');
+my @mips32_instr_fdsrt;  make_hash('mips32', 'fdsrt');
+my @mips32_instr_fdsts;  make_hash('mips32', 'fdsts');
+my @mips32_instr_fdrst;  make_hash('mips32', 'fdrst');
+my @mips32_instr_tfs;    make_hash('mips32', 'tfs');
+my @mips32_instr_fdib;   make_hash('mips32', 'fdib');
+my @mips32_instr_dsc;    make_hash('mips32', 'dsc');
+my @mips32_instr_fdsc;   make_hash('mips32', 'fdsc');
 
 grammar Mips32 is Assembler {
   token mips32_reg                    { <[rR]> ( \d+ ) [ '+' (\d+) ]?
+                                        {
+                                          my $reg = +$/[0];
+                                          if $/[1].defined {
+                                            $reg += $/[1];
+                                          }
+                                          if ! (0 <= $reg <= 31) {
+                                            error_listing '*** Registers must be in range r0 to r31';
+                                            $reg = 0;
+                                          }
+                                          make $reg;
+                                        }
+                                      }
+  token mips32_freg                   { <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                         {
                                           my $reg = +$/[0];
                                           if $/[1].defined {
@@ -1961,6 +2014,374 @@ grammar Mips32 is Assembler {
                                           make ( ($opcode,) );
                                         }
                                       }
+  regex instruction:sym<mips32_st>      { $<mnemonic>=@mips32_instr_st <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><st><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_s>       { $<mnemonic>=@mips32_instr_s <.ws> $<regs>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><s><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dst>     { $<mnemonic>=@mips32_instr_dst <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><dst><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dts>     { $<mnemonic>=@mips32_instr_dts <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><dts><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dtc>     { $<mnemonic>=@mips32_instr_dtc <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<count>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><dtc><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= ($/<count>.made<value> +& 0x1f) +< 6;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_td>      { $<mnemonic>=@mips32_instr_td <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><td><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_tdselq>  { $<mnemonic>=@mips32_instr_tdselq <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg> [ <comma> $<sel>=<expression> ]?
+                                          {
+                                            my $opcode = %instructions<mips32><tdselq><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            if $/<sel>.defined {
+                                              $opcode +|= $/<sel>.made<value> +& 0x07;
+                                            }
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dt>      { $<mnemonic>=@mips32_instr_dt <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><dt><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_d>       { $<mnemonic>=@mips32_instr_d <.ws> $<regd>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><d><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_tsi>     { $<mnemonic>=@mips32_instr_tsi <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><tsi><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= ($/<expression>.made<value> +& 0xffff);
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_ti>     { $<mnemonic>=@mips32_instr_ti <.ws> $<regt>=<mips32_reg> <comma> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><tsi><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= ($/<expression>.made<value> +& 0xffff);
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_b16>     { $<mnemonic>=@mips32_instr_b16 <.ws> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><b16><hash>{~$/<mnemonic>};
+                                            my $offset = $/<expression>.made<value>;
+                                            $offset -= ($pc + 4);
+                                            $offset +> 2;
+                                            $offset +&= 0xffff;
+                                            $opcode +|= $offset;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_sto>     { $<mnemonic>=@mips32_instr_sto <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><sto><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            my $offset = $/<expression>.made<value>;
+                                            $offset -= ($pc + 1);
+                                            $offset +> 2;
+                                            $offset +&= 0xffff;
+                                            $opcode +|= ($/<expression>.made<value> +& 0xffff);
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_so>      { $<mnemonic>=@mips32_instr_so <.ws> $<regs>=<mips32_reg> <comma> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><so><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            my $offset = $/<expression>.made<value>;
+                                            $offset -= ($pc + 1);
+                                            $offset +> 2;
+                                            $offset +&= 0xffff;
+                                            $opcode +|= $offset +& 0xffff;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_si>      { $<mnemonic>=@mips32_instr_si <.ws> $<regs>=<mips32_reg> <comma> <expression>
+                                          {
+                                            my $opcode = %instructions<mips32><si><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= ($/<expression>.made<value> +& 0xffff);
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_oob>     { $<mnemonic>=@mips32_instr_oob <.ws> $<op>=<expression> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><oob><hash>{~$/<mnemonic>};
+                                            $opcode +|= +$/<base>.made +< 21;
+                                            $opcode +|= $/<offset>.made<value> +& 0xffff;
+                                            $opcode +|= ($/<op>.made<value> +< 16) +& 0x1f0000;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_hib>     { $<mnemonic>=@mips32_instr_hib <.ws> $<hint>=<expression> <comma> $<offset>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><hib><hash>{~$/<mnemonic>};
+                                            $opcode +|= +$/<base>.made +< 21;
+                                            $opcode +|= $/<offset>.made +& 0xffff;
+                                            $opcode +|= ($/<hint>.made<value> +< 16) +& 0x1f0000;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dsd>      { $<mnemonic>=@mips32_instr_dsd <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><dsd><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regd>.made +< 16;
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_qt>      { $<mnemonic>=@mips32_instr_qt [ <.ws> $<regt>=<mips32_reg> ] ?
+                                          {
+                                            my $opcode = %instructions<mips32><qt><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regt>.made +< 16 if $/<regt>.defined;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_ext>     { $<mnemonic>=@mips32_instr_ext <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><ext><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= ($/<pos>.made<value> +& 0x1f) +< 6;
+                                            $opcode +|= (($/<size>.made<value>-1) +& 0x1f) +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_ins>     { $<mnemonic>=@mips32_instr_ins <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><ins><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= ($/<pos>.made<value> +& 0x1f) +< 6;
+                                            $opcode +|= (($/<size>.made<value> + $/<pos>.made<value> -1) +& 0x1f) +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_j>       { $<mnemonic>=@mips32_instr_j <.ws> $<target>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><j><hash>{~$/<mnemonic>};
+                                            $opcode +|= ($/<target>.made<value> +& 0xfffffff) +> 2;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_jalr>    { $<mnemonic>=@mips32_instr_jalr <.ws> [ $<regd>=<mips32_reg> <comma> ] ? $<regs>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><jalr><hash>{~$/<mnemonic>};
+                                            my $rd = 31;
+                                            $rd = $/<regd>.made if $/<regd>.defined;
+                                            $opcode +|= $rd +< 11;
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_tob>     { $<mnemonic>=@mips32_instr_tob <.ws> $<regt>=<mips32_reg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><tob><hash>{~$/<mnemonic>};
+                                            $opcode +|= +$/<base>.made +< 21;
+                                            $opcode +|= $/<offset>.made<value> +& 0xffff;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_ftob>    { $<mnemonic>=@mips32_instr_ftob <.ws> $<regt>=<mips32_freg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><ftob><hash>{~$/<mnemonic>};
+                                            $opcode +|= +$/<base>.made +< 21;
+                                            $opcode +|= $/<offset>.made<value> +& 0xffff;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_ob>      { $<mnemonic>=@mips32_instr_ob <.ws> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><ob><hash>{~$/<mnemonic>};
+                                            $opcode +|= +$/<base>.made +< 21;
+                                            $opcode +|= $/<offset>.made<value> +& 0xffff;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_sys>     { $<mnemonic>=@mips32_instr_sys <.ws> [ $<code>=<expression> ]?
+                                          {
+                                            my $opcode = %instructions<mips32><sys><hash>{~$/<mnemonic>};
+                                            my $code = 0;
+                                            $code = $/<code>.made<value> if $/<code>.defined;
+                                            $opcode +|= ($code +& 0xfffff) +< 6;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_func>    { $<mnemonic>=@mips32_instr_func <.ws> $<func>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><func><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<func>.made<value> +& 0x01ffffff;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_tisq>    { $<mnemonic>=@mips32_instr_tisq <.ws> $<regt>=<mips32_reg> <comma> $<impl>=<expression> [ <comma> $<sel>=<expression> ]?
+                                          {
+                                            my $opcode = %instructions<mips32><tisq><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<impl>.made<value> +& 0xffff;
+                                            # The instruction manual has sel in the format of the instruction, but where does it go?
+                                            my $sel = 0;
+                                            $sel = $/<sel>.made<value> if $/<sel>.defined;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_cqo>     { $<mnemonic>=@mips32_instr_cqo <.ws> [ $<cc>=<expression> <comma> ]? $<target>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><cqo><hash>{~$/<mnemonic>};
+                                            my $cc = 0;
+                                            $cc = $/<cc>.made<value> if $/<cc>.defined;
+                                            $opcode +|= ($cc +& 0x07) +< 18;
+                                            my $offset = $/<target>.made<value>;
+                                            $offset -= ($pc + 4);
+                                            $offset +> 2;
+                                            $offset +&= 0xffff;
+                                            $opcode +|= $offset;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_cqfst>   { $<mnemonic>=@mips32_instr_cqfst <.ws> [ $<cc>=<expression> <comma> ]? $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+                                          {
+                                            my $opcode = %instructions<mips32><cqfst><hash>{~$/<mnemonic>};
+                                            my $cc = 0;
+                                            $cc = $/<cc>.made<value> if $/<cc>.defined;
+                                            $opcode +|= ($cc +& 0x07) +< 8;
+                                            $opcode +|= $/<regs>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fds>     { $<mnemonic>=@mips32_instr_fds <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg>
+                                          {
+                                            my $opcode = %instructions<mips32><fds><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +<  6;
+                                            $opcode +|= $/<regs>.made +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdst>    { $<mnemonic>=@mips32_instr_fdst <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+                                          {
+                                            my $opcode = %instructions<mips32><fdst><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +<  6;
+                                            $opcode +|= $/<regs>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdsrt>   { $<mnemonic>=@mips32_instr_fdsrt <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><fdsrt><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +<  6;
+                                            $opcode +|= $/<regs>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdsts>   { $<mnemonic>=@mips32_instr_fdsts <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg> <comma> $<regrs>=<mips32_reg>
+                                          {
+                                            my $opcode = %instructions<mips32><fdsts><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made  +<  6;
+                                            $opcode +|= $/<regs>.made  +< 11;
+                                            $opcode +|= $/<regt>.made  +< 16;
+                                            $opcode +|= $/<regrs>.made +< 21;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdrst>   { $<mnemonic>=@mips32_instr_fdrst <.ws> $<regd>=<mips32_freg> <comma> $<regr>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+                                          {
+                                            my $opcode = %instructions<mips32><fdrst><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +<  6;
+                                            $opcode +|= $/<regs>.made +< 11;
+                                            $opcode +|= $/<regt>.made +< 16;
+                                            $opcode +|= $/<regr>.made +< 21;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_tfs>     { $<mnemonic>=@mips32_instr_tfs <.ws> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_freg>
+                                          {
+                                            my $opcode = %instructions<mips32><tfs><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regs>.made  +< 11;
+                                            $opcode +|= $/<regt>.made  +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdib>    { $<mnemonic>=@mips32_instr_fdib <.ws> $<regd>=<mips32_freg> <comma> $<index>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
+                                          {
+                                            my $opcode = %instructions<mips32><fdib><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made   +<  6;
+                                            $opcode +|= $/<index>.made> +< 16;
+                                            $opcode +|= $/<base>.made>  +< 21;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_dsc>     { $<mnemonic>=@mips32_instr_dsc <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<cc>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><dsc><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            my $cc = $/<cc>.made<value>;
+                                            $opcode +|= $cc +& 0x07;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<mips32_fdsc>    { $<mnemonic>=@mips32_instr_fdsc <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<cc>=<expression>
+                                          {
+                                            my $opcode = %instructions<mips32><fdsc><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<regd>.made +< 11;
+                                            $opcode +|= $/<regs>.made +< 21;
+                                            my $cc = $/<cc>.made<value>;
+                                            $opcode +|= $cc +& 0x07;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
 }
 %instructionset<mips32> = Mips32.new();
 
@@ -2556,6 +2977,7 @@ A memory space includes details of a range of usable memory, and includes things
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+say %instructions.gist;
   for %instructions{$isa}.keys -> $key {
     @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
   }
@@ -2588,7 +3010,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       for ^+$words -> $index {
         $code ~= sprintf($format, $words[$index]);
 	putword(($pc+$instruction_length)*2, $words[$index]);
-	$instruction_length++;
+	$instruction_length += @memspace[0]<pcinc>;
       }
       $code ~~ s/ ' ' $//; # delete trailing space
     } else {

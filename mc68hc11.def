@@ -14,6 +14,7 @@
 	.defmem init = 1
 	.defmem label = ''
 	.defmem pcwidth = 4
+        .defmem = 1
 	.popmem
 	
 	.macro .ram

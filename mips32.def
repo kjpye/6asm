@@ -14,6 +14,7 @@
 	.defmem init = 1
 	.defmem label = ''
 	.defmem pcwidth = 8
+        .defmem pcinc = 4
 
 	.macro .cseg
 	.pushmem ram
@@ -23,12 +24,128 @@
 	.pushmem ram
 	.endm
 	
-	.def pc = r15
-	.def sp = r14 ; perhaps
-
 ;	.list
  .isa mips32
- .instruction inh break 0x0000000d
+ .instruction dst add          0x00000020
+ .instruction dst addu         0x00000021
+ .instruction dst and          0x00000024
+ .instruction tsi addi         0x20000000
+ .instruction tsi addiu        0x24000000
+ .instruction tsi andi         0x30000000
+ .instruction b16 b            0x10000000
+ .instruction b16 bal          0x02110000
+ .instruction sto beq          0x10000000
+ .instruction so  bgez         0x02010000
+ .instruction so  bgezal       0x02110000
+ .instruction so  bgezall      0x02130000
+ .instruction so  bgezl        0x02030000
+ .instruction so  bgtz         0x1c000000
+ .instruction so  bgtzl        0x5c000000
+ .instruction so  blez         0x18000000
+ .instruction so  blezl        0x58000000
+ .instruction so  bltz         0x04000000
+ .instruction so  bltzal       0x04100000
+ .instruction so  bltzall      0x04120000
+ .instruction so  bltzl        0x04020000
+ .instruction sto bne          0x14000000
+ .instruction sto bnel         0x54000000
+ .instruction inh break        0x0000000d
+ .instruction oob cache        0xbc000000
+ .instruction dsd clo          0x70000021
+ .instruction dsd clz          0x70000020
+ .instruction st  div          0x0000001b
+ .instruction inh ehb          0x000000c0 ; MIPS32 release 2
+ .instruction qt  ei           0x41606020 ; MIPS32 release 2
+ .instruction ext ext          0x7c000000 ; MIPS32 release 2
+ .instruction ins ins          0x7c000004 ; MIPS32 release 2
+ .instruction j   j            0x08000000
+ .instruction j   jal          0x0c000000
+ .instruction jalr jalr        0x00000009
+ .instruction jalr jalr.hb     0x00000409 ; MIPS32 release 2
+ .instruction j   jalx         0x74000000 ; MIPS32 with microMIPS32 or MIPS16e
+ .instruction s   jr           0x00000008
+ .instruction s   jr.hb        0x00000408 ; MIPS32 release 2
+ .instruction tob lb           0x80000000
+ .instruction tob lbu          0x90000000
+ .instruction tob lh           0x84000000
+ .instruction tob lhu          0x94000000
+ .instruction tob ll           0xc0000000
+ .instruction ti  lui          0x3c000000
+ .instruction tob lw           0x8c000000
+ .instruction tob lwl          0x88000000
+ .instruction tob lwr          0x98000000
+ .instruction st  madd         0x70000000
+ .instruction st  maddu        0x70000001
+ .instruction d   mfhi         0x00000010
+ .instruction d   mflo         0x00000012
+ .instruction dst movn         0x0000000b
+ .instruction dst movz         0x0000000a
+ .instruction st  msub         0x70000004
+ .instruction st  msubu        0x70000005
+ .instruction s   mthi         0x00000011
+ .instruction s   mtlo         0x00000013
+ .instruction dst mul          0x70000002
+ .instruction st  mult         0x00000018
+ .instruction st  multu        0x00000019
+ .instruction inh nop          0x00000000
+ .instruction dst nor          0x00000027
+ .instruction dst or           0x00000025
+ .instruction tsi ori          0x34000000
+ .instruction inh pause        0x00000140 ; mips32 release 2/MT ASE
+ .instruction oob pref         0xcc000000
+ .instruction hib prefx        0x4c000000
+ .instruction td  rdhwr        0x7c00003b ; MIPS32 release 2
+ .instruction dtc rotr         0x00400002 ; SmartMIPS Crypto; MIPS32 release 2
+ .instruction dts rotrv        0x00000046 ; SmartMIPS Crypto; MIPS32 release 2
+ .instruction tob sb           0xa0000000
+ .instruction tob sc           0xe0000000
+ .instruction sys sdbbp        0xe000003f ; EJTAG
+ .instruction dt  seb          0x7c000420 ; MIPS32 release 2
+ .instruction dt  seh          0x7c000620 ; MIPS32 release 2
+ .instruction tob sh           0xa4000000
+ .instruction dtc sll          0x00000000
+ .instruction dts sllv         0x00000004
+ .instruction dst slt          0x0000002a
+ .instruction tsi slti         0x28000000
+ .instruction tsi sltiu        0x2c000000
+ .instruction dst sltu         0x0000002b
+ .instruction dtc sra          0x00000003
+ .instruction dts srav         0x00000007
+ .instruction dtc srl          0x00000002
+ .instruction dts srlv         0x00000006
+ .instruction inh ssnop        0x00000040
+ .instruction dst sub          0x00000022
+ .instruction dst subu         0x00000023
+ .instruction tob sw           0xac000000
+ .instruction tob swl          0xa8000000
+ .instruction tob swr          0xb8000000
+ .instruction inh sync         0x0000000f
+ .instruction ob  synci        0x041f0000 ; MIPS32 release 2
+ .instruction sys syscall      0x0000000c
+ .instruction inh sync_wmb     0x0000010f
+ .instruction inh sync_mb      0x0000040f
+ .instruction inh sync_acquire 0x0000044f
+ .instruction inh sync_release 0x0000048f
+ .instruction inh sync_rmb     0x000004cf
+ .instruction st  teq          0x00000034
+ .instruction si  teqi         0x040c0000
+ .instruction st  tge          0x00000030
+ .instruction si  tgei         0x04080000
+ .instruction si  tgeiu        0x02090000
+ .instruction st  tgeu         0x000000c1
+ .instruction st  tlt          0x000000c2
+ .instruction si  tlti         0x040a0000
+ .instruction si  tltiu        0x040b0000
+ .instruction st  tltu         0x000000c3
+ .instruction st  tne          0x000000c6
+ .instruction si  tnei         0x040e0000
+ .instruction dt  wsbh         0x7c0000a0
+ .instruction dst xor          0x00000026
+ .instruction tsi xori         0x38000000
+
+ .include mips32_cop0.def
+ .include mips32_cop1.def
+ .include mips32_cop2.def
 
  .assemble
 

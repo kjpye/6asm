@@ -12,6 +12,7 @@
 	.defmem init = 1
 	.defmem label = ''
 	.defmem pcwidth = 8
+        .defmem pcinc = 4
 
 	.macro .cseg
 	.pushmem ram

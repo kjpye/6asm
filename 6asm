@@ -25,9 +25,59 @@ my %directive = ();
 my @local_pointer = ();
 my @local_symbol = ();
 
+#`[ We need some documentation. Here is as good a place as any to start
+
+A memory space includes details of a range of usable memory, and includes
+things like start and end addresses, width, address length and whether it
+is readable, writable or executable.
+
+The following characteristics are standard, and some are used by the assembler:
+
+  bottom     -- the lowest memory address available
+  top        -- the highest memory address available (contiguous memory is assumed)
+  width      -- the number of bits per addressable unit
+  executable -- whether code can be executed from this space
+  writeable  -- whether values can be written to this space using standard store instruction
+  readable   -- whether values can be read from this space using standard store instruction
+  init       -- whether this memory space can be initialised using the usual loading procedures
+  label      -- a string to print in the listing indicating this memory space
+  pcwidth    -- how many characters to use to print the program counter
+  pcinc      -- how much to increment the program counter by for each instruction word
+
+Where memory is not continuous it might be convenient to define a memory
+space for each segment and then manually switch betwen them.
+
+%memspace contains all the defined memory space, indexed by id.
+@memspace contains the current stack of memory space, withe the first
+  element being the top of the stack.
+$pc is the program counter. It is bound to the pc field of the top of the
+  memory space stack. This is maintained by the .pushmem and .popmem
+  directives.
+]
+
 my %memspace;
 my Int $pc;
 my @memspace = ({'pc' => 0.Int});
+
+#'[
+  Local references are temporary lables in the range 0 to 99 which can be used
+  in place of unique lables. They are defined in the usual way as one or two
+  digits at the beginning of a line optionally followed by a colon.
+
+  They are referenced by specifying the number followed by a "b" or 'f'
+  referring to the previous or next occurence of that label.
+
+  It is suggested as a convention that labels 90-99 be used only within macros.
+
+  The implementation uses two arrays:
+
+  @local_symbol is an array of arrays. The first index is the label number and
+    the second is a pointer to the most recent declaration of the label. It is
+    set up during the first pass.
+  @local_pointer is an array containing the pointers to the most recent declaration.
+    It is initialised to an array of -1 values (indicating that no local labels have
+    been seen at the beginning of each pass.
+]
 
 sub setup_local_pointer() {
     for 0..99 -> $index {
@@ -39,11 +89,12 @@ sub setup_local() {
     for 0..99 -> $index {
 	@local_symbol[$index] = [];
     }
-    # setup_local_pointer() is called in do_pass
 }
 
 setup_local();
+# setup_local_pointer() is called in do_pass
 
+# The symbol table for other than local references
 my %symbol = ();
 
 my $isa = '';
@@ -2008,12 +2059,12 @@ grammar Mips32 is Assembler {
                                           make $reg;
                                         }
                                       }
-  regex instruction:sym<mips32_inh>      { $<mnemonic>=@mips32_instr_inh                 <.ws>
-                                        {
-                                          my $opcode = %instructions<mips32><inh><hash>{~$/<mnemonic>};
-                                          make ( ($opcode,) );
+  regex instruction:sym<mips32_inh>     { $<mnemonic>=@mips32_instr_inh                 <.ws>
+                                          {
+                                            my $opcode = %instructions<mips32><inh><hash>{~$/<mnemonic>};
+                                            make ( ($opcode,) );
+                                          }
                                         }
-                                      }
   regex instruction:sym<mips32_st>      { $<mnemonic>=@mips32_instr_st <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><st><hash>{~$/<mnemonic>};
@@ -2799,8 +2850,8 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   }
 };
 
-%directive<.equ> = %directive<.set>;
-%directive<equ> = %directive<.set>;
+%directive<.equ> := %directive<.set>;
+%directive<equ> := %directive<.set>;
 
 %directive<.def> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   return unless $pass == 1; # not much point continuing; the name has already been substituted!
@@ -2860,9 +2911,9 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   }
 };
 
-%directive<.dw> = %directive<.db>;
-%directive<fdb> = %directive<.db>;
-%directive<.dl> = %directive<.db>;
+%directive<.dw> := %directive<.db>;
+%directive<fdb> := %directive<.db>;
+%directive<.dl> := %directive<.db>;
 
 %directive<.end> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
   say ".end" unless $nolist;
@@ -2879,15 +2930,13 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   $pc = +$m.made<value>;
 };
 
-%directive<org> = %directive<.org>;
+%directive<org> := %directive<.org>;
 
-#`[ We need some documentation. Here is as good a place as any to start
-
+#'[
   .pushmem id
 
-pushes the memory space with id "id" onto the memspace stack, creating it first if necessary.
-
-A memory space includes details of a range of usable memory, and includes things like start and end addresses, width, address length and whether it is readable, writable or executable.
+  pushes the memory space with id <id> onto the memspace stack, creating it
+  first if necessary.
 ]
 
 %directive<.pushmem> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {

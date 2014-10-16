@@ -48,7 +48,7 @@ Where memory is not continuous it might be convenient to define a memory
 space for each segment and then manually switch betwen them.
 
 %memspace contains all the defined memory space, indexed by id.
-@memspace contains the current stack of memory space, withe the first
+@memspace contains the current stack of memory space, with the first
   element being the top of the stack.
 $pc is the program counter. It is bound to the pc field of the top of the
   memory space stack. This is maintained by the .pushmem and .popmem
@@ -59,9 +59,9 @@ my %memspace;
 my Int $pc;
 my @memspace = ({'pc' => 0.Int});
 
-#'[
-  Local references are temporary lables in the range 0 to 99 which can be used
-  in place of unique lables. They are defined in the usual way as one or two
+#`[
+  Local references are temporary labels in the range 0 to 99 which can be used
+  in place of unique labels. They are defined in the usual way as one or two
   digits at the beginning of a line optionally followed by a colon.
 
   They are referenced by specifying the number followed by a "b" or 'f'
@@ -153,15 +153,15 @@ grammar Assembler {
                                       make mkexp($value, $def);
                                     }
                                   }
-    token plusminus               { < + - >?                        { make $/ eq '-' ?? -1 !! 1;            } }
-    proto token number            { <*>                                                                       }
+    token plusminus               { < + - >?                        { make $/ eq '-' ?? -1 !! 1;             } }
+    proto token number            { <*>                                                                        }
     token number:sym<decimal>     { <plusminus> ( <[0..9]>+ )       { make $/<plusminus>.made * :10(~$/[0]); } }
-    token number:sym<binary>      { '0' <[bB]> <[01]>+              { make :2(~$/);                         } }
-    token number:sym<octal>       { '0' <[oO]> <[0..7]>+            { make :8(~$/);                         } }
-    token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+  { make :16(~$/);                        } }
-    token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+) { make :16(~$/[0]);                     } }
-    token number:sym<pc>          {     '*'                         { make $pc;                             } }
-    proto rule term               { <*>                                                                       }
+    token number:sym<binary>      { '0' <[bB]> <[01]>+              { make :2(~$/);                          } }
+    token number:sym<octal>       { '0' <[oO]> <[0..7]>+            { make :8(~$/);                          } }
+    token number:sym<hex>         { '0' <[Xx]> <[0..9 a..f A..F]>+  { make :16(~$/);                         } }
+    token number:sym<hex2>        {     '$'   (<[0..9 a..f A..F]>+) { make :16(~$/[0]);                      } }
+    token number:sym<pc>          {     '*'                         { make $pc;                              } }
+    proto rule term               { <*>                                                                        }
     rule term:sym<localref>       { <localref>                      { make $/<localref>.made;                } }
     rule term:sym<number>         { <number>                        { make mkexp($/<number>.made, 1);        } }
     rule term:sym<funcall>        { $<identifier>=(low|LOW|high|HIGH) '(' <expression> ')'
@@ -186,19 +186,26 @@ grammar Assembler {
                                       if ?$/<muloper> {
                                         for 0 .. (+$/<muloper> - 1) -> $index {
 	                                  my $oper = ~$/<muloper>[$index];
-	                                  if $oper ~~ '*' {
-	                                    $value *= $/<term>[$index + 1].made<value>;
-	                                  } elsif $oper ~~ '/' {
-	                                    $value /= $/<term>[$index + 1].made<value>;
-	                                  } elsif $oper ~~ '%' {
-	                                    $value %= $/<term>[$index + 1].made<value>;
-	                                  } elsif $oper ~~ '<<' {
-	                                    $value +<= $/<term>[$index + 1].made<value>;
-	                                  } elsif $oper ~~ '>>' {
-	                                    $value +>= $/<term>[$index + 1].made<value>;
-	                                  } else {
-	                                    error_listing "Illegal operator";
-	                                  }
+					  given $oper {
+	                                    when '*' {
+					      $value *= $/<term>[$index + 1].made<value>;
+	                                    }
+					    when '/' {
+	                                      $value /= $/<term>[$index + 1].made<value>;
+	                                    }
+					    when '%' {
+	                                      $value %= $/<term>[$index + 1].made<value>;
+	                                    }
+					    when '<<' {
+	                                      $value +<= $/<term>[$index + 1].made<value>;
+	                                    }
+					    when '>>' {
+	                                      $value +>= $/<term>[$index + 1].made<value>;
+	                                    }
+					    default {
+	                                      error_listing "Illegal operator";
+	                                    }
+					  }
                                           $def &= $/<term>[$index + 1].made<def>
                                         }
                                       }
@@ -236,55 +243,56 @@ my $instructionset = %instructionset<assembler>;
 
 # Variables required for AVR
 
-my @avr_instr_inh;      make_hash('avr', 'inh');
-my @avr_instr_rr;       make_hash('avr', 'rr');
-my @avr_instr_ww;       make_hash('avr', 'ww');
-my @avr_instr_rr3;      make_hash('avr', 'rr3');
-my @avr_instr_rr4;      make_hash('avr', 'rr4');
-my @avr_instr_r2;       make_hash('avr', 'r2');
-my @avr_instr_r;        make_hash('avr', 'r');
-my @avr_instr_r_reg;    make_hash('avr', 'r_reg');
-my @avr_instr_iw;       make_hash('avr', 'iw');
-my @avr_instr_ir;       make_hash('avr', 'ir');
-my @avr_instr_i6r;      make_hash('avr', 'i6r');
-my @avr_instr_out;      make_hash('avr', 'out');
-my @avr_instr_irc;      make_hash('avr', 'irc');
-my @avr_instr_sreg;     make_hash('avr', 'sreg');
-my @avr_instr_tbit;     make_hash('avr', 'tbit');
-my @avr_instr_brb;      make_hash('avr', 'brb');
-my @avr_instr_branch;   make_hash('avr', 'branch');
+my @avr_instr_inh;      make_hash('avr', 'inh'    );
+my @avr_instr_rr;       make_hash('avr', 'rr'     );
+my @avr_instr_ww;       make_hash('avr', 'ww'     );
+my @avr_instr_rr3;      make_hash('avr', 'rr3'    );
+my @avr_instr_rr4;      make_hash('avr', 'rr4'    );
+my @avr_instr_r2;       make_hash('avr', 'r2'     );
+my @avr_instr_r;        make_hash('avr', 'r'      );
+my @avr_instr_r_reg;    make_hash('avr', 'r_reg'  );
+my @avr_instr_iw;       make_hash('avr', 'iw'     );
+my @avr_instr_ir;       make_hash('avr', 'ir'     );
+my @avr_instr_i6r;      make_hash('avr', 'i6r'    );
+my @avr_instr_out;      make_hash('avr', 'out'    );
+my @avr_instr_irc;      make_hash('avr', 'irc'    );
+my @avr_instr_sreg;     make_hash('avr', 'sreg'   );
+my @avr_instr_tbit;     make_hash('avr', 'tbit'   );
+my @avr_instr_brb;      make_hash('avr', 'brb'    );
+my @avr_instr_branch;   make_hash('avr', 'branch' );
 my @avr_instr_lbranch;  make_hash('avr', 'lbranch');
-my @avr_instr_long;     make_hash('avr', 'long');
-my @avr_instr_lds;      make_hash('avr', 'lds');
-my @avr_instr_sts;      make_hash('avr', 'sts');
-my @avr_instr_bio;      make_hash('avr', 'bio');
-my @avr_instr_i4;       make_hash('avr', 'i4');
-my @avr_instr_rx;       make_hash('avr', 'rx');
-my @avr_instr_xr;       make_hash('avr', 'xr');
-my @avr_instr_rxplus;   make_hash('avr', 'rxplus');
-my @avr_instr_xrplus;   make_hash('avr', 'xrplus');
+my @avr_instr_long;     make_hash('avr', 'long'   );
+my @avr_instr_lds;      make_hash('avr', 'lds'    );
+my @avr_instr_sts;      make_hash('avr', 'sts'    );
+my @avr_instr_bio;      make_hash('avr', 'bio'    );
+my @avr_instr_i4;       make_hash('avr', 'i4'     );
+my @avr_instr_rx;       make_hash('avr', 'rx'     );
+my @avr_instr_xr;       make_hash('avr', 'xr'     );
+my @avr_instr_rxplus;   make_hash('avr', 'rxplus' );
+my @avr_instr_xrplus;   make_hash('avr', 'xrplus' );
 my @avr_instr_rxminus;  make_hash('avr', 'rxminus');
 my @avr_instr_xrminus;  make_hash('avr', 'xrminus');
-my @avr_instr_ry;       make_hash('avr', 'ry');
-my @avr_instr_yr;       make_hash('avr', 'yr');
-my @avr_instr_ryplus;   make_hash('avr', 'ryplus');
-my @avr_instr_yrplus;   make_hash('avr', 'yrplus');
+my @avr_instr_ry;       make_hash('avr', 'ry'     );
+my @avr_instr_yr;       make_hash('avr', 'yr'     );
+my @avr_instr_ryplus;   make_hash('avr', 'ryplus' );
+my @avr_instr_yrplus;   make_hash('avr', 'yrplus' );
 my @avr_instr_ryminus;  make_hash('avr', 'ryminus');
 my @avr_instr_yrminus;  make_hash('avr', 'yrminus');
-my @avr_instr_ryq;      make_hash('avr', 'ryq');
-my @avr_instr_yrq;      make_hash('avr', 'yrq');
-my @avr_instr_rz;       make_hash('avr', 'rz');
-my @avr_instr_stzr;     make_hash('avr', 'stzr');
-my @avr_instr_rzplus;   make_hash('avr', 'rzplus');
-my @avr_instr_zrplus;   make_hash('avr', 'zrplus');
+my @avr_instr_ryq;      make_hash('avr', 'ryq'    );
+my @avr_instr_yrq;      make_hash('avr', 'yrq'    );
+my @avr_instr_rz;       make_hash('avr', 'rz'     );
+my @avr_instr_stzr;     make_hash('avr', 'stzr'   );
+my @avr_instr_rzplus;   make_hash('avr', 'rzplus' );
+my @avr_instr_zrplus;   make_hash('avr', 'zrplus' );
 my @avr_instr_rzminus;  make_hash('avr', 'rzminus');
 my @avr_instr_zrminus;  make_hash('avr', 'zrminus');
-my @avr_instr_rzq;      make_hash('avr', 'rzq');
-my @avr_instr_zrq;      make_hash('avr', 'zrq');
-my @avr_instr_z;        make_hash('avr', 'z');
-my @avr_instr_zr;       make_hash('avr', 'zr');
-my @avr_instr_zplus;    make_hash('avr', 'zplus');
-my @avr_instr_noz;      make_hash('avr', 'noz');
+my @avr_instr_rzq;      make_hash('avr', 'rzq'    );
+my @avr_instr_zrq;      make_hash('avr', 'zrq'    );
+my @avr_instr_z;        make_hash('avr', 'z'      );
+my @avr_instr_zr;       make_hash('avr', 'zr'     );
+my @avr_instr_zplus;    make_hash('avr', 'zplus'  );
+my @avr_instr_noz;      make_hash('avr', 'noz'    );
+
 # Rules for AVR
 
 grammar Avr is Assembler {
@@ -303,10 +311,7 @@ grammar Avr is Assembler {
                                        {
                                          my  $reg = $/[0];
                                          #debug "Found avr_reg: ", $/;
-                                         if $/[1].defined {
-                                           my $offset = $/[1];
-                                           $reg += $offset;
-                                         }
+					 $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 31) {
                                            error_listing '*** Registers must be in range r0 to r31';
                                            $reg = 0;
@@ -1659,12 +1664,12 @@ my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
 my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
 
 grammar Armfull is Arm {
-  proto regex arm_shift               { <*>                                                                                      }
-  regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                                     }
-  regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                            }
-  regex arm_shift:sym<rrx>            { 'rrx' <arm_reg>                                                                          }
-  regex arm_bdttype                   { < fd ed fa ea ia ib da db >                                                              }
-  proto regex arm_hdtaddr             { <*>                                                                                      }
+  proto regex arm_shift               { <*>                                                                                }
+  regex arm_shift:sym<imm>            { < lsl ror lsr asr > '#' <expression>                                               }
+  regex arm_shift:sym<reg>            { < lsl ror lsr asr > <arm_reg>                                                      }
+  regex arm_shift:sym<rrx>            { 'rrx' <arm_reg>                                                                    }
+  regex arm_bdttype                   { < fd ed fa ea ia ib da db >                                                        }
+  proto regex arm_hdtaddr             { <*>                                                                                }
   regex arm_hdtaddr:sym<expr>         { <expression>
                                         {
                                           my $offset = $/<expression>.made - $pc - 8;
@@ -1731,7 +1736,7 @@ grammar Armfull is Arm {
                                           make ($postbyte);
                                         }
                                       }
-  proto regex arm_sdtaddr             { <*>                                                                                      }
+  proto regex arm_sdtaddr             { <*>                                                                                }
   regex arm_sdtaddr:sym<expr>         { <expression>
                                         {
                                           my $offset = $/<expression>.made - $pc - 8;
@@ -1808,7 +1813,7 @@ grammar Armfull is Arm {
                                           make (%arm_sbh{~$/});
                                         }
                                       }
-  regex arm_t                         { 't'?                                                                                     }
+  regex arm_t                         { 't'?                                                                               }
   regex instruction:sym<arm_inh>      { $<mnemonic>=@armfull_instr_inh  <arm_cond>               <.ws>
                                         {
                                           my $opcode = %instructions<armfull><inh><hash>{~$/<mnemonic>};
@@ -1990,55 +1995,53 @@ grammar Thumb is Arm {
 
 # MIPS32 architectures
 
-my @mips32_instr_inh;    make_hash('mips32', 'inh');
-my @mips32_instr_dst;    make_hash('mips32', 'dst');
-my @mips32_instr_dts;    make_hash('mips32', 'dts');
-my @mips32_instr_dtc;    make_hash('mips32', 'dtc');
-my @mips32_instr_td;     make_hash('mips32', 'td');
+my @mips32_instr_inh;    make_hash('mips32', 'inh'   );
+my @mips32_instr_dst;    make_hash('mips32', 'dst'   );
+my @mips32_instr_dts;    make_hash('mips32', 'dts'   );
+my @mips32_instr_dtc;    make_hash('mips32', 'dtc'   );
+my @mips32_instr_td;     make_hash('mips32', 'td'    );
 my @mips32_instr_tdselq; make_hash('mips32', 'tdselq');
-my @mips32_instr_dt;     make_hash('mips32', 'dt');
-my @mips32_instr_d;      make_hash('mips32', 'd');
-my @mips32_instr_st;     make_hash('mips32', 'st');
-my @mips32_instr_dsd;    make_hash('mips32', 'dsd');
-my @mips32_instr_tsi;    make_hash('mips32', 'tsi');
-my @mips32_instr_ti;     make_hash('mips32', 'ti');
-my @mips32_instr_b16;    make_hash('mips32', 'b16');
-my @mips32_instr_sto;    make_hash('mips32', 'sto');
-my @mips32_instr_so;     make_hash('mips32', 'so');
-my @mips32_instr_si;     make_hash('mips32', 'si');
-my @mips32_instr_oob;    make_hash('mips32', 'oob');
-my @mips32_instr_hib;    make_hash('mips32', 'hib');
-my @mips32_instr_qt;     make_hash('mips32', 'qt');
-my @mips32_instr_ext;    make_hash('mips32', 'ext');
-my @mips32_instr_ins;    make_hash('mips32', 'ins');
-my @mips32_instr_j;      make_hash('mips32', 'j');
-my @mips32_instr_s;      make_hash('mips32', 's');
-my @mips32_instr_jalr;   make_hash('mips32', 'jalr');
-my @mips32_instr_tob;    make_hash('mips32', 'tob');
-my @mips32_instr_ftob;   make_hash('mips32', 'ftob');
-my @mips32_instr_ob;     make_hash('mips32', 'ob');
-my @mips32_instr_sys;    make_hash('mips32', 'sys');
-my @mips32_instr_cqo;    make_hash('mips32', 'cqo');
-my @mips32_instr_cqfst;  make_hash('mips32', 'cqfst');
-my @mips32_instr_func;   make_hash('mips32', 'func');
-my @mips32_instr_tisq;   make_hash('mips32', 'tisq');
-my @mips32_instr_fds;    make_hash('mips32', 'fds');
-my @mips32_instr_fdst;   make_hash('mips32', 'fdst');
-my @mips32_instr_fdsrt;  make_hash('mips32', 'fdsrt');
-my @mips32_instr_fdsts;  make_hash('mips32', 'fdsts');
-my @mips32_instr_fdrst;  make_hash('mips32', 'fdrst');
-my @mips32_instr_tfs;    make_hash('mips32', 'tfs');
-my @mips32_instr_fdib;   make_hash('mips32', 'fdib');
-my @mips32_instr_dsc;    make_hash('mips32', 'dsc');
-my @mips32_instr_fdsc;   make_hash('mips32', 'fdsc');
+my @mips32_instr_dt;     make_hash('mips32', 'dt'    );
+my @mips32_instr_d;      make_hash('mips32', 'd'     );
+my @mips32_instr_st;     make_hash('mips32', 'st'    );
+my @mips32_instr_dsd;    make_hash('mips32', 'dsd'   );
+my @mips32_instr_tsi;    make_hash('mips32', 'tsi'   );
+my @mips32_instr_ti;     make_hash('mips32', 'ti'    );
+my @mips32_instr_b16;    make_hash('mips32', 'b16'   );
+my @mips32_instr_sto;    make_hash('mips32', 'sto'   );
+my @mips32_instr_so;     make_hash('mips32', 'so'    );
+my @mips32_instr_si;     make_hash('mips32', 'si'    );
+my @mips32_instr_oob;    make_hash('mips32', 'oob'   );
+my @mips32_instr_hib;    make_hash('mips32', 'hib'   );
+my @mips32_instr_qt;     make_hash('mips32', 'qt'    );
+my @mips32_instr_ext;    make_hash('mips32', 'ext'   );
+my @mips32_instr_ins;    make_hash('mips32', 'ins'   );
+my @mips32_instr_j;      make_hash('mips32', 'j'     );
+my @mips32_instr_s;      make_hash('mips32', 's'     );
+my @mips32_instr_jalr;   make_hash('mips32', 'jalr'  );
+my @mips32_instr_tob;    make_hash('mips32', 'tob'   );
+my @mips32_instr_ftob;   make_hash('mips32', 'ftob'  );
+my @mips32_instr_ob;     make_hash('mips32', 'ob'    );
+my @mips32_instr_sys;    make_hash('mips32', 'sys'   );
+my @mips32_instr_cqo;    make_hash('mips32', 'cqo'   );
+my @mips32_instr_cqfst;  make_hash('mips32', 'cqfst' );
+my @mips32_instr_func;   make_hash('mips32', 'func'  );
+my @mips32_instr_tisq;   make_hash('mips32', 'tisq'  );
+my @mips32_instr_fds;    make_hash('mips32', 'fds'   );
+my @mips32_instr_fdst;   make_hash('mips32', 'fdst'  );
+my @mips32_instr_fdsrt;  make_hash('mips32', 'fdsrt' );
+my @mips32_instr_fdsts;  make_hash('mips32', 'fdsts' );
+my @mips32_instr_fdrst;  make_hash('mips32', 'fdrst' );
+my @mips32_instr_tfs;    make_hash('mips32', 'tfs'   );
+my @mips32_instr_fdib;   make_hash('mips32', 'fdib'  );
+my @mips32_instr_dsc;    make_hash('mips32', 'dsc'   );
+my @mips32_instr_fdsc;   make_hash('mips32', 'fdsc'  );
 
 grammar Mips32 is Assembler {
   token mips32_reg                    { <[rR]> ( \d+ ) [ '+' (\d+) ]?
                                         {
                                           my $reg = +$/[0];
-                                          if $/[1].defined {
-                                            $reg += $/[1];
-                                          }
+					  $reg += $/[1] if $/[1].defined;
                                           if ! (0 <= $reg <= 31) {
                                             error_listing '*** Registers must be in range r0 to r31';
                                             $reg = 0;
@@ -2049,9 +2052,7 @@ grammar Mips32 is Assembler {
   token mips32_freg                   { <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                         {
                                           my $reg = +$/[0];
-                                          if $/[1].defined {
-                                            $reg += $/[1];
-                                          }
+					  $reg += $/[1] if $/[1].defined;
                                           if ! (0 <= $reg <= 31) {
                                             error_listing '*** Registers must be in range r0 to r31';
                                             $reg = 0;
@@ -2678,7 +2679,7 @@ sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
   } else {
     $pc_str = ' ' x (%param<pcwidth> + 2);
   }
-  my $fmt = ' %4d %s %-' ~ %param<codewidth>+1 ~ 's %8s %8s %s' ~ "\n";
+  my $fmt = '%4d %s %-' ~ %param<codewidth>+1 ~ 's %8s %8s %s' ~ "\n";
   printf $fmt, $line_number, $pc_str, $code_str, $label, $opcode, $rest;
 }
 
@@ -2932,7 +2933,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 
 %directive<org> := %directive<.org>;
 
-#'[
+#`[
   .pushmem id
 
   pushes the memory space with id <id> onto the memspace stack, creating it
@@ -3167,7 +3168,7 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
+  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

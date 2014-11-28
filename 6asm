@@ -5,7 +5,7 @@ use v6;
 my $debug = 0;
 
 sub debug (Str $message) {
-  say $message if $debug;
+  note $message if $debug;
 }
 
 sub low (Int $val) {
@@ -44,11 +44,11 @@ The following characteristics are standard, and some are used by the assembler:
   pcwidth    -- how many characters to use to print the program counter
   pcinc      -- how much to increment the program counter by for each instruction word
 
-Where memory is not continuous it might be convenient to define a memory
+Where memory is not contiguous it might be convenient to define a memory
 space for each segment and then manually switch betwen them.
 
-%memspace contains all the defined memory space, indexed by id.
-@memspace contains the current stack of memory space, with the first
+%memspace contains all the defined memory spaces, indexed by id.
+@memspace contains the current stack of memory spaces, with the first
   element being the top of the stack.
 $pc is the program counter. It is bound to the pc field of the top of the
   memory space stack. This is maintained by the .pushmem and .popmem
@@ -236,6 +236,14 @@ grammar Assembler {
     proto regex instruction       { <*>                                                                       }
     token comma                   { <.ws>? ',' <.ws>?                                                         }
 }
+
+#`[
+  The following variables specify which instruction set we're currently handling.
+
+  %instructionset is keyed on the instruction set name and contains a type object for the appropriate grammar.
+
+  $instructionset is the type object for the current grammar.
+]
 
 my %instructionset;
 %instructionset<assembler> = Assembler.new();

@@ -2,7 +2,7 @@
 
 use v6;
 
-my $debug = 0;
+my $debug = 1;
 
 sub debug (Str $message) {
   note $message if $debug;
@@ -232,7 +232,7 @@ grammar Assembler {
                                   }
     proto token string            { <*>                                                                       }
     token string:sym<singlequote> { \' ( <[a..z A..Z 0..9 <ws>]>* ) \' { make ~$/[0];                       } }
-    rule stringexpression         { <string>                           { make ~$/<string>.made;              } }
+    rule stringexpression         { <string>                           { make ~$/<string>.made;             } }
     proto regex instruction       { <*>                                                                       }
     token comma                   { <.ws>? ',' <.ws>?                                                         }
 }
@@ -2445,6 +2445,188 @@ grammar Mips32 is Assembler {
 }
 %instructionset<mips32> = Mips32.new();
 
+# Risc-V
+
+my @riscv_instr_inh;   make_hash('riscv', 'inh');
+my @riscv_instr_rd;    make_hash('riscv', 'rd');
+my @riscv_instr_r;     make_hash('riscv', 'r');
+my @riscv_instr_fr;    make_hash('riscv', 'fr');
+my @riscv_instr_fr2;   make_hash('riscv', 'fr2');
+my @riscv_instr_fr4;   make_hash('riscv', 'fr4');
+my @riscv_instr_ra;    make_hash('riscv', 'ra');
+my @riscv_instr_ra0;   make_hash('riscv', 'ra0');
+my @riscv_instr_sh;    make_hash('riscv', 'sh');
+my @riscv_instr_lsh;   make_hash('riscv', 'lsh');
+my @riscv_instr_i;     make_hash('riscv', 'i');
+my @riscv_instr_fi;    make_hash('riscv', 'fi');
+my @riscv_instr_s;     make_hash('riscv', 's');
+my @riscv_instr_fs;    make_hash('riscv', 'fs');
+my @riscv_instr_sb;    make_hash('riscv', 'sb');
+my @riscv_instr_u;     make_hash('riscv', 'u');
+my @riscv_instr_uj;    make_hash('riscv', 'uj');
+
+grammar RiscV is Assembler {
+  token riscv_reg                    { <[xX]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 31) {
+                                           error_listing '*** Registers must be in range x0 to x31';
+                                           $reg = 0;
+                                         }
+                                         make $reg;
+                                       }
+                                     }
+  token riscv_freg                    { <[fF]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 31) {
+                                           error_listing '*** Registers must be in range f0 to f31';
+                                           $reg = 0;
+                                         }
+                                         make $reg;
+                                       }
+                                     }
+  regex instruction:sym<riscv_inh>   { $<mnemonic>=@riscv_instr_inh
+                                          {
+                                            my $opcode = %instructions<riscv><inh><hash>{~$/<mnemonic>};
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_r>     { $<mnemonic>=@riscv_instr_r <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+                                          {
+                                            my $opcode = %instructions<riscv><r><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<rs2>.made +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_fr>    { $<mnemonic>=@riscv_instr_fr <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg>
+                                          {
+                                            my $opcode = %instructions<riscv><fr><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<rs2>.made +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_fr2>   { $<mnemonic>=@riscv_instr_fr2 <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg>
+                                          {
+                                            my $opcode = %instructions<riscv><fr2><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_fr4>   { $<mnemonic>=@riscv_instr_fr4 <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg> <comma> $<rs3>=<riscv_freg>
+                                          {
+                                            my $opcode = %instructions<riscv><fr4><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<rs2>.made +< 20;
+                                            $opcode +|= $/<rs3>.made +< 27;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+# How are the next two regexen modified for the aq and rl bits?
+  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+                                          {
+                                            my $opcode = %instructions<riscv><ra><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<rs2>.made +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
+                                          {
+                                            my $opcode = %instructions<riscv><ra0><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_rd>    { $<mnemonic>=@riscv_instr_rd <.ws> $<rd>=<riscv_reg> 
+                                          {
+                                            my $opcode = %instructions<riscv><rd><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_sh>  { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><sh><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made              +< 7;
+                                            $opcode +|= $/<rs1>.made             +< 15;
+                                            $opcode +|= ($/<shamt>.made +& 0x1f) +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_lsh>  { $<mnemonic>=@riscv_instr_lsh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><lsh><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made              +< 7;
+                                            $opcode +|= $/<rs1>.made             +< 15;
+                                            $opcode +|= ($/<shamt>.made +& 0x3f) +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_i>     { $<mnemonic>=@riscv_instr_i <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<imm>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<imm>.made +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_s>     { $<mnemonic>=@riscv_instr_s <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made              +< 15;
+                                            $opcode +|= $/<rs1>.made             +< 20;
+                                            $opcode +|= ($/<imm>.made +& 0x001f) +<  7;
+                                            $opcode +|= ($/<imm>.made +& 0x0fe0) +< 15;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_sb>    { $<mnemonic>=@riscv_instr_sb <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rs1>.made             +< 15;
+                                            $opcode +|= $/<rs2>.made             +< 20;
+                                            $opcode +|= ($/<imm>.made +& 0x0800) +>  4;
+                                            $opcode +|= ($/<imm>.made +& 0x001e) +<  7;
+                                            $opcode +|= ($/<imm>.made +& 0x0fe0) +< 15;
+                                            $opcode +|= ($/<imm>.made +& 0x1000) +< 16;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_u>     { $<mnemonic>=@riscv_instr_u <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<imm>.made +& 0xfffff000;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_uj>    { $<mnemonic>=@riscv_instr_uj <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+# There is a reason these bits are arranged like this. It just makes the assembler a bit more complicated!
+                                            $opcode +|=  $/<imm>.made +& 0x000ff000       ;
+                                            $opcode +|= ($/<imm>.made +& 0x00000800) +<  9;
+                                            $opcode +|= ($/<imm>.made +& 0x000007fe) +< 20;
+                                            $opcode +|= ($/<imm>.made +& 0x00010000) +< 11;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+}
+%instructionset<riscv> = RiscV.new();
+
 # Skeleton for new architectures
 
 #my @arch_instr_inh;   make_hash('arch', 'inh');
@@ -3029,16 +3211,29 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   $m = Assembler.subparse($args,
 		       :rule(<expression>));
   my $value = +$m.made<value>;
-  format_listing(-1, '', $label, $opcode, $rest);
-  %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
+  if %instructions{$isa}{$instr_type}<array>.defined {
+    format_listing(-1, '', $label, $opcode, $rest);
+#note "$isa $instr_type $opc $value";
+    %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
+  } else {
+    error_listing "Unknown instruction type $instr_type";
+  }
 };
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-say %instructions.gist;
+say %instructions{$isa};
   for %instructions{$isa}.keys -> $key {
-    @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
+say "Generating for $isa $key";
+say "Generating %instructions{$isa}{$key}<array>";
+    if %instructions{$isa}{$key}<hash>.defined {
+      @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
+    } else {
+say "Empty array for %instructions{$isa}{$key}<array>";
+      @::(%instructions{$isa}{$key}<array>) = ();
+    }
   }
+say @riscv_instr_inh;
   $instructionset = %instructionset{$isa};
 }
 
@@ -3176,7 +3371,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

@@ -2,7 +2,7 @@
 
 use v6;
 
-my $debug = 1;
+my $debug = 0;
 
 sub debug (Str $message) {
   note $message if $debug;
@@ -2450,6 +2450,7 @@ grammar Mips32 is Assembler {
 my @riscv_instr_inh;   make_hash('riscv', 'inh');
 my @riscv_instr_rd;    make_hash('riscv', 'rd');
 my @riscv_instr_r;     make_hash('riscv', 'r');
+my @riscv_instr_r2;    make_hash('riscv', 'r2');
 my @riscv_instr_fr;    make_hash('riscv', 'fr');
 my @riscv_instr_fr2;   make_hash('riscv', 'fr2');
 my @riscv_instr_fr4;   make_hash('riscv', 'fr4');
@@ -2466,7 +2467,8 @@ my @riscv_instr_u;     make_hash('riscv', 'u');
 my @riscv_instr_uj;    make_hash('riscv', 'uj');
 
 grammar RiscV is Assembler {
-  token riscv_reg                    { <[xX]> ( \d+ ) [ '+' (\d+) ]?
+  proto regex riscv_reg              { <*>                                                                                }
+  token riscv_reg:sym<x>             { <[xX]> ( \d+ ) [ '+' (\d+) ]?
                                        {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
@@ -2477,7 +2479,82 @@ grammar RiscV is Assembler {
                                          make $reg;
                                        }
                                      }
-  token riscv_freg                    { <[fF]> ( \d+ ) [ '+' (\d+) ]?
+  token riscv_reg:sym<zero>          { 'zero'
+                                       {
+                                         make 0;
+                                       }
+                                     }
+  token riscv_reg:sym<ra>            { 'ra'
+                                       {
+                                         make 1;
+                                       }
+                                     }
+  token riscv_reg:sym<fp>            { 'fp'
+                                       {
+                                         make 2;
+                                       }
+                                     }
+  token riscv_reg:sym<s>             { <[sS]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 11) {
+                                           error_listing '*** Saved registers must be in range s0 to s11';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 2;
+                                       }
+                                     }
+  token riscv_reg:sym<sp>            { 'sp'
+                                       {
+                                         make 14;
+                                       }
+                                     }
+  token riscv_reg:sym<tp>            { 'tp'
+                                       {
+                                         make 15;
+                                       }
+                                     }
+  token riscv_reg:sym<v>             { <[vV]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 1) {
+                                           error_listing '*** Return value registers must be in range v0 to v1';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 16;
+                                       }
+                                     }
+  token riscv_reg:sym<a>             { <[aA]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 7) {
+                                           error_listing '*** Function argument registers must be in range a0 to a7';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 18;
+                                       }
+                                     }
+  token riscv_reg:sym<t>             { <[tT]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 4) {
+                                           error_listing '*** Function argument registers must be in range t0 to t4';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 26;
+                                       }
+                                     }
+  token riscv_reg:sym<gp>            { 'gp'
+                                       {
+                                         make 31;
+                                       }
+                                     }
+  proto regex riscv_freg              { <*>                                                                                }
+  token riscv_freg:sym<f>            { <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                        {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
@@ -2486,6 +2563,50 @@ grammar RiscV is Assembler {
                                            $reg = 0;
                                          }
                                          make $reg;
+                                       }
+                                     }
+  token riscv_freg:sym<fs>           { <[fF]> <[sS]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 15) {
+                                           error_listing '*** FP saved registers must be in range fs0 to fs15';
+                                           $reg = 0;
+                                         }
+                                         make $reg;
+                                       }
+                                     }
+  token riscv_freg:sym<fv>           { <[fF]> <[vV]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 1) {
+                                           error_listing '*** FP return value registers must be in range fv0 to fv1';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 16;
+                                       }
+                                     }
+  token riscv_freg:sym<fa>           { <[fF]> <[aA]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 7) {
+                                           error_listing '*** FP argument registers must be in range fa0 to fa7';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 18;
+                                       }
+                                     }
+  token riscv_freg:sym<ft>           { <[fF]> <[tT]> ( \d+ ) [ '+' (\d+) ]?
+                                       {
+                                         my $reg = +$/[0];
+                                         $reg += $/[1] if $/[1].defined;
+                                         if ! (0 <= $reg <= 5) {
+                                           error_listing '*** FP temporary registers must be in range ft0 to ft5';
+                                           $reg = 0;
+                                         }
+                                         make $reg + 26;
                                        }
                                      }
   regex instruction:sym<riscv_inh>   { $<mnemonic>=@riscv_instr_inh
@@ -2503,48 +2624,81 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fr>    { $<mnemonic>=@riscv_instr_fr <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg>
+  regex instruction:sym<riscv_r2>    { $<mnemonic>=@riscv_instr_r2 <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
                                           {
-                                            my $opcode = %instructions<riscv><fr><hash>{~$/<mnemonic>};
+                                            my $opcode = %instructions<riscv><r2><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
                                             $opcode +|= $/<rs2>.made +< 20;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fr2>   { $<mnemonic>=@riscv_instr_fr2 <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg>
+  token riscv_rm                     { [ '.' ( 'rne' | 'rtz' | 'rdn' | 'rup' | 'rmm' ) ]?
+                                       {
+                                         my $rm = 0x7000;
+                                         if $/[0].defined {
+                                           $rm = 0x0000 if $/[0] eq 'rne';
+                                           $rm = 0x1000 if $/[0] eq 'rtz';
+                                           $rm = 0x2000 if $/[0] eq 'rdn';
+                                           $rm = 0x3000 if $/[0] eq 'rup';
+                                           $rm = 0x4000 if $/[0] eq 'rmm';
+                                         }
+                                         make $rm;
+                                       }
+                                     }
+  regex instruction:sym<riscv_fr>    { $<mnemonic>=@riscv_instr_fr <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg>
+                                          {
+                                            my $opcode = %instructions<riscv><fr><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made +< 7;
+                                            $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<rs2>.made +< 20;
+                                            $opcode +|= $/<riscv_rm>.made;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_fr2>   { $<mnemonic>=@riscv_instr_fr2 <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg>
                                           {
                                             my $opcode = %instructions<riscv><fr2><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
+                                            $opcode +|= $/<riscv_rm>.made;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fr4>   { $<mnemonic>=@riscv_instr_fr4 <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg> <comma> $<rs3>=<riscv_freg>
+  regex instruction:sym<riscv_fr4>   { $<mnemonic>=@riscv_instr_fr4 <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg> <comma> $<rs3>=<riscv_freg>
                                           {
                                             my $opcode = %instructions<riscv><fr4><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
                                             $opcode +|= $/<rs2>.made +< 20;
                                             $opcode +|= $/<rs3>.made +< 27;
+                                            $opcode +|= $/<riscv_rm>.made;
                                             make ( ($opcode,) );
                                           }
                                         }
 # How are the next two regexen modified for the aq and rl bits?
-  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
                                           {
                                             my $opcode = %instructions<riscv><ra><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
                                             $opcode +|= $/<rs2>.made +< 20;
+                                            for @($/<modifiers>) -> $modifier {
+                                              $opcode +|= 0x04000000 if $modifier eq '.aq';
+                                              $opcode +|= 0x02000000 if $modifier eq '.rl';
+                                            }
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
+  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
                                           {
                                             my $opcode = %instructions<riscv><ra0><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
+                                            for @($/<modifiers>) -> $modifier {
+                                              $opcode +|= 0x04000000 if $modifier eq '.aq';
+                                              $opcode +|= 0x02000000 if $modifier eq '.rl';
+                                            }
                                             make ( ($opcode,) );
                                           }
                                         }
@@ -2555,7 +2709,16 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_sh>  { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+  regex instruction:sym<riscv_sh>       { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+                                          {
+                                            my $opcode = %instructions<riscv><sh><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<rd>.made              +< 7;
+                                            $opcode +|= $/<rs1>.made             +< 15;
+                                            $opcode +|= ($/<shamt>.made +& 0x1f) +< 20;
+                                            make ( ($opcode,) );
+                                          }
+                                        }
+  regex instruction:sym<riscv_sh_v>     { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<shamt>=<expression> '(' $<rs1>=<riscv_reg> ')'
                                           {
                                             my $opcode = %instructions<riscv><sh><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 7;
@@ -2578,7 +2741,7 @@ grammar RiscV is Assembler {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             $opcode +|= $/<rs1>.made +< 15;
-                                            $opcode +|= $/<imm>.made +< 20;
+                                            $opcode +|= $/<imm>.made +< 20; # Should check for immediate value in range
                                             make ( ($opcode,) );
                                           }
                                         }
@@ -2597,10 +2760,11 @@ grammar RiscV is Assembler {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rs1>.made             +< 15;
                                             $opcode +|= $/<rs2>.made             +< 20;
-                                            $opcode +|= ($/<imm>.made +& 0x0800) +>  4;
-                                            $opcode +|= ($/<imm>.made +& 0x001e) +<  7;
-                                            $opcode +|= ($/<imm>.made +& 0x0fe0) +< 15;
-                                            $opcode +|= ($/<imm>.made +& 0x1000) +< 16;
+                                            my $offset = ($/<imm>.made - $pc) / 2; # Check if in range
+                                            $opcode +|= ($offset +& 0x0800) +>  4;
+                                            $opcode +|= ($offset +& 0x001e) +<  7;
+                                            $opcode +|= ($offset +& 0x0fe0) +< 15;
+                                            $opcode +|= ($offset +& 0x1000) +< 16;
                                             make ( ($opcode,) );
                                           }
                                         }
@@ -2616,11 +2780,12 @@ grammar RiscV is Assembler {
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
+                                            my $offset = ($/<imm>.made - $pc) div 2;
 # There is a reason these bits are arranged like this. It just makes the assembler a bit more complicated!
-                                            $opcode +|=  $/<imm>.made +& 0x000ff000       ;
-                                            $opcode +|= ($/<imm>.made +& 0x00000800) +<  9;
-                                            $opcode +|= ($/<imm>.made +& 0x000007fe) +< 20;
-                                            $opcode +|= ($/<imm>.made +& 0x00010000) +< 11;
+                                            $opcode +|=  $offset +& 0x000ff000       ;
+                                            $opcode +|= ($offset +& 0x00000800) +<  9;
+                                            $opcode +|= ($offset +& 0x000007fe) +< 20;
+                                            $opcode +|= ($offset +& 0x00010000) +< 11;
                                             make ( ($opcode,) );
                                           }
                                         }
@@ -3222,18 +3387,18 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-say %instructions{$isa};
+#say %instructions{$isa};
   for %instructions{$isa}.keys -> $key {
-say "Generating for $isa $key";
-say "Generating %instructions{$isa}{$key}<array>";
+#say "Generating for $isa $key";
+#say "Generating %instructions{$isa}{$key}<array>";
     if %instructions{$isa}{$key}<hash>.defined {
       @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
     } else {
-say "Empty array for %instructions{$isa}{$key}<array>";
+#say "Empty array for %instructions{$isa}{$key}<array>";
       @::(%instructions{$isa}{$key}<array>) = ();
     }
   }
-say @riscv_instr_inh;
+#say @riscv_instr_inh;
   $instructionset = %instructionset{$isa};
 }
 
@@ -3371,7 +3536,7 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
+  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

@@ -1,4 +1,4 @@
-;	.nolist
+	.nolist
 ; Definitions for the Risc-V processor
 
 	.param codewidth = 32
@@ -31,13 +31,28 @@
  .instruction u    lui        0x00000037
  .instruction u    auipc      0x00000017
  .instruction uj   jal        0x0000006f
+ .macro j
+ jal x0, @0
+ .endm
  .instruction i    jalr       0x00000067
  .instruction sb   beq        0x00000063
  .instruction sb   bne        0x00001063
  .instruction sb   blt        0x00004063
+ .macro bgt
+ blt @1, @0, @2
+ .endm
  .instruction sb   bge        0x00005063
+ .macro ble
+ bge @1, @0, @2
+ .endm
  .instruction sb   bltu       0x00006063
+ .macro bgtu
+ bltu @1, @0, @2
+ .endm
  .instruction sb   bgeu       0x00007063
+ .macro bleu
+ bgeu @1, @0, @2
+ .endm
  .instruction i    lb         0x00000003
  .instruction i    lh         0x00001003
  .instruction i    lw         0x00002003
@@ -47,9 +62,21 @@
  .instruction s    sh         0x00001023
  .instruction s    sw         0x00002023
  .instruction i    addi       0x00000013
+ .macro mv
+ addi @0, @1, 0
+ .endm
+ .macro nop
+ addi x0, x0, 0
+ .endm
  .instruction i    slti       0x00002013
  .instruction i    sltiu      0x00003013
+ .macro seqz
+ sltiu @0, @1, 1
+ .endm
  .instruction i    xori       0x00004013
+ .macro not
+ xori @0, @1, -1
+ .endm
  .instruction i    ori        0x00006013
  .instruction i    andi       0x00007013
  .instruction sh   slli       0x00001013
@@ -60,6 +87,9 @@
  .instruction r    sll        0x00001033
  .instruction r    slt        0x00002033
  .instruction r    sltu       0x00003033
+ .macro snez
+ sltu @0, x0, @1
+ .endm
  .instruction r    xor        0x00004033
  .instruction r    srl        0x00005033
  .instruction r    sra        0x40005033
@@ -84,6 +114,9 @@
  .instruction lsh  srli       0x00005013
  .instruction lsh  srai       0x40005013
  .instruction i    addiw      0x0000001b
+ .macro sext.w
+ addiw @0, @1, 0
+ .endm
  .instruction sh   slliw      0x0000101b
  .instruction sh   srliw      0x0000501b
  .instruction sh   sraiw      0x4000501b
@@ -123,7 +156,7 @@
  .instruction ra   amomaxu.w  0xe000402f
 
 # RV64A standard extension
- .instruction ra0   lr.d       0x1000602f
+ .instruction ra0  lr.d       0x1000602f
  .instruction ra   sc.d       0x1800602f
  .instruction ra   amoswap.d  0x0800602f
  .instruction ra   amoadd.d   0x0000602f
@@ -186,9 +219,32 @@
  .instruction fr4  fnmadd.d   0x0200004f
  .instruction fr   fadd.d     0x02000053
  .instruction fr   fsub.d     0x0a000053
+ .instruction fr   fmul.d     0x12000053
+ .instruction fr   fdiv.d     0x1a000053
+ .instruction fr2  fsqrt.d    0x5a000053
+ .instruction fr   fsgnj.d    0x22000053
+ .instruction fr   fsgnjn.d   0x22002053
+ .instruction fr   fsgnjx.d   0x22004053
+ .instruction fr   fmin.d     0x2a000053
+ .instruction fr   fmax.d     0x2a002053
+ .instruction fr2  fcvt.s.d   0x40100053
+ .instruction fr2  fcvt.d.s   0x42000053
+ .instruction fr   feq.d      0xa2004053
+ .instruction fr   flt.d      0xa2002053
+ .instruction fr   fle.d      0xa2000053
+ .instruction fr2  fclass.d   0xe2002053
+ .instruction fr2  fcvt.w.d   0xc2000053
+ .instruction fr2  fcvt.wu.d  0xc2100053
+ .instruction fr2  fcvt.d.w   0xd2000053
+ .instruction fr2  fcvt.d.wu  0xd2100053
 
 # RV64D standard extension
-
+ .instruction fr2  fcvt.l.d   0xc2200053
+ .instruction fr2  fcvt.lu.d  0xc2300053
+ .instruction fr2  fmv.x.d    0xe2000053
+ .instruction fr2  fcvt.d.l   0xd2200053
+ .instruction fr2  fcvt.d.lu  0xd2300053
+ .instruction fr2  fmv.d.x    0xf2000053
 
  .assemble
 

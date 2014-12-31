@@ -60,3 +60,5 @@ again2:
 # critical section
 # ...
  amoswap.w.rl x0, x0, (a0) # release lock by storing 0.
+ fence.po
+ fence.sr.sw

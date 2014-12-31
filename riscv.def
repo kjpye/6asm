@@ -95,7 +95,7 @@
  .instruction r    sra        0x40005033
  .instruction r    or         0x00006033
  .instruction r    and        0x00007033
-#fence 0x0000000f
+ .instruction fence fence     0x0000000f
  .instruction inh  fence.i    0x0000100f
  .instruction inh  scall      0x00000073
  .instruction inh  sbreak     0x00100073

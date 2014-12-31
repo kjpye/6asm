@@ -2465,6 +2465,7 @@ my @riscv_instr_fs;    make_hash('riscv', 'fs');
 my @riscv_instr_sb;    make_hash('riscv', 'sb');
 my @riscv_instr_u;     make_hash('riscv', 'u');
 my @riscv_instr_uj;    make_hash('riscv', 'uj');
+my @riscv_instr_fence; make_hash('riscv', 'fence');
 
 grammar RiscV is Assembler {
   proto regex riscv_reg              { <*>                                                                                }
@@ -2676,7 +2677,22 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-# How are the next two regexen modified for the aq and rl bits?
+  regex instruction:sym<riscv_fence>     { $<mnemonic>=@riscv_instr_fence $<modifiers>=( '.' <[ps]> <[iorw]> )*
+                                          {
+                                            my $opcode = %instructions<riscv><fence><hash>{~$/<mnemonic>};
+                                            for @($/<modifiers>) -> $modifier {
+                                              $opcode +|= 0x08000000 if $modifier eq '.pi';
+                                              $opcode +|= 0x04000000 if $modifier eq '.po';
+                                              $opcode +|= 0x02000000 if $modifier eq '.pr';
+                                              $opcode +|= 0x01000000 if $modifier eq '.pw';
+                                              $opcode +|= 0x00800000 if $modifier eq '.si';
+                                              $opcode +|= 0x00400000 if $modifier eq '.so';
+                                              $opcode +|= 0x00200000 if $modifier eq '.sr';
+                                              $opcode +|= 0x00100000 if $modifier eq '.sw';
+                                            }
+                                            make ( ($opcode,) );
+                                          }
+                                        }
   regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
                                           {
                                             my $opcode = %instructions<riscv><ra><hash>{~$/<mnemonic>};

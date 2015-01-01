@@ -13,6 +13,7 @@
 	.defmem init = 1
 	.defmem label = 'C'
 	.defmem pcwidth = 3
+        .defmem pcinc = 1;
 
 	.pushmem ram
 	.defmem bottom = 0x60

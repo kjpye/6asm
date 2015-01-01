@@ -41,4 +41,6 @@ place
  ldmed sp!,{r0-r3,r15}
 
  .arch thumb
- adc r1,r3,#0x234
+; Thumb architecture
+ adc r1, r3, #0x234 ; comment
+ adc.n r1, r3, #0x234

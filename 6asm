@@ -2554,6 +2554,17 @@ grammar RiscV is Assembler {
                                          make 31;
                                        }
                                      }
+  proto regex riscv_indreg           { <*> }
+  regex riscv_indreg:sym<reg>        { $<reg>=<riscv_reg>
+                                       {
+                                         make $/<reg>.made;
+                                       }
+                                     }
+  regex riscv_indreg:sym<parreg>     { '(' $<reg>=<riscv_reg> ')'
+                                       {
+                                         make $/<reg>.made;
+                                       }
+                                     }
   proto regex riscv_freg              { <*>                                                                                }
   token riscv_freg:sym<f>            { <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                        {
@@ -2693,7 +2704,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_indreg>
                                           {
                                             my $opcode = %instructions<riscv><ra><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2706,7 +2717,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
+  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_indreg>
                                           {
                                             my $opcode = %instructions<riscv><ra0><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2761,7 +2772,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_s>     { $<mnemonic>=@riscv_instr_s <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_s>     { $<mnemonic>=@riscv_instr_s <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression> '(' $<rs1>=<riscv_reg> ')'
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 15;

@@ -35,8 +35,17 @@
  jal x0, @0
  .endm
  .instruction i    jalr       0x00000067
+ .macro jr
+ jalr x0, @0, 0
+ .endm
  .instruction sb   beq        0x00000063
+ .macro beqz
+ beq @0, x0, @1
+ .endm
  .instruction sb   bne        0x00001063
+ .macro bnez
+ bne @0, x0, @1
+ .endm
  .instruction sb   blt        0x00004063
  .macro bgt
  blt @1, @0, @2
@@ -67,6 +76,9 @@
  .endm
  .macro nop
  addi x0, x0, 0
+ .endm
+ .macro li
+ addi @0, x0, @1
  .endm
  .instruction i    slti       0x00002013
  .instruction i    sltiu      0x00003013

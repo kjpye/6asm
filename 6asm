@@ -2819,6 +2819,162 @@ grammar RiscV is Assembler {
 }
 %instructionset<riscv> = RiscV.new();
 
+
+my @i8051_instr_inh;    make_hash('i8051', 'inh');
+my @i8051_instr_single; make_hash('i8051', 'single');
+my @i8051_instr_arith;  make_hash('i8051', 'arith');
+my @i8051_instr_addr11; make_hash('i8051', 'addr11');
+my @i8051_instr_addr16; make_hash('i8051', 'addr16');
+my @i8051_instr_bit;    make_hash('i8051', 'bit');
+my @i8051_instr_acc;    make_hash('i8051', 'acc');
+my @i8051_instr_offset; make_hash('i8051', 'offset');
+my @i8051_instr_rarith; make_hash('i8051', 'rarith');
+my @i8051_instr_logic;  make_hash('i8051', 'logic');
+my @i8051_instr_rlogic; make_hash('i8051', 'rlogic');
+
+grammar I8051 is Assembler {
+  token i8051_reg                    { <[rR]> $<regno>=( \d+ )
+                                       {
+                                         make +$/<regno>;
+                                       }
+                                     }
+  token i8051_ireg                   { '@' <[rR]> $<regno>=( <[01]> )
+                                       {
+                                         make ( +$/<regno>, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_inh>   { $<mnemonic>=@i8051_instr_inh
+                                       {
+                                         my $opcode = %instructions<i8051><inh><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+  regex instruction:sym<i8051_logic>   { $<mnemonic>=@i8051_instr_logic <.ws> <[cC]> <comma> $<expression>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><logic><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<expression>.made<value>;
+                                         make ( $opcode, $bit +& 0xff);
+                                       }
+                                     }
+  regex instruction:sym<i8051_rlogic>   { $<mnemonic>=@i8051_instr_rlogic <.ws> <[cC]> <comma> '/' $<expression>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><rlogic><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<expression>.made<value>;
+                                         make ( $opcode, $bit +& 0xff);
+                                       }
+                                     }
+  regex instruction:sym<i8051_sind>   { $<mnemonic>=@i8051_instr_single <.ws> <i8051_ireg>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         $opcode +|= $/<i8051_ireg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_sdir>   { $<mnemonic>=@i8051_instr_single <.ws> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         make ( $opcode, +$/<expression> );
+                                       }
+                                     }
+  regex instruction:sym<i8051_sreg>   { $<mnemonic>=@i8051_instr_single <.ws> <i8051_reg>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         $opcode +|= +$/<i8051_reg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_sacc>   { $<mnemonic>=@i8051_instr_single <.ws> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x04;
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_ind>   { $<mnemonic>=@i8051_instr_arith <.ws> <[aA]> <comma> <i8051_ireg>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         $opcode +|= $/<i8051_ireg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_reg>   { $<mnemonic>=@i8051_instr_arith <.ws> <[aA]> <comma> <i8051_reg>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         $opcode +|= +$/<i8051_reg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_dir>   { $<mnemonic>=@i8051_instr_arith <.ws> <[aA]> <comma> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         make ( $opcode, +$/<expression> );
+                                       }
+                                     }
+  regex instruction:sym<i8051_imm>   { $<mnemonic>=@i8051_instr_arith <.ws> <[aA]> <comma> '#' <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x04;
+                                         make ( $opcode, +$/<expression> );
+                                       }
+                                     }
+  regex instruction:sym<i8051_acca>  { $<mnemonic>=@i8051_instr_rarith <.ws> $<direct>=<expression> <comma> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><rarith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x03;
+                                         make ( $opcode, +$/<direct>.made<value> +& 0xff );
+                                       }
+                                     }
+  regex instruction:sym<i8051_dira>  { $<mnemonic>=@i8051_instr_rarith <.ws> $<direct>=<expression> <comma> '#' $<value>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><rarith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x03;
+                                         make ( $opcode, +$/<direct>.made<value> +& 0xff, +$/<value>.made<value> +& 0xff );
+                                       }
+                                     }
+  regex instruction:sym<i8051_addr11> { $<mnemonic>=@i8051_instr_addr11 <.ws> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><addr11><hash>{~$/<mnemonic>};
+                                         $opcode +|= $/<expression>.made<value> +& 0x1f00 +> 8;
+                                         make ( $opcode, +$/<expression> +& 0xff );
+                                       }
+                                     }
+  regex instruction:sym<i8051_addr16>   { $<mnemonic>=@i8051_instr_addr16 <.ws> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><addr16><hash>{~$/<mnemonic>};
+                                         make ( $opcode, (+$/<expression> +& 0xff00) +> 8, +$/<expression> +& 0xff );
+                                       }
+                                     }
+  regex instruction:sym<i8051_bit>   { $<mnemonic>=@i8051_instr_bit <.ws> $<bit>=<expression> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><bit><hash>{~$/<mnemonic>};
+                                         my $bitno = +$/<bit>.made<value> +& 0xff;
+                                         my $offset = +$/<target>.made<value> - ($pc + 3);
+                                         make ( $opcode, +$/<bit>.made<value>, $offset +& 0xff );
+                                       }
+                                     }
+  regex instruction:sym<i8051_acc>   { $<mnemonic>=@i8051_instr_acc <.ws> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><acc><hash>{~$/<mnemonic>};
+                                         make ( $opcode, );
+                                       }
+                                     }
+  regex instruction:sym<i8051_offset>   { $<mnemonic>=@i8051_instr_offset <.ws> $<expression>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><offset><hash>{~$/<mnemonic>};
+                                         my $target = +$/<expression>.made<value>;
+                                         my $offset = $target - ($pc + 2);
+                                         make ( $opcode, $offset +& 0xff);
+                                       }
+                                     }
+}
+%instructionset<i8051> = I8051.new();
+
 # Skeleton for new architectures
 
 #my @arch_instr_inh;   make_hash('arch', 'inh');
@@ -3390,6 +3546,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 
 # The .instruction directive generates the data the parser uses to assemble code
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+#note ".instruction... $label $opcode $rest $pass";
   return unless $pass == 1;
   my $args = $rest;
   my $m = Assembler.subparse($args,
@@ -3414,18 +3571,19 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-#say %instructions{$isa};
+#note "Assembling for isa $isa";
+#note '%instructions: ', %instructions{$isa};
   for %instructions{$isa}.keys -> $key {
-#say "Generating for $isa $key";
-#say "Generating %instructions{$isa}{$key}<array>";
+#note "Generating for $isa $key";
+#note "Generating %instructions{$isa}{$key}<array>";
     if %instructions{$isa}{$key}<hash>.defined {
       @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
     } else {
-#say "Empty array for %instructions{$isa}{$key}<array>";
+#note "Empty array for %instructions{$isa}{$key}<array>";
       @::(%instructions{$isa}{$key}<array>) = ();
     }
   }
-#say @riscv_instr_inh;
+#note @i8051_instr_single;
   $instructionset = %instructionset{$isa};
 }
 
@@ -3563,7 +3721,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

@@ -46,6 +46,7 @@
  .instruction bit    jbc   0x10
  .instruction bit    jb    0x20
  .instruction bit    jnb   0x30
+ .instruction acc    rr    0x03
  .instruction acc    rrc   0x13
  .instruction acc    rl    0x23
  .instruction acc    rlc   0x33
@@ -62,6 +63,11 @@
  .instruction logic  anl   0x82
  .instruction rlogic anl   0xb0
  .instruction logic  mov   0xa2
+ .instruction dptr   jmp   0x73
+ .instruction mov    mov   0x70
+ .instruction mov2   mov   0x80
+ .instruction mov3   mov   0x90
+ .instruction mov4   mov   0xa0
 
  .assemble
 

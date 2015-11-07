@@ -1,0 +1,91 @@
+	; .nolist
+; Definitions for the 8051 processor
+
+	.param codewidth = 16
+        .param pcwidth = 8
+
+	.pushmem rom
+	.defmem bottom = 0x0
+	.defmem top = 0xffff
+	.defmem width = 8
+	.defmem executable = 1
+	.defmem writeable = 0
+	.defmem readable = 1
+	.defmem init = 1
+	.defmem label = ''
+	.defmem pcwidth = 4
+        .defmem pcinc = 1
+	.popmem
+	
+	.macro .rom
+	.pushmem rom
+	.endm
+	
+	.macro .code
+	.pushmem rom
+	.endm
+
+ .isa i8051
+
+ .instruction inh    nop   0x00
+ .instruction inh    ret   0x22
+ .instruction inh    reti  0x32
+ .instruction single inc   0x00
+ .instruction single dec   0x10
+ .instruction arith  add   0x20
+ .instruction arith  addc  0x30
+ .instruction arith  orl   0x40
+ .instruction arith  anl   0x50
+ .instruction arith  xrl   0x60
+ .instruction arith  subb  0x90
+ .instruction arith  xch   0xc0
+ .instruction addr11 ajmp  0x01
+ .instruction addr11 acall 0x11
+ .instruction addr16 ljmp  0x02
+ .instruction addr16 lcall 0x12
+ .instruction bitoff jbc   0x10
+ .instruction bitoff jb    0x20
+ .instruction bitoff jnb   0x30
+ .instruction acc    rr    0x03
+ .instruction acc    rrc   0x13
+ .instruction acc    rl    0x23
+ .instruction acc    rlc   0x33
+ .instruction acc    swap  0xc4
+ .instruction acc    da    0xd4
+ .instruction offset jc    0x40
+ .instruction offset jnc   0x50
+ .instruction offset jz    0x60
+ .instruction offset jnz   0x70
+ .instruction offset sjmp  0x80
+ .instruction rarith orl   0x40
+ .instruction rarith anl   0x50
+ .instruction rarith xrl   0x60
+ .instruction logic  orl   0x72
+ .instruction rlogic orl   0xa0
+ .instruction logic  anl   0x82
+ .instruction rlogic anl   0xb0
+ .instruction logic  mov   0xa2
+ .instruction adptr  jmp   0x73
+ .instruction mov    mov   0x70
+ .instruction mov2   mov   0x80
+ .instruction mov3   mov   0x90
+ .instruction mov4   mov   0xa0
+ .instruction movc   movc  0x83
+ .instruction mul    div   0x84
+ .instruction mul    mul   0xa4
+ .instruction movd   mov   0x90
+ .instruction movC   mov   0x92
+ .instruction dptr   inc   0xa3
+ .instruction bit    cpl   0xb2
+ .instruction bit    clr   0xc2
+ .instruction bit    setb  0xd2
+ .instruction cjne   cjne  0xb0
+ .instruction direct push  0xc0
+ .instruction direct pop   0xd0
+ .instruction djnz   djnz  0xd0
+
+ .assemble
+
+ .arch i8051
+
+ .list

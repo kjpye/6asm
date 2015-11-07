@@ -53,6 +53,8 @@ space for each segment and then manually switch betwen them.
 $pc is the program counter. It is bound to the pc field of the top of the
   memory space stack. This is maintained by the .pushmem and .popmem
   directives.
+
+Many of the features above are not yet used (like the readable/writeable/executable information).
 ]
 
 my %memspace;
@@ -76,7 +78,7 @@ my @memspace = ({'pc' => 0.Int});
     set up during the first pass.
   @local_pointer is an array containing the pointers to the most recent declaration.
     It is initialised to an array of -1 values (indicating that no local labels have
-    been seen at the beginning of each pass.
+    been seen at the beginning of each pass).
 ]
 
 sub setup_local_pointer() {
@@ -121,7 +123,6 @@ grammar Assembler {
     token id                      { <wb> ( <[a..z A..Z _]> <[a..z A..Z 0..9 _ \.]>* ) <wb> }
     token identifier              { <id>
                                     {
-                                      #say "Found identifier: ", $/ if $debug;
                                       my $sym = ~$/<id>;
                                       my $lcsym = $sym.lc;
                                       if %symbol{$lcsym}.defined {
@@ -143,7 +144,6 @@ grammar Assembler {
                                         ++$index2;
                                         $def = 0;
                                       }
-                                      #debug "In method local_ref: index is $index ($index2)";
                                       if $index2 < 0 {
                                         $value = 0; # Should be error
                                       } else {
@@ -335,7 +335,7 @@ grammar Avr is Assembler {
                                          make $r2;
                                        }
                                      }
-  regex instruction:sym<avr_rr>      { $<mnemonic>=@avr_instr_rr      <avr_reg> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_rr>      { $<mnemonic>=(@avr_instr_rr)      <avr_reg> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><rr><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<avr_reg>[0].made;
@@ -346,7 +346,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_ww1>     { $<mnemonic>=@avr_instr_ww      <avr_regpair> <comma> <avr_regpair> <ws>
+  regex instruction:sym<avr_ww1>     { $<mnemonic>=(@avr_instr_ww)      <avr_regpair> <comma> <avr_regpair> <ws>
                                        {
                                          my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<regpair>[0].made;
@@ -356,7 +356,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_ww2>     { $<mnemonic>=@avr_instr_ww      <avr_reg> <comma> <avr_reg> <ws> 
+  regex instruction:sym<avr_ww2>     { $<mnemonic>=(@avr_instr_ww)      <avr_reg> <comma> <avr_reg> <ws> 
                                        {
                                          my $opcode = %instructions<avr><ww><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<avr_reg>[0].made;
@@ -366,7 +366,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_rr3>     { $<mnemonic>=@avr_instr_rr3     <avr_reg> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_rr3>     { $<mnemonic>=(@avr_instr_rr3)     <avr_reg> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><rr3><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<avr_reg>[0].made;
@@ -380,7 +380,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_rr4>     { $<mnemonic>=@avr_instr_rr4     <avr_reg> <comma> <avr_reg> <.ws> 
+  regex instruction:sym<avr_rr4>     { $<mnemonic>=(@avr_instr_rr4)     <avr_reg> <comma> <avr_reg> <.ws> 
                                        {
                                          my $opcode = %instructions<avr><rr4><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<avr_reg>[0].made;
@@ -394,7 +394,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_r2>      { $<mnemonic>=@avr_instr_r2   <avr_reg> <ws> 
+  regex instruction:sym<avr_r2>      { $<mnemonic>=(@avr_instr_r2)   <avr_reg> <ws> 
                                        {
                                          my $opcode = %instructions<avr><r2><hash>{~$/<mnemonic>};
                                          my $r1 = +$/<avr_reg>.made;
@@ -404,7 +404,7 @@ grammar Avr is Assembler {
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
                                      }
-  regex instruction:sym<avr_r>       { $<mnemonic>=@avr_instr_r       <avr_reg> <ws> 
+  regex instruction:sym<avr_r>       { $<mnemonic>=(@avr_instr_r)       <avr_reg> <ws> 
                                        {
                                          my $opcode = %instructions<avr><r><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -412,13 +412,13 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_inh>     { $<mnemonic>=@avr_instr_inh     <ws>
+  regex instruction:sym<avr_inh>     { $<mnemonic>=(@avr_instr_inh)     <ws>
                                        {
                                          my $opcode = %instructions<avr><inh><hash>{~$/<mnemonic>};
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_iw>      { $<mnemonic>=@avr_instr_iw      <ws> <avr_regpair> <comma> <expression> <ws> 
+  regex instruction:sym<avr_iw>      { $<mnemonic>=(@avr_instr_iw)      <ws> <avr_regpair> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
                                          my $reg = $/<regpair>.made;
@@ -433,7 +433,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_iw2>     { $<mnemonic>=@avr_instr_iw      <ws> <avr_reg> <comma> <expression> <ws> 
+  regex instruction:sym<avr_iw2>     { $<mnemonic>=(@avr_instr_iw)      <ws> <avr_reg> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><iw><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -448,7 +448,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_ir>      { $<mnemonic>=@avr_instr_ir     <ws> <avr_reg> <comma> <expression> <ws> 
+  regex instruction:sym<avr_ir>      { $<mnemonic>=(@avr_instr_ir)     <ws> <avr_reg> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><ir><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -463,7 +463,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_irc>     { $<mnemonic>=@avr_instr_irc     <ws> <avr_reg> <comma> <expression> <ws> 
+  regex instruction:sym<avr_irc>     { $<mnemonic>=(@avr_instr_irc)     <ws> <avr_reg> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><irc><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -478,7 +478,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_sreg>    { $<mnemonic>=@avr_instr_sreg    <ws> <avr_bit> <ws> 
+  regex instruction:sym<avr_sreg>    { $<mnemonic>=(@avr_instr_sreg)    <ws> <avr_bit> <ws> 
                                        {
                                          my $opcode = %instructions<avr><sreg><hash>{~$/<mnemonic>};
                                          my $bit = $/<avr_bit>.made;
@@ -486,7 +486,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_tbit>    { $<mnemonic>=@avr_instr_tbit    <ws> <avr_reg> <comma> <avr_bit> <ws> 
+  regex instruction:sym<avr_tbit>    { $<mnemonic>=(@avr_instr_tbit)    <ws> <avr_reg> <comma> <avr_bit> <ws> 
                                        {
                                          my $opcode = %instructions<avr><tbit><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -496,7 +496,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_brb>     { $<mnemonic>=@avr_instr_brb     <ws> <avr_bit> <comma> <expression> <ws> 
+  regex instruction:sym<avr_brb>     { $<mnemonic>=(@avr_instr_brb)     <ws> <avr_bit> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><brb><hash>{~$/<mnemonic>};
                                          my $bit = $/<avr_bit>.made;
@@ -508,7 +508,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_branch>  { $<mnemonic>=@avr_instr_branch  <ws> <expression> <ws> 
+  regex instruction:sym<avr_branch>  { $<mnemonic>=(@avr_instr_branch)  <ws> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><branch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
@@ -518,7 +518,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_lbranch> { $<mnemonic>=@avr_instr_lbranch <ws> <expression> <ws> 
+  regex instruction:sym<avr_lbranch> { $<mnemonic>=(@avr_instr_lbranch) <ws> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><lbranch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
@@ -528,7 +528,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_long>    { $<mnemonic>=@avr_instr_long    <ws> <expression> <ws> 
+  regex instruction:sym<avr_long>    { $<mnemonic>=(@avr_instr_long)    <ws> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><long><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
@@ -537,7 +537,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,($target +& 0xffff)) );
                                        }
                                      }
-  regex instruction:sym<avr_lds>     { $<mnemonic>=@avr_instr_lds     <ws> <avr_reg> <comma> <expression> <ws> 
+  regex instruction:sym<avr_lds>     { $<mnemonic>=(@avr_instr_lds)     <ws> <avr_reg> <comma> <expression> <ws> 
                                        {
                                        # TODO: Handle 7-bit address variant
                                          my $opcode = %instructions<avr><lds><hash>{~$/<mnemonic>};
@@ -547,7 +547,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,($addr +& 0xffff)) );
                                        }
                                      }
-  regex instruction:sym<avr_sts>     { $<mnemonic>=@avr_instr_sts     <ws> <expression> <comma> <avr_reg> <ws> 
+  regex instruction:sym<avr_sts>     { $<mnemonic>=(@avr_instr_sts)     <ws> <expression> <comma> <avr_reg> <ws> 
                                        {
                                        # TODO: Handle 7-bit address variant
                                          my $opcode = %instructions<avr><sts><hash>{~$/<mnemonic>};
@@ -557,7 +557,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,($addr +& 0xffff)) );
                                        }
                                      }
-  regex instruction:sym<avr_bio>     { $<mnemonic>=@avr_instr_bio     <ws> <expression> <comma> <avr_bit> <ws>
+  regex instruction:sym<avr_bio>     { $<mnemonic>=(@avr_instr_bio)     <ws> <expression> <comma> <avr_bit> <ws>
                                        {
                                          my $opcode = %instructions<avr><bio><hash>{~$/<mnemonic>};
                                          my $bit = $/<avr_bit>.made;
@@ -568,7 +568,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_i4>      { $<mnemonic>=@avr_instr_i4      <ws> <expression> <ws>
+  regex instruction:sym<avr_i4>      { $<mnemonic>=(@avr_instr_i4)      <ws> <expression> <ws>
                                        {
                                          my $opcode = %instructions<avr><i4><hash>{~$/<mnemonic>};
                                          my $round = $/<expression>.made<value>;
@@ -577,7 +577,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rx>      { $<mnemonic>=@avr_instr_rx      <ws> <avr_reg> <comma> <[xX]> <!before '+'> <ws>
+  regex instruction:sym<avr_rx>      { $<mnemonic>=(@avr_instr_rx)      <ws> <avr_reg> <comma> <[xX]> <!before '+'> <ws>
                                        {
                                          my $opcode = %instructions<avr><rx><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -585,7 +585,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_xr>      { $<mnemonic>=@avr_instr_xr      <ws> <[xX]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_xr>      { $<mnemonic>=(@avr_instr_xr)      <ws> <[xX]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><xr><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -593,7 +593,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rxplus>  { $<mnemonic>=@avr_instr_rxplus  <ws> <avr_reg> <comma> <[xX]>'+' <ws>
+  regex instruction:sym<avr_rxplus>  { $<mnemonic>=(@avr_instr_rxplus)  <ws> <avr_reg> <comma> <[xX]>'+' <ws>
                                        {
                                          my $opcode = %instructions<avr><rxplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -601,7 +601,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_xrplus>  { $<mnemonic>=@avr_instr_xrplus  <ws> <[xX]>'+' <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_xrplus>  { $<mnemonic>=(@avr_instr_xrplus)  <ws> <[xX]>'+' <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><xrplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -609,7 +609,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rxminus> { $<mnemonic>=@avr_instr_rxminus <ws> <avr_reg> <comma> '-'<[xX]> <ws>
+  regex instruction:sym<avr_rxminus> { $<mnemonic>=(@avr_instr_rxminus) <ws> <avr_reg> <comma> '-'<[xX]> <ws>
                                        {
                                          my $opcode = %instructions<avr><rxminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -617,7 +617,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_xrminus> { $<mnemonic>=@avr_instr_xrminus <ws> '-'<[xX]> <comma> <avr_reg> <ws> 
+  regex instruction:sym<avr_xrminus> { $<mnemonic>=(@avr_instr_xrminus) <ws> '-'<[xX]> <comma> <avr_reg> <ws> 
                                        {
                                          my $opcode = %instructions<avr><xrminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -625,7 +625,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_ry>      { $<mnemonic>=@avr_instr_ry      <ws> <avr_reg> <comma> <[yY]> <!before '+'> <ws>
+  regex instruction:sym<avr_ry>      { $<mnemonic>=(@avr_instr_ry)      <ws> <avr_reg> <comma> <[yY]> <!before '+'> <ws>
                                        {
                                          my $opcode = %instructions<avr><ry><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -633,7 +633,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_yr>      { $<mnemonic>=@avr_instr_yr      <ws> <[yY]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_yr>      { $<mnemonic>=(@avr_instr_yr)      <ws> <[yY]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><yr><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -641,7 +641,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_ryplus>  { $<mnemonic>=@avr_instr_ryplus  <ws> <avr_reg> <comma> <[yY]>'+' <!before <expression> > <ws>
+  regex instruction:sym<avr_ryplus>  { $<mnemonic>=(@avr_instr_ryplus)  <ws> <avr_reg> <comma> <[yY]>'+' <!before <expression> > <ws>
                                        {
                                          my $opcode = %instructions<avr><ryplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -649,7 +649,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_yrplus>  { $<mnemonic>=@avr_instr_yrplus  <ws> <[yY]>'+' <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_yrplus>  { $<mnemonic>=(@avr_instr_yrplus)  <ws> <[yY]>'+' <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><yrplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -657,7 +657,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_ryminus> { $<mnemonic>=@avr_instr_ryminus <ws> <avr_reg> <comma> '-'<[yY]> <ws>
+  regex instruction:sym<avr_ryminus> { $<mnemonic>=(@avr_instr_ryminus) <ws> <avr_reg> <comma> '-'<[yY]> <ws>
                                        {
                                          my $opcode = %instructions<avr><ryminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -665,7 +665,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_yrminus> { $<mnemonic>=@avr_instr_yrminus <ws> '-'<[yY]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_yrminus> { $<mnemonic>=(@avr_instr_yrminus) <ws> '-'<[yY]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><yrminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -673,7 +673,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_ryq>     { $<mnemonic>=@avr_instr_ryq     <ws> <avr_reg> <comma> <[yY]> '+' <expression> <ws>
+  regex instruction:sym<avr_ryq>     { $<mnemonic>=(@avr_instr_ryq)     <ws> <avr_reg> <comma> <[yY]> '+' <expression> <ws>
                                        {
                                          my $opcode = %instructions<avr><ryq><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -689,7 +689,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_yrq>     { $<mnemonic>=@avr_instr_yrq     <ws> <[yY]> '+' <expression> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_yrq>     { $<mnemonic>=(@avr_instr_yrq)     <ws> <[yY]> '+' <expression> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><yrq><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -705,7 +705,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rz>      { $<mnemonic>=@avr_instr_rz      <ws> <avr_reg> <comma> <[zZ]> <!before '+' > <ws>
+  regex instruction:sym<avr_rz>      { $<mnemonic>=(@avr_instr_rz)      <ws> <avr_reg> <comma> <[zZ]> <!before '+' > <ws>
                                        {
                                          my $opcode = %instructions<avr><rz><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -713,7 +713,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_stzr>    { $<mnemonic>=@avr_instr_stzr    <ws> <[zZ]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_stzr>    { $<mnemonic>=(@avr_instr_stzr)    <ws> <[zZ]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><stzr><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -721,7 +721,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rzplus>  { $<mnemonic>=@avr_instr_rzplus  <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
+  regex instruction:sym<avr_rzplus>  { $<mnemonic>=(@avr_instr_rzplus)  <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
                                        {
                                          my $opcode = %instructions<avr><rzplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -729,7 +729,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_zrplus>  { $<mnemonic>=@avr_instr_zrplus  <ws> <[zZ]>'+' <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_zrplus>  { $<mnemonic>=(@avr_instr_zrplus)  <ws> <[zZ]>'+' <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><zrplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -737,7 +737,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rzminus> { $<mnemonic>=@avr_instr_rzminus <ws> <avr_reg> <comma> '-'<[zZ]> <ws>
+  regex instruction:sym<avr_rzminus> { $<mnemonic>=(@avr_instr_rzminus) <ws> <avr_reg> <comma> '-'<[zZ]> <ws>
                                        {
                                          my $opcode = %instructions<avr><rzminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -745,7 +745,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_zrminus> { $<mnemonic>=@avr_instr_zrminus <ws> '-'<[zZ]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_zrminus> { $<mnemonic>=(@avr_instr_zrminus) <ws> '-'<[zZ]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><zrminus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -753,7 +753,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_rzq>     { $<mnemonic>=@avr_instr_rzq     <ws> <avr_reg> <comma> <[zZ]> '+' <expression> <ws>
+  regex instruction:sym<avr_rzq>     { $<mnemonic>=(@avr_instr_rzq)     <ws> <avr_reg> <comma> <[zZ]> '+' <expression> <ws>
                                        {
                                          my $opcode = %instructions<avr><rzq><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -769,7 +769,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_zrq>     { $<mnemonic>=@avr_instr_zrq     <ws> <[zZ]> '+' <expression> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_zrq>     { $<mnemonic>=(@avr_instr_zrq)     <ws> <[zZ]> '+' <expression> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><zrq><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -785,7 +785,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_zr>      { $<mnemonic>=@avr_instr_zr      <ws> <[zZ]> <comma> <avr_reg> <ws>
+  regex instruction:sym<avr_zr>      { $<mnemonic>=(@avr_instr_zr)      <ws> <[zZ]> <comma> <avr_reg> <ws>
                                        {
                                          my $opcode = %instructions<avr><zr><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -793,7 +793,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_zplus>   { $<mnemonic>=@avr_instr_zplus   <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
+  regex instruction:sym<avr_zplus>   { $<mnemonic>=(@avr_instr_zplus)   <ws> <avr_reg> <comma> <[zZ]>'+' <ws>
                                        {
                                          my $opcode = %instructions<avr><zplus><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -801,13 +801,13 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_noz>     { $<mnemonic>=@avr_instr_noz     <ws>
+  regex instruction:sym<avr_noz>     { $<mnemonic>=(@avr_instr_noz)     <ws>
                                        {
                                          my $opcode = %instructions<avr><noz><hash>{~$/<mnemonic>};
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_i6r>     { $<mnemonic>=@avr_instr_i6r     <ws> <avr_reg> <comma> <expression> <ws> 
+  regex instruction:sym<avr_i6r>     { $<mnemonic>=(@avr_instr_i6r)     <ws> <avr_reg> <comma> <expression> <ws> 
                                        {
                                          my $opcode = %instructions<avr><i6r><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -822,7 +822,7 @@ grammar Avr is Assembler {
                                          make ( ($opcode,) );
                                        }
                                      }
-  regex instruction:sym<avr_out>     { $<mnemonic>=@avr_instr_out     <ws> <expression> <comma> <avr_reg> <ws> 
+  regex instruction:sym<avr_out>     { $<mnemonic>=(@avr_instr_out)     <ws> <expression> <comma> <avr_reg> <ws> 
                                        {
                                          my $opcode = %instructions<avr><out><hash>{~$/<mnemonic>};
                                          my $reg = $/<avr_reg>.made;
@@ -896,13 +896,13 @@ grammar Pic10 is Assembler {
                                           make $reg;
                                         }
                                       }
-  regex instruction:sym<pic10_inh>    { $<mnemonic>=@pic10_instr_inh     <.ws>
+  regex instruction:sym<pic10_inh>    { $<mnemonic>=(@pic10_instr_inh)     <.ws>
                                         {
                                           my $opcode = %instructions<pic10><inh><hash>{~$/<mnemonic>};
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_byte>   { $<mnemonic>=@pic10_instr_byte    <.ws> <pic10_f> <comma> <pic10_d>
+  regex instruction:sym<pic10_byte>   { $<mnemonic>=(@pic10_instr_byte)    <.ws> <pic10_f> <comma> <pic10_d>
                                         {
                                           my $opcode = %instructions<pic10><byte><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<pic10_f>.made;
@@ -910,14 +910,14 @@ grammar Pic10 is Assembler {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_bytes>  { $<mnemonic>=@pic10_instr_bytes   <.ws> <pic10_f>
+  regex instruction:sym<pic10_bytes>  { $<mnemonic>=(@pic10_instr_bytes)   <.ws> <pic10_f>
                                         {
                                           my $opcode = %instructions<pic10><bytes><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<pic10_f>.made;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_bit>    { $<mnemonic>=@pic10_instr_bit     <.ws> <pic10_f> <comma> <pic10_bit>
+  regex instruction:sym<pic10_bit>    { $<mnemonic>=(@pic10_instr_bit)     <.ws> <pic10_f> <comma> <pic10_bit>
                                         {
                                           my $opcode = %instructions<pic10><bit><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<pic10_f>.made;
@@ -925,21 +925,21 @@ grammar Pic10 is Assembler {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_lit>    { $<mnemonic>=@pic10_instr_lit     <.ws> <expression>
+  regex instruction:sym<pic10_lit>    { $<mnemonic>=(@pic10_instr_lit)     <.ws> <expression>
                                         {
                                           my $opcode = %instructions<pic10><lit><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<expression>.made<value> +& 0xff;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_goto>   { $<mnemonic>=@pic10_instr_goto    <.ws> <expression>
+  regex instruction:sym<pic10_goto>   { $<mnemonic>=(@pic10_instr_goto)    <.ws> <expression>
                                         {
                                           my $opcode = %instructions<pic10><goto><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<expression>.made<value> +& 0x1ff;
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<pic10_tris>   { $<mnemonic>=@pic10_instr_tris    <.ws> <pic10_f>
+  regex instruction:sym<pic10_tris>   { $<mnemonic>=(@pic10_instr_tris)    <.ws> <pic10_f>
                                         {
                                           my $opcode = %instructions<pic10><tris><hash>{~$/<mnemonic>};
                                           my $file = +$/<pic10_f>.made;
@@ -996,13 +996,13 @@ grammar Pic18 is Assembler {
                                           make $reg;
                                         }
                                       }
-  regex instruction:sym<pic18_inh>     { $<mnemonic>=@pic18_instr_inh     <.ws>
+  regex instruction:sym<pic18_inh>     { $<mnemonic>=(@pic18_instr_inh)     <.ws>
                                          {
                                            my $opcode = %instructions<pic18><inh><hash>{~$/<mnemonic>};
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_bytefda> { $<mnemonic>=@pic18_instr_bytefda <.ws> <pic18_f> <comma> <pic18_d> <comma> <pic18_a> <ws>
+  regex instruction:sym<pic18_bytefda> { $<mnemonic>=(@pic18_instr_bytefda) <.ws> <pic18_f> <comma> <pic18_d> <comma> <pic18_a> <ws>
                                          {
                                            my $opcode = %instructions<pic18><bytefda><hash>{~$/<mnemonic>};
                                            my $f = $/<pic18_f>.made;
@@ -1014,7 +1014,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_bytefa>  { $<mnemonic>=@pic18_instr_bytefa  <.ws> <pic18_f> <comma> <pic18_a> <ws>
+  regex instruction:sym<pic18_bytefa>  { $<mnemonic>=(@pic18_instr_bytefa)  <.ws> <pic18_f> <comma> <pic18_a> <ws>
                                          {
                                            my $opcode = %instructions<pic18><bytefa><hash>{~$/<mnemonic>};
                                            my $f = $/<pic18_f>.made;
@@ -1024,7 +1024,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_byteff>  { $<mnemonic>=@pic18_instr_byteff  <.ws> <expression> <comma> <expression> <ws>
+  regex instruction:sym<pic18_byteff>  { $<mnemonic>=(@pic18_instr_byteff)  <.ws> <expression> <comma> <expression> <ws>
                                          {
                                            my $opcode = %instructions<pic18><byteff><hash>{~$/<mnemonic>};
                                            my $fs = $/<expression>[0].made<value> +& 0x0fff;
@@ -1033,7 +1033,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode, 0xf000 +| $fd) );
                                          }
                                        }
-  regex instruction:sym<pic18_bitm>    { $<mnemonic>=@pic18_instr_bit     <.ws> <pic18_f> <comma> <pic18_bit> <comma> <pic18_a> <ws>
+  regex instruction:sym<pic18_bitm>    { $<mnemonic>=(@pic18_instr_bit)     <.ws> <pic18_f> <comma> <pic18_bit> <comma> <pic18_a> <ws>
                                          {
                                            my $opcode = %instructions<pic18><bit><hash>{~$/<mnemonic>};
                                            my $f = $/<pic18_f>.made;
@@ -1045,7 +1045,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_branch>  { $<mnemonic>=@pic18_instr_branch  <.ws> <expression>
+  regex instruction:sym<pic18_branch>  { $<mnemonic>=(@pic18_instr_branch)  <.ws> <expression>
                                          {
                                            my $opcode = %instructions<pic18><branch><hash>{~$/<mnemonic>};
                                            my $target = $/<expression>.made<value>;
@@ -1057,7 +1057,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_lbranch> { $<mnemonic>=@pic18_instr_lbranch <.ws> <expression>
+  regex instruction:sym<pic18_lbranch> { $<mnemonic>=(@pic18_instr_lbranch) <.ws> <expression>
                                          {
                                            my $opcode = %instructions<pic18><lbranch><hash>{~$/<mnemonic>};
                                            my $target = $/<expression>.made<value>;
@@ -1069,7 +1069,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_call>    { $<mnemonic>=@pic18_instr_call    <.ws> <expression> [ <comma> <expression> ] ?
+  regex instruction:sym<pic18_call>    { $<mnemonic>=(@pic18_instr_call)    <.ws> <expression> [ <comma> <expression> ] ?
                                          {
                                            my $opcode = %instructions<pic18><call><hash>{~$/<mnemonic>};
                                            my $target = $/<expression>[0].made<value>;
@@ -1079,14 +1079,14 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode, 0xf000 + ($target +> 12)) );
                                          }
                                        }
-  regex instruction:sym<pic18_ret>     { $<mnemonic>=@pic18_instr_ret     <.ws> <expression> ?
+  regex instruction:sym<pic18_ret>     { $<mnemonic>=(@pic18_instr_ret)     <.ws> <expression> ?
                                          {
                                            my $opcode = %instructions<pic18><ret><hash>{~$/<mnemonic>};
                                            $opcode +|= 0x0001 if defined $/<expression> && $/<expression>.made<value> != 0;
                                            make ( ($opcode,) );
                                          }
                                        }
-  regex instruction:sym<pic18_lit>     { $<mnemonic>=@pic18_instr_lit     <.ws> <expression>
+  regex instruction:sym<pic18_lit>     { $<mnemonic>=(@pic18_instr_lit)     <.ws> <expression>
                                          {
                                            my $opcode = %instructions<pic18><lit><hash>{~$/<mnemonic>};
                                            my $imm = $/<expression>.made<value>;
@@ -1094,7 +1094,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode +| $imm,) );
                                          }
                                        }
-  regex instruction:sym<pic18_bsr>     { $<mnemonic>=@pic18_instr_bsr     <.ws> <expression>
+  regex instruction:sym<pic18_bsr>     { $<mnemonic>=(@pic18_instr_bsr)     <.ws> <expression>
                                          {
                                            my $opcode = %instructions<pic18><bsr><hash>{~$/<mnemonic>};
                                            my $imm = $/<expression>.made<value>;
@@ -1102,7 +1102,7 @@ grammar Pic18 is Assembler {
                                            make ( ($opcode +| $imm,) );
                                          }
                                        }
-  regex instruction:sym<pic18_tblrd>   { $<mnemonic>=@pic18_instr_tblrd   <.ws> ('*'|'*+'|'*-'|'+*')
+  regex instruction:sym<pic18_tblrd>   { $<mnemonic>=(@pic18_instr_tblrd)   <.ws> ('*'|'*+'|'*-'|'+*')
                                          {
                                            my $opcode = %instructions<pic18><tblrd><hash>{~$/<mnemonic>};
                                            my $type = ~$/[0];
@@ -1207,7 +1207,7 @@ grammar Mc6809 is Assembler {
                                           make ( (0x8d, $offset +> 8, $offset) );
                                         }
                                       }
-  regex instruction:sym<mc6809_inh>   { $<mnemonic>=@mc6809_instr_inh  <.ws>
+  regex instruction:sym<mc6809_inh>   { $<mnemonic>=(@mc6809_instr_inh)  <.ws>
                                         {
                                           my $opcode = %instructions<mc6809><inh><hash>{~$/<mnemonic>};
                                           if ($opcode > 0xff) {
@@ -1217,7 +1217,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_imm8>  { $<mnemonic>=@mc6809_instr_imm8 <.ws> '#' <expression>
+  regex instruction:sym<mc6809_imm8>  { $<mnemonic>=(@mc6809_instr_imm8) <.ws> '#' <expression>
                                         {
                                           my $opcode = %instructions<mc6809><imm8><hash>{~$/<mnemonic>};
                                           my $imm = +$/<expression>.made<value> +& 0xff;
@@ -1228,7 +1228,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_imm16> { $<mnemonic>=@mc6809_instr_imm16 <.ws> '#' <expression>
+  regex instruction:sym<mc6809_imm16> { $<mnemonic>=(@mc6809_instr_imm16) <.ws> '#' <expression>
                                         {
                                           my $opcode = %instructions<mc6809><imm16><hash>{~$/<mnemonic>};
                                           my $imm = +$/<expression>.made<value> +& 0xffff;
@@ -1239,7 +1239,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_dir>   { $<mnemonic>=@mc6809_instr_die <.ws> '<' <expression> <!before <comma> >
+  regex instruction:sym<mc6809_dir>   { $<mnemonic>=(@mc6809_instr_die) <.ws> '<' <expression> <!before <comma> >
                                         {
                                           my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
                                           $opcode +|= 0x10; # direct addressing mode
@@ -1252,7 +1252,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_ind1>  { $<mnemonic>=@mc6809_instr_die <.ws> <mc6809_idx>
+  regex instruction:sym<mc6809_ind1>  { $<mnemonic>=(@mc6809_instr_die) <.ws> <mc6809_idx>
                                         {
                                           my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
                                           $opcode +|= 0x20; # indexed addressing mode
@@ -1264,7 +1264,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_ind2>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <mc6809_idx> ']'
+  regex instruction:sym<mc6809_ind2>  { $<mnemonic>=(@mc6809_instr_die) <.ws> '[' <mc6809_idx> ']'
                                         {
                                           my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
                                           $opcode +|= 0x20; # indexed addressing mode
@@ -1277,7 +1277,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_ind3>  { $<mnemonic>=@mc6809_instr_die <.ws> '[' <expression> ']'
+  regex instruction:sym<mc6809_ind3>  { $<mnemonic>=(@mc6809_instr_die) <.ws> '[' <expression> ']'
                                         {
                                           my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
                                           $opcode +|= 0x20; # indexed addressing mode
@@ -1288,7 +1288,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_ext>   { $<mnemonic>=@mc6809_instr_die <.ws> <expression> <!before <comma> >
+  regex instruction:sym<mc6809_ext>   { $<mnemonic>=(@mc6809_instr_die) <.ws> <expression> <!before <comma> >
                                         {
                                           my $opcode = %instructions<mc6809><die><hash>{~$/<mnemonic>};
                                           my $imm = $/<expression>.made<value> +& 0xffff;
@@ -1313,7 +1313,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_br>    { $<mnemonic>=@mc6809_instr_br  <.ws> <expression>
+  regex instruction:sym<mc6809_br>    { $<mnemonic>=(@mc6809_instr_br)  <.ws> <expression>
                                         {
                                           my $opcode = %instructions<mc6809><br><hash>{~$/<mnemonic>};
                                           my $imm = +$/<expression>.made<value> +& 0xffff;
@@ -1326,7 +1326,7 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_lbr>   { $<mnemonic>=@mc6809_instr_lbr <.ws> <expression>
+  regex instruction:sym<mc6809_lbr>   { $<mnemonic>=(@mc6809_instr_lbr) <.ws> <expression>
                                         {
                                           my $opcode = %instructions<mc6809><lbr><hash>{~$/<mnemonic>};
                                           my $imm = +$/<expression>.made<value> +& 0xffff;
@@ -1339,14 +1339,14 @@ grammar Mc6809 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc6809_tfr>   { $<mnemonic>=@mc6809_instr_tfr <.ws> <mc6809_anyreg> <.ws>? <comma> <.ws>? <mc6809_anyreg>
+  regex instruction:sym<mc6809_tfr>   { $<mnemonic>=(@mc6809_instr_tfr) <.ws> <mc6809_anyreg> <.ws>? <comma> <.ws>? <mc6809_anyreg>
                                         {
                                           my $opcode = %instructions<mc6809><tfr><hash>{~$/<mnemonic>};
                                           my $postbyte = ($/<mc6809_anyreg>[0].made +< 4) +| $/<mc6809_anyreg>[1].made;
                                           make ( ($opcode, $postbyte) );
                                         }
                                       }
-  regex instruction:sym<mc6809_psh>   { $<mnemonic>=@mc6809_instr_psh <.ws> <mc6809_anyreg>+ % <comma>
+  regex instruction:sym<mc6809_psh>   { $<mnemonic>=(@mc6809_instr_psh) <.ws> <mc6809_anyreg>+ % <comma>
                                         {
                                           my $opcode = %instructions<mc6809><psh><hash>{~$/<mnemonic>};
                                           my $postbyte = 0;
@@ -1439,7 +1439,7 @@ grammar Mc68hc11 is Assembler {
                                           make %mc68hc11_reg16{$acc.lc};
                                         }
                                       }
-  regex instruction:sym<mc68hc11_inh> { $<mnemonic>=@mc68hc11_instr_inh
+  regex instruction:sym<mc68hc11_inh> { $<mnemonic>=(@mc68hc11_instr_inh)
                                         {
                                           my $opcode = %instructions<mc68hc11><inh><hash>{~$/<mnemonic>};
                                           if ($opcode > 0xff) {
@@ -1449,7 +1449,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_br>    { $<mnemonic>=@mc68hc11_instr_br  <.ws> <expression>
+  regex instruction:sym<mc68hc11_br>    { $<mnemonic>=(@mc68hc11_instr_br)  <.ws> <expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><br><hash>{~$/<mnemonic>};
                                           my $imm = +$/<expression>.made<value> +& 0xffff;
@@ -1462,7 +1462,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_imm8> { $<mnemonic>=@mc68hc11_instr_imm8 <.ws> '#' <expression> <ws>
+  regex instruction:sym<mc68hc11_imm8> { $<mnemonic>=(@mc68hc11_instr_imm8) <.ws> '#' <expression> <ws>
                                         {
                                           my $mnemonic = ~$/<mnemonic>;
                                           my $opcode = %instructions<mc68hc11><imm8><hash>{$mnemonic};
@@ -1474,7 +1474,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_imm16> { $<mnemonic>=@mc68hc11_instr_imm16 <.ws> '#' <expression> <ws>
+  regex instruction:sym<mc68hc11_imm16> { $<mnemonic>=(@mc68hc11_instr_imm16) <.ws> '#' <expression> <ws>
                                         {
                                           my $mnemonic = ~$/<mnemonic>;
                                           my $opcode = %instructions<mc68hc11><imm16><hash>{$mnemonic};
@@ -1486,7 +1486,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_dir> { $<mnemonic>=@mc68hc11_instr_die <.ws> '<' <expression>
+  regex instruction:sym<mc68hc11_dir> { $<mnemonic>=(@mc68hc11_instr_die) <.ws> '<' <expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
                                           my $target = $/<expression>.made<value>;
@@ -1498,7 +1498,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_ext> { $<mnemonic>=@mc68hc11_instr_die <.ws>     <expression> <!before <comma> >
+  regex instruction:sym<mc68hc11_ext> { $<mnemonic>=(@mc68hc11_instr_die) <.ws>     <expression> <!before <comma> >
                                         {
                                           my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
                                           my $target = $/<expression>.made<value>;
@@ -1510,7 +1510,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_ind> { $<mnemonic>=@mc68hc11_instr_die <.ws> <expression> <comma> <mc68hc11_reg16>
+  regex instruction:sym<mc68hc11_ind> { $<mnemonic>=(@mc68hc11_instr_die) <.ws> <expression> <comma> <mc68hc11_reg16>
                                         {
                                           my $opcode = %instructions<mc68hc11><die><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made + 0x20;
@@ -1523,7 +1523,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_eiext> { $<mnemonic>=@mc68hc11_instr_ei <.ws>     <expression>
+  regex instruction:sym<mc68hc11_eiext> { $<mnemonic>=(@mc68hc11_instr_ei) <.ws>     <expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><ei><hash>{~$/<mnemonic>};
                                           my $target = $/<expression>.made<value>;
@@ -1535,7 +1535,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_eiind> { $<mnemonic>=@mc68hc11_instr_ei <.ws> <expression> <comma> <mc68hc11_reg16>
+  regex instruction:sym<mc68hc11_eiind> { $<mnemonic>=(@mc68hc11_instr_ei) <.ws> <expression> <comma> <mc68hc11_reg16>
                                         {
                                           my $opcode = %instructions<mc68hc11><ei><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made + 0x20;
@@ -1548,7 +1548,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_bitdir> { $<mnemonic>=@mc68hc11_instr_bit <.ws> <expression> <ws> $<mask>=<expression>
+  regex instruction:sym<mc68hc11_bitdir> { $<mnemonic>=(@mc68hc11_instr_bit) <.ws> <expression> <ws> $<mask>=<expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
                                           my $mask = $/<mask>.made<value>;
@@ -1561,7 +1561,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_bitind> { $<mnemonic>=@mc68hc11_instr_bit <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <ws> $<mask>=<expression>
+  regex instruction:sym<mc68hc11_bitind> { $<mnemonic>=(@mc68hc11_instr_bit) <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <ws> $<mask>=<expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><bit><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made;
@@ -1577,7 +1577,7 @@ grammar Mc68hc11 is Assembler {
                                           }
                                         }
                                       }
-  regex instruction:sym<mc68hc11_bbrind> { $<mnemonic>=@mc68hc11_instr_bbr <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <.ws> $<mask>=<expression> <.ws> $<target>=<expression>
+  regex instruction:sym<mc68hc11_bbrind> { $<mnemonic>=(@mc68hc11_instr_bbr) <.ws> $<offset>=<expression> <comma> <mc68hc11_reg16> <.ws> $<mask>=<expression> <.ws> $<target>=<expression>
                                         {
                                           my $opcode = %instructions<mc68hc11><bbr><hash>{~$/<mnemonic>};
                                           my $index = $/<mc68hc11_reg16>.made;
@@ -1822,7 +1822,7 @@ grammar Armfull is Arm {
                                         }
                                       }
   regex arm_t                         { 't'?                                                                               }
-  regex instruction:sym<arm_inh>      { $<mnemonic>=@armfull_instr_inh  <arm_cond>               <.ws>
+  regex instruction:sym<arm_inh>      { $<mnemonic>=(@armfull_instr_inh)  <arm_cond>               <.ws>
                                         {
                                           my $opcode = %instructions<armfull><inh><hash>{~$/<mnemonic>};
                                           my $cond = $/<arm_cond>.made;
@@ -1830,7 +1830,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mul>      { $<mnemonic>=@armfull_instr_mul  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>
+  regex instruction:sym<arm_mul>      { $<mnemonic>=(@armfull_instr_mul)  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 3..3 % <comma>
                                         {
                                           my $opcode = %instructions<armfull><mul><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1841,7 +1841,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mla>      { $<mnemonic>=@armfull_instr_mla  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+  regex instruction:sym<arm_mla>      { $<mnemonic>=(@armfull_instr_mla)  <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
                                         {
                                           my $opcode = %instructions<armfull><mla><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1853,7 +1853,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_mull>     { $<mnemonic>=@armfull_instr_mull <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
+  regex instruction:sym<arm_mull>     { $<mnemonic>=(@armfull_instr_mull) <arm_cond> <arm_setcond> <.ws> <arm_reg> ** 4..4 % <comma>
                                         {
                                           my $opcode = %instructions<armfull><mull><hash>{~$/<mnemonic>};
                                       # TODO: check for valid register combinations
@@ -1866,7 +1866,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_sds>      { $<mnemonic>=@armfull_instr_sds  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']'
+  regex instruction:sym<arm_sds>      { $<mnemonic>=(@armfull_instr_sds)  <arm_cond> <arm_byte>    <.ws> <arm_reg> ** 2 % <comma> <comma> '[' <arm_reg> ']'
                                         {
                                           my $opcode = %instructions<armfull><sds><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1877,7 +1877,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_brx>      { $<mnemonic>=@armfull_instr_brx  <arm_cond>               <.ws> <arm_reg>
+  regex instruction:sym<arm_brx>      { $<mnemonic>=(@armfull_instr_brx)  <arm_cond>               <.ws> <arm_reg>
                                         {
                                           my $opcode = %instructions<armfull><brx><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1885,7 +1885,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_hdt>      { $<mnemonic>=@armfull_instr_hdt  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>
+  regex instruction:sym<arm_hdt>      { $<mnemonic>=(@armfull_instr_hdt)  <arm_cond> <arm_sbh>     <.ws> <arm_reg> <comma> <arm_hdtaddr>
                                         {
                                           my $opcode = %instructions<armfull><hdt><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1894,7 +1894,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_sdt>      { $<mnemonic>=@armfull_instr_sdt  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>
+  regex instruction:sym<arm_sdt>      { $<mnemonic>=(@armfull_instr_sdt)  <arm_cond> <arm_byte> <arm_t> <.ws> <arm_reg> <comma> <arm_sdtaddr>
                                         {
                                           my $opcode = %instructions<armfull><sdt><hash>{~$/<mnemonic>};
                                           $opcode +|= $/<arm_cond>.made;
@@ -1903,7 +1903,7 @@ grammar Armfull is Arm {
                                           make ( ($opcode,) );
                                         }
                                       }
-  regex instruction:sym<arm_bdt>      { $<mnemonic>=@armfull_instr_bdt  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')?
+  regex instruction:sym<arm_bdt>      { $<mnemonic>=(@armfull_instr_bdt)  <arm_cond> <arm_bdttype> <.ws> <arm_reg> ('!')? <comma> <arm_rlist> ('^')?
                                         {
                                         }
                                       }
@@ -1973,7 +1973,7 @@ grammar Thumb is Arm {
 ### TODO Fail otherwise
                                        }
                                      }
-  regex instruction:sym<thumb_arimm> { $<mnemonic>=@thumb_instr_arimm <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> <thumb_imm>
+  regex instruction:sym<thumb_arimm> { $<mnemonic>=(@thumb_instr_arimm) <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> <thumb_imm>
                                        {
 # Only legal for ARMv7-M processors
                                          my $opcode = %instructions<thumb><arimm><hash>{~$/<mnemonic>};
@@ -1993,7 +1993,7 @@ grammar Thumb is Arm {
                                        | <comma> [ ( 'lsl' | 'lsr' | 'asr' | 'ror' ) ['#' <expression>]? ] { make $/<expression>.made +& 0x1f; } # TODO encode shift type
                                        | <comma> 'rrx' { make 0x60; }
                                      }
-  regex instruction:sym<thumb_arreg> { $<mnemonic>=@thumb_instr_arreg <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
+  regex instruction:sym<thumb_arreg> { $<mnemonic>=(@thumb_instr_arreg) <arm_setcond> <arm_cond> <thumb_width> <.ws> [$<dest>=<arm_reg> <comma>]? $<src>=<arm_reg> <comma> $<shift>=<arm_reg> <arm_shift>
                                        {
                                        }
                                      }
@@ -2068,13 +2068,13 @@ grammar Mips32 is Assembler {
                                           make $reg;
                                         }
                                       }
-  regex instruction:sym<mips32_inh>     { $<mnemonic>=@mips32_instr_inh                 <.ws>
+  regex instruction:sym<mips32_inh>     { $<mnemonic>=(@mips32_instr_inh)                 <.ws>
                                           {
                                             my $opcode = %instructions<mips32><inh><hash>{~$/<mnemonic>};
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_st>      { $<mnemonic>=@mips32_instr_st <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+  regex instruction:sym<mips32_st>      { $<mnemonic>=(@mips32_instr_st) <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><st><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2082,14 +2082,14 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_s>       { $<mnemonic>=@mips32_instr_s <.ws> $<regs>=<mips32_reg>
+  regex instruction:sym<mips32_s>       { $<mnemonic>=(@mips32_instr_s) <.ws> $<regs>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><s><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dst>     { $<mnemonic>=@mips32_instr_dst <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+  regex instruction:sym<mips32_dst>     { $<mnemonic>=(@mips32_instr_dst) <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><dst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2098,7 +2098,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dts>     { $<mnemonic>=@mips32_instr_dts <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_reg>
+  regex instruction:sym<mips32_dts>     { $<mnemonic>=(@mips32_instr_dts) <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><dts><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2107,7 +2107,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dtc>     { $<mnemonic>=@mips32_instr_dtc <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<count>=<expression>
+  regex instruction:sym<mips32_dtc>     { $<mnemonic>=(@mips32_instr_dtc) <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<count>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><dtc><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2116,7 +2116,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_td>      { $<mnemonic>=@mips32_instr_td <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg>
+  regex instruction:sym<mips32_td>      { $<mnemonic>=(@mips32_instr_td) <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><td><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2124,7 +2124,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_tdselq>  { $<mnemonic>=@mips32_instr_tdselq <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg> [ <comma> $<sel>=<expression> ]?
+  regex instruction:sym<mips32_tdselq>  { $<mnemonic>=(@mips32_instr_tdselq) <.ws> $<regt>=<mips32_reg> <comma> $<regd>=<mips32_reg> [ <comma> $<sel>=<expression> ]?
                                           {
                                             my $opcode = %instructions<mips32><tdselq><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2135,7 +2135,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dt>      { $<mnemonic>=@mips32_instr_dt <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg>
+  regex instruction:sym<mips32_dt>      { $<mnemonic>=(@mips32_instr_dt) <.ws> $<regd>=<mips32_reg> <comma> $<regt>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><dt><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2143,14 +2143,14 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_d>       { $<mnemonic>=@mips32_instr_d <.ws> $<regd>=<mips32_reg>
+  regex instruction:sym<mips32_d>       { $<mnemonic>=(@mips32_instr_d) <.ws> $<regd>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><d><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_tsi>     { $<mnemonic>=@mips32_instr_tsi <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
+  regex instruction:sym<mips32_tsi>     { $<mnemonic>=(@mips32_instr_tsi) <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<mips32><tsi><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2159,7 +2159,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_ti>     { $<mnemonic>=@mips32_instr_ti <.ws> $<regt>=<mips32_reg> <comma> <expression>
+  regex instruction:sym<mips32_ti>     { $<mnemonic>=(@mips32_instr_ti) <.ws> $<regt>=<mips32_reg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<mips32><tsi><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regt>.made +< 16;
@@ -2167,7 +2167,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_b16>     { $<mnemonic>=@mips32_instr_b16 <.ws> <expression>
+  regex instruction:sym<mips32_b16>     { $<mnemonic>=(@mips32_instr_b16) <.ws> <expression>
                                           {
                                             my $opcode = %instructions<mips32><b16><hash>{~$/<mnemonic>};
                                             my $offset = $/<expression>.made<value>;
@@ -2178,7 +2178,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_sto>     { $<mnemonic>=@mips32_instr_sto <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
+  regex instruction:sym<mips32_sto>     { $<mnemonic>=(@mips32_instr_sto) <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<mips32><sto><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2191,7 +2191,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_so>      { $<mnemonic>=@mips32_instr_so <.ws> $<regs>=<mips32_reg> <comma> <expression>
+  regex instruction:sym<mips32_so>      { $<mnemonic>=(@mips32_instr_so) <.ws> $<regs>=<mips32_reg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<mips32><so><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2203,7 +2203,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_si>      { $<mnemonic>=@mips32_instr_si <.ws> $<regs>=<mips32_reg> <comma> <expression>
+  regex instruction:sym<mips32_si>      { $<mnemonic>=(@mips32_instr_si) <.ws> $<regs>=<mips32_reg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<mips32><si><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2211,7 +2211,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_oob>     { $<mnemonic>=@mips32_instr_oob <.ws> $<op>=<expression> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_oob>     { $<mnemonic>=(@mips32_instr_oob) <.ws> $<op>=<expression> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><oob><hash>{~$/<mnemonic>};
                                             $opcode +|= +$/<base>.made +< 21;
@@ -2220,7 +2220,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_hib>     { $<mnemonic>=@mips32_instr_hib <.ws> $<hint>=<expression> <comma> $<offset>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_hib>     { $<mnemonic>=(@mips32_instr_hib) <.ws> $<hint>=<expression> <comma> $<offset>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><hib><hash>{~$/<mnemonic>};
                                             $opcode +|= +$/<base>.made +< 21;
@@ -2229,7 +2229,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dsd>      { $<mnemonic>=@mips32_instr_dsd <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg>
+  regex instruction:sym<mips32_dsd>      { $<mnemonic>=(@mips32_instr_dsd) <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><dsd><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2238,14 +2238,14 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_qt>      { $<mnemonic>=@mips32_instr_qt [ <.ws> $<regt>=<mips32_reg> ] ?
+  regex instruction:sym<mips32_qt>      { $<mnemonic>=(@mips32_instr_qt) [ <.ws> $<regt>=<mips32_reg> ] ?
                                           {
                                             my $opcode = %instructions<mips32><qt><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regt>.made +< 16 if $/<regt>.defined;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_ext>     { $<mnemonic>=@mips32_instr_ext <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
+  regex instruction:sym<mips32_ext>     { $<mnemonic>=(@mips32_instr_ext) <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><ext><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2255,7 +2255,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_ins>     { $<mnemonic>=@mips32_instr_ins <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
+  regex instruction:sym<mips32_ins>     { $<mnemonic>=(@mips32_instr_ins) <.ws> $<regs>=<mips32_reg> <comma> $<regt>=<mips32_reg> <comma> $<pos>=<expression> <comma> $<size>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><ins><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made +< 21;
@@ -2265,14 +2265,14 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_j>       { $<mnemonic>=@mips32_instr_j <.ws> $<target>=<expression>
+  regex instruction:sym<mips32_j>       { $<mnemonic>=(@mips32_instr_j) <.ws> $<target>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><j><hash>{~$/<mnemonic>};
                                             $opcode +|= ($/<target>.made<value> +& 0xfffffff) +> 2;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_jalr>    { $<mnemonic>=@mips32_instr_jalr <.ws> [ $<regd>=<mips32_reg> <comma> ] ? $<regs>=<mips32_reg>
+  regex instruction:sym<mips32_jalr>    { $<mnemonic>=(@mips32_instr_jalr) <.ws> [ $<regd>=<mips32_reg> <comma> ] ? $<regs>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><jalr><hash>{~$/<mnemonic>};
                                             my $rd = 31;
@@ -2282,7 +2282,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_tob>     { $<mnemonic>=@mips32_instr_tob <.ws> $<regt>=<mips32_reg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_tob>     { $<mnemonic>=(@mips32_instr_tob) <.ws> $<regt>=<mips32_reg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><tob><hash>{~$/<mnemonic>};
                                             $opcode +|= +$/<base>.made +< 21;
@@ -2291,7 +2291,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_ftob>    { $<mnemonic>=@mips32_instr_ftob <.ws> $<regt>=<mips32_freg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_ftob>    { $<mnemonic>=(@mips32_instr_ftob) <.ws> $<regt>=<mips32_freg> <comma> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><ftob><hash>{~$/<mnemonic>};
                                             $opcode +|= +$/<base>.made +< 21;
@@ -2300,7 +2300,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_ob>      { $<mnemonic>=@mips32_instr_ob <.ws> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_ob>      { $<mnemonic>=(@mips32_instr_ob) <.ws> $<offset>=<expression> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><ob><hash>{~$/<mnemonic>};
                                             $opcode +|= +$/<base>.made +< 21;
@@ -2308,7 +2308,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_sys>     { $<mnemonic>=@mips32_instr_sys <.ws> [ $<code>=<expression> ]?
+  regex instruction:sym<mips32_sys>     { $<mnemonic>=(@mips32_instr_sys) <.ws> [ $<code>=<expression> ]?
                                           {
                                             my $opcode = %instructions<mips32><sys><hash>{~$/<mnemonic>};
                                             my $code = 0;
@@ -2317,14 +2317,14 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_func>    { $<mnemonic>=@mips32_instr_func <.ws> $<func>=<expression>
+  regex instruction:sym<mips32_func>    { $<mnemonic>=(@mips32_instr_func) <.ws> $<func>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><func><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<func>.made<value> +& 0x01ffffff;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_tisq>    { $<mnemonic>=@mips32_instr_tisq <.ws> $<regt>=<mips32_reg> <comma> $<impl>=<expression> [ <comma> $<sel>=<expression> ]?
+  regex instruction:sym<mips32_tisq>    { $<mnemonic>=(@mips32_instr_tisq) <.ws> $<regt>=<mips32_reg> <comma> $<impl>=<expression> [ <comma> $<sel>=<expression> ]?
                                           {
                                             my $opcode = %instructions<mips32><tisq><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<impl>.made<value> +& 0xffff;
@@ -2334,7 +2334,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_cqo>     { $<mnemonic>=@mips32_instr_cqo <.ws> [ $<cc>=<expression> <comma> ]? $<target>=<expression>
+  regex instruction:sym<mips32_cqo>     { $<mnemonic>=(@mips32_instr_cqo) <.ws> [ $<cc>=<expression> <comma> ]? $<target>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><cqo><hash>{~$/<mnemonic>};
                                             my $cc = 0;
@@ -2348,7 +2348,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_cqfst>   { $<mnemonic>=@mips32_instr_cqfst <.ws> [ $<cc>=<expression> <comma> ]? $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+  regex instruction:sym<mips32_cqfst>   { $<mnemonic>=(@mips32_instr_cqfst) <.ws> [ $<cc>=<expression> <comma> ]? $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
                                           {
                                             my $opcode = %instructions<mips32><cqfst><hash>{~$/<mnemonic>};
                                             my $cc = 0;
@@ -2359,7 +2359,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fds>     { $<mnemonic>=@mips32_instr_fds <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg>
+  regex instruction:sym<mips32_fds>     { $<mnemonic>=(@mips32_instr_fds) <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg>
                                           {
                                             my $opcode = %instructions<mips32><fds><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +<  6;
@@ -2367,7 +2367,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdst>    { $<mnemonic>=@mips32_instr_fdst <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+  regex instruction:sym<mips32_fdst>    { $<mnemonic>=(@mips32_instr_fdst) <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
                                           {
                                             my $opcode = %instructions<mips32><fdst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +<  6;
@@ -2376,7 +2376,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdsrt>   { $<mnemonic>=@mips32_instr_fdsrt <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_reg>
+  regex instruction:sym<mips32_fdsrt>   { $<mnemonic>=(@mips32_instr_fdsrt) <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><fdsrt><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +<  6;
@@ -2385,7 +2385,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdsts>   { $<mnemonic>=@mips32_instr_fdsts <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg> <comma> $<regrs>=<mips32_reg>
+  regex instruction:sym<mips32_fdsts>   { $<mnemonic>=(@mips32_instr_fdsts) <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg> <comma> $<regrs>=<mips32_reg>
                                           {
                                             my $opcode = %instructions<mips32><fdsts><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made  +<  6;
@@ -2395,7 +2395,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdrst>   { $<mnemonic>=@mips32_instr_fdrst <.ws> $<regd>=<mips32_freg> <comma> $<regr>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
+  regex instruction:sym<mips32_fdrst>   { $<mnemonic>=(@mips32_instr_fdrst) <.ws> $<regd>=<mips32_freg> <comma> $<regr>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<regt>=<mips32_freg>
                                           {
                                             my $opcode = %instructions<mips32><fdrst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +<  6;
@@ -2405,7 +2405,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_tfs>     { $<mnemonic>=@mips32_instr_tfs <.ws> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_freg>
+  regex instruction:sym<mips32_tfs>     { $<mnemonic>=(@mips32_instr_tfs) <.ws> $<regt>=<mips32_reg> <comma> $<regs>=<mips32_freg>
                                           {
                                             my $opcode = %instructions<mips32><tfs><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regs>.made  +< 11;
@@ -2413,7 +2413,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdib>    { $<mnemonic>=@mips32_instr_fdib <.ws> $<regd>=<mips32_freg> <comma> $<index>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
+  regex instruction:sym<mips32_fdib>    { $<mnemonic>=(@mips32_instr_fdib) <.ws> $<regd>=<mips32_freg> <comma> $<index>=<mips32_reg> '(' $<base>=<mips32_reg> ')'
                                           {
                                             my $opcode = %instructions<mips32><fdib><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made   +<  6;
@@ -2422,7 +2422,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_dsc>     { $<mnemonic>=@mips32_instr_dsc <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<cc>=<expression>
+  regex instruction:sym<mips32_dsc>     { $<mnemonic>=(@mips32_instr_dsc) <.ws> $<regd>=<mips32_reg> <comma> $<regs>=<mips32_reg> <comma> $<cc>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><dsc><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2432,7 +2432,7 @@ grammar Mips32 is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<mips32_fdsc>    { $<mnemonic>=@mips32_instr_fdsc <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<cc>=<expression>
+  regex instruction:sym<mips32_fdsc>    { $<mnemonic>=(@mips32_instr_fdsc) <.ws> $<regd>=<mips32_freg> <comma> $<regs>=<mips32_freg> <comma> $<cc>=<expression>
                                           {
                                             my $opcode = %instructions<mips32><fdsc><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<regd>.made +< 11;
@@ -2554,6 +2554,17 @@ grammar RiscV is Assembler {
                                          make 31;
                                        }
                                      }
+  proto regex riscv_indreg           { <*> }
+  regex riscv_indreg:sym<reg>        { $<reg>=(<riscv_reg>)
+                                       {
+                                         make $/<reg>.made;
+                                       }
+                                     }
+  regex riscv_indreg:sym<parreg>     { '(' $<reg>=(<riscv_reg>) ')'
+                                       {
+                                         make $/<reg>.made;
+                                       }
+                                     }
   proto regex riscv_freg              { <*>                                                                                }
   token riscv_freg:sym<f>            { <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                        {
@@ -2610,13 +2621,13 @@ grammar RiscV is Assembler {
                                          make $reg + 26;
                                        }
                                      }
-  regex instruction:sym<riscv_inh>   { $<mnemonic>=@riscv_instr_inh
+  regex instruction:sym<riscv_inh>   { $<mnemonic>=(@riscv_instr_inh)
                                           {
                                             my $opcode = %instructions<riscv><inh><hash>{~$/<mnemonic>};
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_r>     { $<mnemonic>=@riscv_instr_r <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+  regex instruction:sym<riscv_r>     { $<mnemonic>=(@riscv_instr_r) <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
                                           {
                                             my $opcode = %instructions<riscv><r><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2625,7 +2636,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_r2>    { $<mnemonic>=@riscv_instr_r2 <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
+  regex instruction:sym<riscv_r2>    { $<mnemonic>=(@riscv_instr_r2) <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
                                           {
                                             my $opcode = %instructions<riscv><r2><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2647,7 +2658,7 @@ grammar RiscV is Assembler {
                                          make $rm;
                                        }
                                      }
-  regex instruction:sym<riscv_fr>    { $<mnemonic>=@riscv_instr_fr <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg>
+  regex instruction:sym<riscv_fr>    { $<mnemonic>=(@riscv_instr_fr) <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg>
                                           {
                                             my $opcode = %instructions<riscv><fr><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2657,7 +2668,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fr2>   { $<mnemonic>=@riscv_instr_fr2 <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg>
+  regex instruction:sym<riscv_fr2>   { $<mnemonic>=(@riscv_instr_fr2) <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg>
                                           {
                                             my $opcode = %instructions<riscv><fr2><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2666,7 +2677,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fr4>   { $<mnemonic>=@riscv_instr_fr4 <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg> <comma> $<rs3>=<riscv_freg>
+  regex instruction:sym<riscv_fr4>   { $<mnemonic>=(@riscv_instr_fr4) <riscv_rm> <.ws> $<rd>=<riscv_freg> <comma> $<rs1>=<riscv_freg> <comma> $<rs2>=<riscv_freg> <comma> $<rs3>=<riscv_freg>
                                           {
                                             my $opcode = %instructions<riscv><fr4><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2677,7 +2688,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_fence>     { $<mnemonic>=@riscv_instr_fence $<modifiers>=( '.' <[ps]> <[iorw]> )*
+  regex instruction:sym<riscv_fence>     { $<mnemonic>=(@riscv_instr_fence) $<modifiers>=( '.' <[ps]> <[iorw]> )*
                                           {
                                             my $opcode = %instructions<riscv><fence><hash>{~$/<mnemonic>};
                                             for @($/<modifiers>) -> $modifier {
@@ -2693,7 +2704,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_ra>     { $<mnemonic>=@riscv_instr_ra $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg>
+  regex instruction:sym<riscv_ra>     { $<mnemonic>=(@riscv_instr_ra) $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_indreg>
                                           {
                                             my $opcode = %instructions<riscv><ra><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2706,7 +2717,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_ra0>     { $<mnemonic>=@riscv_instr_ra0 $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg>
+  regex instruction:sym<riscv_ra0>     { $<mnemonic>=(@riscv_instr_ra0) $<modifiers>=( '.' [ 'aq' | 'rl' ] )* <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_indreg>
                                           {
                                             my $opcode = %instructions<riscv><ra0><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2718,14 +2729,14 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_rd>    { $<mnemonic>=@riscv_instr_rd <.ws> $<rd>=<riscv_reg> 
+  regex instruction:sym<riscv_rd>    { $<mnemonic>=(@riscv_instr_rd) <.ws> $<rd>=<riscv_reg> 
                                           {
                                             my $opcode = %instructions<riscv><rd><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_sh>       { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+  regex instruction:sym<riscv_sh>       { $<mnemonic>=(@riscv_instr_sh) <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><sh><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 7;
@@ -2734,7 +2745,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_sh_v>     { $<mnemonic>=@riscv_instr_sh <.ws> $<rd>=<riscv_reg> <comma> $<shamt>=<expression> '(' $<rs1>=<riscv_reg> ')'
+  regex instruction:sym<riscv_sh_v>     { $<mnemonic>=(@riscv_instr_sh) <.ws> $<rd>=<riscv_reg> <comma> $<shamt>=<expression> '(' $<rs1>=<riscv_reg> ')'
                                           {
                                             my $opcode = %instructions<riscv><sh><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 7;
@@ -2743,7 +2754,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_lsh>  { $<mnemonic>=@riscv_instr_lsh <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
+  regex instruction:sym<riscv_lsh>  { $<mnemonic>=(@riscv_instr_lsh) <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<shamt>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><lsh><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 7;
@@ -2752,7 +2763,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_i>     { $<mnemonic>=@riscv_instr_i <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_i>     { $<mnemonic>=(@riscv_instr_i) <.ws> $<rd>=<riscv_reg> <comma> $<rs1>=<riscv_reg> <comma> $<imm>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2761,7 +2772,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_s>     { $<mnemonic>=@riscv_instr_s <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_s>     { $<mnemonic>=(@riscv_instr_s) <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression> '(' $<rs1>=<riscv_reg> ')'
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made              +< 15;
@@ -2771,7 +2782,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_sb>    { $<mnemonic>=@riscv_instr_sb <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_sb>    { $<mnemonic>=(@riscv_instr_sb) <.ws> $<rs1>=<riscv_reg> <comma> $<rs2>=<riscv_reg> <comma> $<imm>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rs1>.made             +< 15;
@@ -2784,7 +2795,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_u>     { $<mnemonic>=@riscv_instr_u <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_u>     { $<mnemonic>=(@riscv_instr_u) <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2792,7 +2803,7 @@ grammar RiscV is Assembler {
                                             make ( ($opcode,) );
                                           }
                                         }
-  regex instruction:sym<riscv_uj>    { $<mnemonic>=@riscv_instr_uj <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
+  regex instruction:sym<riscv_uj>    { $<mnemonic>=(@riscv_instr_uj) <.ws> $<rd>=<riscv_reg> <comma> $<imm>=<expression>
                                           {
                                             my $opcode = %instructions<riscv><i><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<rd>.made +< 7;
@@ -2808,12 +2819,483 @@ grammar RiscV is Assembler {
 }
 %instructionset<riscv> = RiscV.new();
 
+# 8051 type cpus
+
+my @i8051_instr_inh;    make_hash('i8051', 'inh');
+my @i8051_instr_single; make_hash('i8051', 'single');
+my @i8051_instr_arith;  make_hash('i8051', 'arith');
+my @i8051_instr_addr11; make_hash('i8051', 'addr11');
+my @i8051_instr_addr16; make_hash('i8051', 'addr16');
+my @i8051_instr_bitoff; make_hash('i8051', 'bitoff');
+my @i8051_instr_acc;    make_hash('i8051', 'acc');
+my @i8051_instr_offset; make_hash('i8051', 'offset');
+my @i8051_instr_rarith; make_hash('i8051', 'rarith');
+my @i8051_instr_logic;  make_hash('i8051', 'logic');
+my @i8051_instr_rlogic; make_hash('i8051', 'rlogic');
+my @i8051_instr_adptr;  make_hash('i8051', 'adptr');
+my @i8051_instr_mov;    make_hash('i8051', 'mov');
+my @i8051_instr_mov2;   make_hash('i8051', 'mov2');
+my @i8051_instr_mov3;   make_hash('i8051', 'mov3');
+my @i8051_instr_mov4;   make_hash('i8051', 'mov4');
+my @i8051_instr_movc;   make_hash('i8051', 'movc');
+my @i8051_instr_movC;   make_hash('i8051', 'movC');
+my @i8051_instr_movd;   make_hash('i8051', 'movd');
+my @i8051_instr_mul;    make_hash('i8051', 'mul');
+my @i8051_instr_dptr;   make_hash('i8051', 'dptr');
+my @i8051_instr_bit;    make_hash('i8051', 'bit');
+my @i8051_instr_cjne;   make_hash('i8051', 'cjne');
+my @i8051_instr_djnz;   make_hash('i8051', 'djnz');
+my @i8051_instr_direct; make_hash('i8051', 'direct');
+
+grammar I8051 is Assembler {
+  token i8051_reg                    { :i 'r' $<regno>=( \d+ )
+                                       {
+                                         make +$/<regno>;
+                                       }
+                                     }
+  token i8051_ireg                   { :i '@' 'r' $<regno>=( <[01]> )
+                                       {
+                                         my $reg = +$/<regno>;
+                                         make $reg;
+                                       }
+                                     }
+  regex i8051_direct                 { <expression>
+                                       {
+                                         make $/<expression>.made;
+                                       }
+                                     }
+  regex i8051_bit                    { <expression>
+                                       {
+                                         make $/<expression>.made;
+                                       }
+                                     }
+# nop
+  regex instruction:sym<i8051_inh>   { $<mnemonic>=(@i8051_instr_inh)
+                                       {
+                                         my $opcode = %instructions<i8051><inh><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+# inc dptr
+  regex instruction:sym<i8051_dptr>  { :i $<mnemonic>=(@i8051_instr_dptr) <.ws> 'dptr'
+                                       {
+                                         my $opcode = %instructions<i8051><dptr><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+# mul ab
+  regex instruction:sym<i8051_mul>   { :i $<mnemonic>=(@i8051_instr_mul) <.ws> 'ab'
+                                       {
+                                         my $opcode = %instructions<i8051><mul><hash>{~$/<mnemonic>};
+                                         make ( ($opcode,) );
+                                       }
+                                     }
+# inc a
+  regex instruction:sym<i8051_sacc>   { $<mnemonic>=(@i8051_instr_single) <.ws> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x04;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# inc r0
+  regex instruction:sym<i8051_sreg>   { $<mnemonic>=(@i8051_instr_single) <.ws> <i8051_reg>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         $opcode +|= +$/<i8051_reg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# cpl C
+  regex instruction:sym<i8051_bitc>   { :i $<mnemonic>=(@i8051_instr_bit) <.ws> 'c'
+                                       {
+                                         my $opcode = %instructions<i8051><bit><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x01;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# cpl bit
+  regex instruction:sym<i8051_bit>   { $<mnemonic>=(@i8051_instr_bit) <.ws> $<bit>=<i8051_bit>
+                                       {
+                                         my $opcode = %instructions<i8051><bit><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<bit>.made<value>;
+                                         make ( $opcode, $bit +& 0xff);
+                                       }
+                                     }
+# orl C, bit
+  regex instruction:sym<i8051_logic> { $<mnemonic>=(@i8051_instr_logic) <.ws> <[cC]> <comma> $<bit>=<i8051_bit>
+                                       {
+                                         my $opcode = %instructions<i8051><logic><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<bit>.made<value>;
+                                         make ( $opcode, $bit +& 0xff);
+                                       }
+                                     }
+# orl C, /bit
+  regex instruction:sym<i8051_rlogic>   { $<mnemonic>=(@i8051_instr_rlogic) <.ws> <[cC]> <comma> '/' $<bit>=<i8051_bit>
+                                       {
+                                         my $opcode = %instructions<i8051><rlogic><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<bit>.made<value>;
+                                         make ( $opcode, $bit +& 0xff);
+                                       }
+                                     }
+# inc @r0
+  regex instruction:sym<i8051_sind>   { $<mnemonic>=(@i8051_instr_single) <.ws> <i8051_ireg>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         $opcode += $/<i8051_ireg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# inc direct
+  regex instruction:sym<i8051_sdir>   { $<mnemonic>=(@i8051_instr_single) <.ws> $<direct>=<i8051_direct>
+                                       {
+                                         my $opcode = %instructions<i8051><single><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         make ( $opcode, +$/<direct>.made<value> );
+                                       }
+                                     }
+# add a, #imm
+  regex instruction:sym<i8051_imm>   { $<mnemonic>=(@i8051_instr_arith) <.ws> <[aA]> <comma> '#' <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x04;
+                                         my $imm = +$/<expression>.made<value>;
+                                         make ( $opcode, $imm );
+                                       }
+                                     }
+# add a, @r0
+  regex instruction:sym<i8051_ind>   { $<mnemonic>=(@i8051_instr_arith) <.ws> <[aA]> <comma> <i8051_ireg>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         $opcode +|= $/<i8051_ireg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# add a, r0
+  regex instruction:sym<i8051_reg>   { $<mnemonic>=(@i8051_instr_arith) <.ws> <[aA]> <comma> <i8051_reg>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         $opcode +|= +$/<i8051_reg>.made;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# add a, direct
+  regex instruction:sym<i8051_dir>   { $<mnemonic>=(@i8051_instr_arith) <.ws> <[aA]> <comma> $<direct>=<i8051_direct>
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         make ( $opcode, +$/<direct>.made<value> );
+                                       }
+                                     }
+# add direct, a
+  regex instruction:sym<i8051_da>    { :i $<mnemonic>=(@i8051_instr_arith) <.ws> $<direct>=<i8051_direct> <comma> 'a'
+                                       {
+                                         my $opcode = %instructions<i8051><arith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x02;
+                                         make ( $opcode, +$/<direct>.made<value> );
+                                       }
+                                     }
+# add direct, a
+  regex instruction:sym<i8051_acca>  { $<mnemonic>=(@i8051_instr_rarith) <.ws> $<direct>=<i8051_direct> <comma> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><rarith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x03;
+                                         make ( $opcode, +$/<direct>.made<value> +& 0xff );
+                                       }
+                                     }
+# add direct, #imm
+  regex instruction:sym<i8051_dira>  { $<mnemonic>=(@i8051_instr_rarith) <.ws> $<direct>=<i8051_direct> <comma> '#' $<value>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><rarith><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x03;
+                                         make ( $opcode, +$/<direct>.made<value> +& 0xff, +$/<value>.made<value> +& 0xff );
+                                       }
+                                     }
+# ajmp addr11
+  regex instruction:sym<i8051_addr11> { $<mnemonic>=(@i8051_instr_addr11) <.ws> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><addr11><hash>{~$/<mnemonic>};
+                                         my $target = +$/<expression>.made<value>;
+                                         $opcode +|= ($target +& 0x1f00) +> 3;
+                                         make ( $opcode, $target +& 0xff );
+                                       }
+                                      }
+# lcall addr16
+  regex instruction:sym<i8051_addr16> { $<mnemonic>=(@i8051_instr_addr16) <.ws> <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><addr16><hash>{~$/<mnemonic>};
+                                         my $target = +$/<expression>.made<value>;
+                                         make ( $opcode, ($target +> 8) +& 0xff, $target +& 0xff );
+                                       }
+                                      }
+# jbc bit, offset
+  regex instruction:sym<i8051_bitoff> { $<mnemonic>=(@i8051_instr_bitoff) <.ws> $<bit>=<i8051_bit> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><bitoff><hash>{~$/<mnemonic>};
+                                         my $bitno = +$/<bit>.made<value> +& 0xff;
+                                         my $offset = +$/<target>.made<value> - ($pc + 3);
+                                         make ( $opcode, +$/<bit>.made<value>, $offset +& 0xff );
+                                       }
+                                     }
+# rrc a
+  regex instruction:sym<i8051_acc>   { $<mnemonic>=(@i8051_instr_acc) <.ws> <[aA]>
+                                       {
+                                         my $opcode = %instructions<i8051><acc><hash>{~$/<mnemonic>};
+                                         make ( $opcode, );
+                                       }
+                                     }
+# jmp @A+dptr
+  regex instruction:sym<i8051_adptr> { :i $<mnemonic>=(@i8051_instr_adptr) <.ws> '@' <[aA]> <.ws> '+' <.ws> 'dptr'
+                                       {
+                                         my $opcode = %instructions<i8051><adptr><hash>{~$/<mnemonic>};
+                                         make ( $opcode, );
+                                       }
+                                     }
+# jc offset
+  regex instruction:sym<i8051_offset>   { $<mnemonic>=(@i8051_instr_offset) <.ws> $<expression>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><offset><hash>{~$/<mnemonic>};
+                                         my $target = +$/<expression>.made<value>;
+                                         my $offset = $target - ($pc + 2);
+                                         make ( $opcode, $offset +& 0xff);
+                                       }
+                                     }
+# mov bit, C
+  regex instruction:sym<i8051_movC>  { :i $<mnemonic>=(@i8051_instr_movC) <.ws> $<bit>=<i8051_bit> <comma> 'c'
+                                       {
+                                         my $opcode = %instructions<i8051><movC><hash>{~$/<mnemonic>};
+                                         my $bit = +$/<bit>.made<value>;
+                                         make ( $opcode, $bit );
+                                       }
+                                     }
+# mov a, #imm
+  regex instruction:sym<i8051_movai> { :i $<mnemonic>=(@i8051_instr_mov) <.ws> 'a' <comma> '#' $<imm>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><mov><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x04;
+                                         my $imm = +$/<imm>.made<value> +& 0xff;
+                                         make ( $opcode, $imm );
+                                       }
+                                     }
+# mov r0, #imm
+  regex instruction:sym<i8051_movri> { :i $<mnemonic>=(@i8051_instr_mov) <.ws> $<reg>=<i8051_reg> <comma> '#' $<imm>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><mov><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         my $reg = +$/<reg>.made +& 0xff;
+                                         $opcode +|= $reg;
+                                         my $imm = +$/<imm>.made<value> +& 0xff;
+                                         make ( $opcode, $imm );
+                                       }
+                                     }
+# mov dptr, #imm
+  regex instruction:sym<i8051_movDi> { :i $<mnemonic>=(@i8051_instr_movd) <.ws> 'dptr' <comma> '#' <expression>
+                                       {
+                                         my $opcode = %instructions<i8051><movd><hash>{~$/<mnemonic>};
+                                         my $imm = +$/<expression>.made<value> +& 0xff;
+                                         make ( $opcode, $imm );
+                                       }
+                                     }
+# mov direct, #imm
+  regex instruction:sym<i8051_movdi> { :i $<mnemonic>=(@i8051_instr_mov) <.ws> $<dir>=<i8051_direct> <comma> '#' $<imm>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><mov><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         my $imm = +$/<imm>.made<value> +& 0xff;
+                                         make ( $opcode, $dir, $imm );
+                                       }
+                                     }
+# mov @r0, #imm
+  regex instruction:sym<i8051_movii> { :i $<mnemonic>=(@i8051_instr_mov) <.ws> $<reg>=<i8051_ireg> <comma> '#' $<imm>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><mov><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         my $reg = +$/<reg>.made +& 0xff;
+                                         $opcode += $reg;
+                                         my $imm = +$/<imm>.made<value> +& 0xff;
+                                         make ( $opcode, $imm );
+                                       }
+                                     }
+# mov direct, r0
+  regex instruction:sym<i8051_movdr> { :i $<mnemonic>=(@i8051_instr_mov2) <.ws> $<dir>=<i8051_direct> <comma> $<reg>=<i8051_reg>
+                                       {
+                                         my $opcode = %instructions<i8051><mov2><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         my $reg = +$/<reg>.made +& 0xff;
+                                         $opcode +|= $reg;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+# mov direct, @r0
+  regex instruction:sym<i8051_movdI> { :i $<mnemonic>=(@i8051_instr_mov2) <.ws> $<dir>=<i8051_direct> <comma> $<ireg>=<i8051_ireg>
+                                       {
+                                         my $opcode = %instructions<i8051><mov2><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         my $ireg = +$/<ireg>.made +& 0xff;
+                                         $opcode +|= $ireg;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+# mov r0, direct
+  regex instruction:sym<i8051_movrd> { :i $<mnemonic>=(@i8051_instr_mov3) <.ws> $<reg>=<i8051_reg> <comma> $<dir>=<i8051_direct>
+                                       {
+                                         my $opcode = %instructions<i8051><mov3><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         my $reg = +$/<reg>.made        +& 0xff;
+                                         $opcode += $reg;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+# mov @r0, direct
+  regex instruction:sym<i8051_movId> { :i $<mnemonic>=(@i8051_instr_mov3) <.ws> $<reg>=<i8051_ireg> <comma> $<dir>=<i8051_direct>
+                                       {
+                                         my $opcode = %instructions<i8051><mov3><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         my $reg = +$/<reg>.made        +& 0xff;
+                                         $opcode += $reg;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+# mov @r0, a
+  regex instruction:sym<i8051_movia> { :i $<mnemonic>=(@i8051_instr_mov4) <.ws> $<reg>=<i8051_ireg> <comma> 'a'
+                                       {
+                                         my $opcode = %instructions<i8051><mov4><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x06;
+                                         my $reg = +$/<dir>.made +& 0xff;
+                                         $opcode += $reg;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# mov r0, a
+  regex instruction:sym<i8051_movra> { :i $<mnemonic>=(@i8051_instr_mov4) <.ws> $<reg>=<i8051_reg> <comma> 'a'
+                                       {
+                                         my $opcode = %instructions<i8051><mov4><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x08;
+                                         my $reg = +$/<dir>.made +& 0xff;
+                                         $opcode += $reg;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# mov direct, a
+  regex instruction:sym<i8051_movda> { :i $<mnemonic>=(@i8051_instr_mov4) <.ws> $<dir>=<i8051_direct> <comma> 'a'
+                                       {
+                                         my $opcode = %instructions<i8051><mov4><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         my $dir = +$/<dir>.made<value> +& 0xff;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+# mov direct, direct
+  regex instruction:sym<i8051_movdd> { :i $<mnemonic>=(@i8051_instr_mov2) <.ws> $<dir1>=<i8051_direct> <comma> $<dir2>=<i8051_direct>
+                                       {
+                                         my $opcode = %instructions<i8051><mov2><hash>{~$/<mnemonic>};
+                                         $opcode +|= 0x05;
+                                         my $dir1 = +$/<dir1>.made<value> +& 0xff;
+                                         my $dir2 = +$/<dir2>.made<value> +& 0xff;
+                                         make ( $opcode, $dir1, $dir2 );
+                                       }
+                                     }
+# movc a, @a+pc
+  regex instruction:sym<i8051_movc>  { :i $<mnemonic>=(@i8051_instr_movc) <.ws> 'a' <comma> '@' 'a' <.ws> '+' <.ws> 'pc'
+                                       {
+                                         my $opcode = %instructions<i8051><movc><hash>{~$/<mnemonic>};
+                                         make ( $opcode, );
+                                       }
+                                     }
+# movc a, @a+dptr
+  regex instruction:sym<i8051_movcd> { :i $<mnemonic>=(@i8051_instr_movc) <.ws> 'a' <comma> '@' 'a' <.ws> '+' <.ws> 'dptr'
+                                       {
+                                         my $opcode = %instructions<i8051><movc><hash>{~$/<mnemonic>};
+                                         $opcode += 0x10;
+                                         make ( $opcode, );
+                                       }
+                                     }
+# cjne a, #imm, offset
+  regex instruction:sym<i8051_cjnei> { :i $<mnemonic>=(@i8051_instr_cjne) <.ws> 'a' <comma> '#' $<imm>=<expression> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><cjne><hash>{~$/<mnemonic>};
+                                         $opcode += 0x04;
+                                         my $imm = +$/<imm>.made<value>;
+                                         my $target = +$/<target>.made<value>;
+                                         my $offset = $target - ($pc + 3);
+                                         make ( $opcode, $imm, $offset );
+                                       }
+                                     }
+# cjne a, direct, offset
+  regex instruction:sym<i8051_cjned> { :i $<mnemonic>=(@i8051_instr_cjne) <.ws> 'a' <comma> $<dir>=<expression> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><cjne><hash>{~$/<mnemonic>};
+                                         $opcode += 0x05;
+                                         my $dir = +$/<dir>.made<value>;
+                                         my $target = +$/<target>.made<value>;
+                                         my $offset = $target - ($pc + 3);
+                                         make ( $opcode, $dir, $offset );
+                                       }
+                                     }
+# cjne a, @r0, offset
+  regex instruction:sym<i8051_cjneI> { :i $<mnemonic>=(@i8051_instr_cjne) <.ws> $<reg>=<i8051_ireg> <comma> '#' $<imm>=<expression> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><cjne><hash>{~$/<mnemonic>};
+                                         $opcode += 0x06;
+                                         my $reg    = +$/<reg>.made;
+                                         $opcode += $reg;
+                                         my $imm    = +$/<imm>.made<value>;
+                                         my $target = +$/<target>.made<value>;
+                                         my $offset = $target - ($pc + 3);
+                                         make ( $opcode, $imm, $offset );
+                                       }
+                                     }
+# cjne a, r0, offset
+  regex instruction:sym<i8051_cjner> { :i $<mnemonic>=(@i8051_instr_cjne) <.ws> $<reg>=<i8051_reg> <comma> '#' $<imm>=<expression> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><cjne><hash>{~$/<mnemonic>};
+                                         $opcode += 0x08;
+                                         my $reg    = +$/<reg>.made;
+                                         $opcode += $reg;
+                                         my $imm    = +$/<imm>.made<value>;
+                                         my $target = +$/<target>.made<value>;
+                                         my $offset = $target - ($pc + 3);
+                                         make ( $opcode, $imm, $offset );
+                                       }
+                                     }
+# djnz r0, offset
+  regex instruction:sym<i8051_djnzr> { :i $<mnemonic>=(@i8051_instr_djnz) <.ws> $<reg>=<i8051_reg> <comma> $<target>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><djnz><hash>{~$/<mnemonic>};
+                                         $opcode += 0x08;
+                                         my $reg    = +$/<reg>.made;
+                                         $opcode += $reg;
+                                         my $target = +$/<target>.made<value>;
+                                         my $offset = $target - ($pc + 2);
+                                         make ( $opcode, $offset );
+                                       }
+                                     }
+# push direct
+  regex instruction:sym<i8051_direct> { :i $<mnemonic>=(@i8051_instr_direct) <.ws> $<direct>=<expression>
+                                       {
+                                         my $opcode = %instructions<i8051><direct><hash>{~$/<mnemonic>};
+                                         my $dir = +$/<direct>.made<value>;
+                                         make ( $opcode, $dir );
+                                       }
+                                     }
+}
+%instructionset<i8051> = I8051.new();
+
 # Skeleton for new architectures
 
-#my @arch_instr_inh;   make_hash('arch', 'inh');
-#grammar Arch is Assembler {
-#}
-#%instructions<arch> = Arch.new();
+my @arch_instr_inh;   make_hash('arch', 'inh');
+grammar Arch is Assembler {
+}
+%instructions<arch> = Arch.new();
 
 # Input routines
 
@@ -2896,27 +3378,40 @@ parse_line(Str $line) {
   my Str $label = '';
   my Str $opcode = '';
   my Str $rest = '';
+
+# Check for and handle any label definition
   if $tline ~~ /^\S/ { # we have a label
         $tline ~~ s/^(\S+)//;
        $label = ~$0;
   } else {
     #say "no label";
   }
+
+# Delete leading whitespace
   $tline ~~ s/^\s+//;
+
+# Check for mnemonic or directive
   if $tline ~~ /^[\w|\.]/ {
     $tline ~~ s/^(\S+)//;
     $opcode = ~$0;
   }
   $tline ~~ s/^\s+//;
+
   $rest = $tline;
   my $orig_rest = $rest;
+
+# Expand a macro
   if %macro{$opcode.lc}.defined {
     format_listing(-1, '', $label, $opcode, $rest);
     expand_macro($label, $opcode.lc, $rest);
     next;
   }
-  $rest ~~ s:g/ <wb>(\w+)<wb> /{
+
+# Not a macro -- split remainder of line into arguments
+#   TODO: need to be cleverer here to handle strings
+  $rest ~~ s:g/ <wb>(\w+)<wb> /{ # TODO: This should use "words" and probably map or some such
 				my $word = $0;
+                                # Expand definitions
 				if %define{$word}.defined {
 				  %define{$word}
 				} else {
@@ -2928,6 +3423,7 @@ parse_line(Str $line) {
 
 # Read the next line of input from wherever input is coming at the moment
 # Handle the line
+
 sub
 get_next_line {
   loop {
@@ -2938,35 +3434,41 @@ get_next_line {
     if ! $line.defined {
       return (Str, Str, Str, Str);
     }
+
+# If we are defining a macro, stop defining it if opcode is ".endm",
+#  otherwise just append this line to the macro definition
     if $current_macro_def {
-      #debug "Defining macro $current_macro_def: $line";
       if $line ~~ /^<ws>\.endm<wb>/ {
-      #debug "Found endm";
 	$current_macro_def = '';
       } else {
-      #debug "Adding line to macro";
 	%macro{$current_macro_def}.push($line);
       }
       simple_listing($line);
       next;
     }
-    #debug "Looking for comment: $line";
+
+# Check for line comments
     if $line ~~ / ^ <.ws>? [ <[\#;*]> .* ]? $ / { # comments
-      #debug "Found comment: $line";
       simple_listing($line);
       next;
     }
+
+# Check for macro definition
     if $line ~~ /^<ws>\.macro<ws>(\S+)/ {
       simple_listing($line);
       $current_macro_def = ~$/[0];
       %macro{$current_macro_def} = [];
       next;
     }
+
+# Check for includes
     if $line ~~ /^<ws>\.include<ws>(\S+)/ {
       simple_listing($line);
       include_file(~$/[0]);
       next;
     }
+
+# Check for .if
     if $line ~~ /^<ws>  \.if <ws> / {
       if $ifdepth == $truedepth {
 	# only in this case do we care about the value of the expression
@@ -2981,6 +3483,8 @@ get_next_line {
       ++$ifdepth;
       next;
     }
+
+# Check for .else
     if $line ~~ /^<ws>\.else<wb>/ {
       if $ifdepth == $truedepth {
 	--$truedepth;
@@ -2991,6 +3495,8 @@ get_next_line {
       }
       next;
     }
+
+# Check for .endif
     if $line ~~ /^<ws>\.endif<wb>/ {
       --$ifdepth;
       if $ifdepth < $truedepth {
@@ -2998,6 +3504,9 @@ get_next_line {
       }
       next;
     }
+
+# Check whether we are conditionally assembling.
+# Only if so do we actually parse the line
     if ($truedepth == $ifdepth) {
       my ($label, $opcode, $orig_rest, $rest) = parse_line($line);
       return ($line, $label, $opcode, $orig_rest, $rest);
@@ -3011,27 +3520,23 @@ get_next_line {
 # Output
 
 # Here is the code which generates the various forms of output.
-# Currently listings and Motorola S1 format are available
+# Currently listings and Motorola S format are available
 
-my $suppress_output = 1;
 my $nolist = 0;
 
 # listing
 
 sub simple_listing(Str $line) {
-  return if $suppress_output; # some variables below don't exist on earlier passes
   return if $nolist;
   printf "%4d                 %s\n", $line_number, $line;
 }
 
 sub error_listing(Str $msg) {
-  return if $suppress_output; # some variables below don't exist on earlier passes
   return if $nolist;
   printf "                    %s\n", $msg;
 }
 
 sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
-  return if $suppress_output; # some variables below don't exist on earlier passes
   return if $nolist;
   my $code_str = $code;
   if $code.chars > %param<codewidth> {
@@ -3381,6 +3886,7 @@ say $param;
 
 # The .instruction directive generates the data the parser uses to assemble code
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
+#note ".instruction... $label $opcode $rest $pass";
   return unless $pass == 1;
   my $args = $rest;
   my $m = Assembler.subparse($args,
@@ -3405,18 +3911,19 @@ say $param;
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-#say %instructions{$isa};
+#note "Assembling for isa $isa";
+#note '%instructions: ', %instructions{$isa};
   for %instructions{$isa}.keys -> $key {
-#say "Generating for $isa $key";
-#say "Generating %instructions{$isa}{$key}<array>";
+#note "Generating for $isa $key";
+#note "Generating %instructions{$isa}{$key}<array>";
     if %instructions{$isa}{$key}<hash>.defined {
       @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
     } else {
-#say "Empty array for %instructions{$isa}{$key}<array>";
+#note "Empty array for %instructions{$isa}{$key}<array>";
       @::(%instructions{$isa}{$key}<array>) = ();
     }
   }
-#say @riscv_instr_inh;
+#note @i8051_instr_single;
   $instructionset = %instructionset{$isa};
 }
 
@@ -3464,13 +3971,10 @@ my @files = ();
 # pass_number should be 1, and then 2
 
 sub do_pass(Int $pass_number) {
-  $suppress_output = ($pass_number == 2) ?? 0 !! 1;
-  $suppress_output = 0;
   $ifdepth = 0;
   $truedepth = 0;
   $current_macro_def = '';
   setup_local_pointer();
-# reset program counters
   for %memspace.keys -> $space {
     %memspace{$space}<pc> = 0;
   }
@@ -3554,7 +4058,7 @@ for @*ARGS -> $arg {
 }
 
 {
-  my $*OUT = open '/dev/null', :w;
+#  my $*OUT = open '/dev/null', :w;
   do_pass(1+0);
 }
 

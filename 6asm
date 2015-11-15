@@ -107,9 +107,8 @@ sub make_hash(Str $isa, Str $instr) {
   %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
 }
 
-sub mkexp {
-  my ($value, $def) = @_;
-  #debug "Making expression from $value, $def";
+sub mkexp($value, $def) {
+  debug "Making expression from $value, $def";
   return {value => $value, def => $def};
 }
 
@@ -206,7 +205,7 @@ grammar Assembler {
 	                                      error_listing "Illegal operator";
 	                                    }
 					  }
-                                          $def &= $/<term>[$index + 1].made<def>
+                                          $def +&= $/<term>[$index + 1].made<def>
                                         }
                                       }
                                       make mkexp($value, $def);
@@ -217,14 +216,14 @@ grammar Assembler {
                                       my $value = $/<mulexpr>[0].made<value>;
                                       my $def   = $/<mulexpr>[0].made<def>;
                                       if ?$/<addoper> {
-                                        for 0 .. (+$<addoper> - 1) -> $index {
+                                        for ^+$<addoper> -> $index {
 	                                  my $oper = ~$/<addoper>[$index];
 	                                  if $oper ~~ '+' {
 	                                    $value += $/<mulexpr>[$index + 1].made<value>;
 	                                  } else {
 	                                    $value -= $/<mulexpr>[$index + 1].made<value>;
 	                                  }
-                                          $def &= $/<mulexpr>[$index + 1].made<def>;
+                                          $def +&= $/<mulexpr>[$index + 1].made<def>;
                                         }
                                       }
                                       make mkexp($value, $def);

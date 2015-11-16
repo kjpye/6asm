@@ -22,9 +22,6 @@ my %param = (codewidth => 9,
 
 my %directive = ();
 
-my @local_pointer = ();
-my @local_symbol = ();
-
 #`[ We need some documentation. Here is as good a place as any to start
 
 A memory space includes details of a range of usable memory, and includes
@@ -80,6 +77,9 @@ my @memspace = ({'pc' => 0.Int});
     It is initialised to an array of -1 values (indicating that no local labels have
     been seen at the beginning of each pass).
 ]
+
+my @local_pointer = ();
+my @local_symbol = ();
 
 sub setup_local_pointer() {
     for 0..99 -> $index {
@@ -862,6 +862,7 @@ my @pic18_instr_ret;      make_hash('pic18', 'ret');
 my @pic18_instr_lit;      make_hash('pic18', 'lit');
 my @pic18_instr_bsr;      make_hash('pic18', 'bsr');
 my @pic18_instr_tblrd;    make_hash('pic18', 'tblrd');
+
 # Rules for PIC
 
 grammar Pic10 is Assembler {
@@ -1146,17 +1147,22 @@ grammar Mc6809 is Assembler {
   token mc6809_anyreg                 { < a b cc dp x y u s d pc >
                                         {
                                           my $reg = ~$/;
-                                          my %mc6809_anyreg = ('d' => 0, 'x' => 1, 'y' => 2, 'u' => 3, 's' => 4, 'pc' => 5, 'a' => 8, 'b' => 9, 'cc' => 10, 'dp' => 11);
+                                          my %mc6809_anyreg = ('d' => 0,
+                                                               'x' => 1, 'y' => 2, 'u' => 3, 's' => 4,
+                                                               'pc' => 5,
+                                                               'a' => 8, 'b' => 9,
+                                                               'cc' => 10,
+                                                               'dp' => 11);
                                           make %mc6809_anyreg{$reg};
                                         }
                                       }
   proto regex mc6809_idx              { <*>                                                                                      }
   regex mc6809_idx:sym<off>           { <expression> <comma> <mc6809_reg16>
                                         {
-                                          my $def = $/<expression>.made<def>;
+                                          my $def   = $/<expression>.made<def>;
                                           my $value = $/<expression>.made<value>;
-                                          my $reg = $/<mc6809_reg16>.made;
-                                          my $made = 0;
+                                          my $reg   = $/<mc6809_reg16>.made;
+                                          my $made  = 0;
                                           if $def {
                                             if $value == 0 {
                                               make ( (0x84 +| $reg +< 5, ));
@@ -1171,7 +1177,7 @@ grammar Mc6809 is Assembler {
                                               $made = 1;
                                             }
                                           } 
-                                          if ! $made {
+                                          if ! $made { # 16 bit offset
                                             make ( (0x89 +| ($reg +< 5), ($value +> 8), ($value +& 0xff)));
                                           }
                                         }
@@ -1257,9 +1263,9 @@ grammar Mc6809 is Assembler {
                                           $opcode +|= 0x20; # indexed addressing mode
                                           my @postbytes = $/<mc6809_idx>.made;
                                           if ($opcode > 0xff) {
-                                            make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
+                                            make ( ($opcode +> 8, $opcode +& 0xff, |@postbytes) );
                                           } else {
-                                            make ( @($opcode, @postbytes ) );
+                                            make ( ($opcode, |@postbytes ) );
                                           }
                                         }
                                       }
@@ -1270,9 +1276,9 @@ grammar Mc6809 is Assembler {
                                           my @postbytes = $/<mc6809_idx>.made;
                                           @postbytes[0] +|= 0x10; # set indirect bit -- TODO fix 5 bit offsets
                                           if ($opcode > 0xff) {
-                                            make ( ($opcode +> 8, $opcode +& 0xff, @postbytes) );
+                                            make ( ($opcode +> 8, $opcode +& 0xff, |@postbytes) );
                                           } else {
-                                            make ( ($opcode, @postbytes) );
+                                            make ( ($opcode, |@postbytes) );
                                           }
                                         }
                                       }
@@ -1424,7 +1430,7 @@ my @mc68hc11_instr_bit;   make_hash('mc68hc11', 'bit');
 my @mc68hc11_instr_bbr;   make_hash('mc68hc11', 'bbr');
 
 grammar Mc68hc11 is Assembler {
-  token mc68hc11_acc                    { < a b >
+  token mc68hc11_acc                  { < a b >
                                         {
                                           my  $acc = ~$/;
                                           make $acc eq 'a' ?? 0 !! 1;
@@ -3361,7 +3367,6 @@ expand_macro(Str $label, Str $opcode, Str $rest) {
       }
     }
     # interpolate the arguments
-#    say "Interpolating arguments ", @args.perl, " into $line\n";
     while ($line ~~ /\@(<digit>)/) {
       my $value = @args[$/[0]];
       $line ~~ s/\@<digit>/{$value}/;
@@ -3380,10 +3385,8 @@ parse_line(Str $line) {
 
 # Check for and handle any label definition
   if $tline ~~ /^\S/ { # we have a label
-        $tline ~~ s/^(\S+)//;
-       $label = ~$0;
-  } else {
-    #say "no label";
+    $tline ~~ s/^(\S+)//;
+    $label = ~$0;
   }
 
 # Delete leading whitespace
@@ -3746,12 +3749,10 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 };
 
 %directive<.param> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-say $rest;
   my $args = $rest;
   my $m = Assembler.subparse($args,
 			  :rule(<id>));
   my $param = ~$m[0];
-say $param;
   $args = $args.substr(+$m.to); # remove identifier
   $args ~~ s/ ^ <ws>? \= <ws>? //;
   $m = Assembler.subparse($args,
@@ -3885,7 +3886,6 @@ say $param;
 
 # The .instruction directive generates the data the parser uses to assemble code
 %directive<.instruction> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-#note ".instruction... $label $opcode $rest $pass";
   return unless $pass == 1;
   my $args = $rest;
   my $m = Assembler.subparse($args,
@@ -3901,7 +3901,6 @@ say $param;
   my $value = +$m.made<value>;
   if %instructions{$isa}{$instr_type}<array>.defined {
     format_listing(-1, '', $label, $opcode, $rest);
-#note "$isa $instr_type $opc $value";
     %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
   } else {
     error_listing "Unknown instruction type $instr_type";
@@ -3910,19 +3909,12 @@ say $param;
 
 # .assemble -- instruction set definition is complete
 %directive<.assemble> = sub (Str $label, Str $opcode, Str $rest, Int $pass) {
-#note "Assembling for isa $isa";
-#note '%instructions: ', %instructions{$isa};
   for %instructions{$isa}.keys -> $key {
-#note "Generating for $isa $key";
-#note "Generating %instructions{$isa}{$key}<array>";
     if %instructions{$isa}{$key}<hash>.defined {
       @::(%instructions{$isa}{$key}<array>) = %instructions{$isa}{$key}<hash>.keys;
     } else {
-#note "Empty array for %instructions{$isa}{$key}<array>";
-      @::(%instructions{$isa}{$key}<array>) = ();
     }
   }
-#note @i8051_instr_single;
   $instructionset = %instructionset{$isa};
 }
 
@@ -3982,7 +3974,7 @@ sub do_pass(Int $pass_number) {
 
 # include the filenames in reverse order so the first gets opened first
 # and then chains through to the second and so on
-  for 0 .. +@files-1 ->$fileindex {
+  for ^+@files ->$fileindex {
       include_file(@files[$fileindex]);
   }
   loop {
@@ -4043,6 +4035,7 @@ sub print_symbols () {
 }
 
 # START HERE
+
 for @*ARGS -> $arg {
   if ($arg eq '--debug') {
     $debug = 1;

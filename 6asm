@@ -128,7 +128,7 @@ grammar Assembler {
                                         my $val = %symbol{$sym.lc}<value>;
                                         make mkexp($val, 1);
                                       } else {
-                                        error_listing "*** Undefined symbol \"$sym\"";
+                                        error_listing "Undefined symbol \"$sym\"";
                                         make mkexp(0, 0);
                                       }
                                     }
@@ -309,7 +309,7 @@ grammar Avr is Assembler {
                                          if 0 <= $val <= 7 {
                                            make $val;
                                          } else {
-                                          error_listing '*** Bit number out of range';
+                                          error_listing 'Bit number out of range';
                                           make 0;
                                          }
                                        }
@@ -320,7 +320,7 @@ grammar Avr is Assembler {
                                          #debug "Found avr_reg: ", $/;
 					 $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 31) {
-                                           error_listing '*** Registers must be in range r0 to r31';
+                                           error_listing 'Registers must be in range r0 to r31';
                                            $reg = 0;
                                          }
                                          make $reg;
@@ -330,7 +330,7 @@ grammar Avr is Assembler {
                                        {
                                          my $r1 = $/[0];
                                          my $r2 = $/[1];
-                                         error_listing ('*** Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
+                                         error_listing ('Illegal register pair') unless ($r1 == $r2 + 1) && ($r1 +& 1);
                                          make $r2;
                                        }
                                      }
@@ -374,7 +374,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($r1 +< 4) +& 0x0070;
                                            $opcode +|=  $r2       +& 0x0007;
                                          } else {
-                                           error_listing '*** Registers must be in range 16 to 23';
+                                           error_listing 'Registers must be in range 16 to 23';
                                          }
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
@@ -388,7 +388,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($r1 +< 4) +& 0x00f0;
                                            $opcode +|=  $r2       +& 0x000f;
                                          } else {
-                                           error_listing '*** Registers must be in range 16 to 31';
+                                           error_listing 'Registers must be in range 16 to 31';
                                          }
                                          make( ($opcode,) ); # don't remove the comma!
                                        }
@@ -423,7 +423,7 @@ grammar Avr is Assembler {
                                          my $reg = $/<regpair>.made;
                                          my $val = $/<expression>.made<value>;
                                          if ($reg < 24) || ($reg +& 1) {
-                                           error_listing('*** Register must be r25:r24, r27:r26, r29:r28 or r31:r30');
+                                           error_listing('Register must be r25:r24, r27:r26, r29:r28 or r31:r30');
                                            $reg = 24;
                                          }
                                          $opcode +|= ($reg +< 1) +& 0x0030;
@@ -438,7 +438,7 @@ grammar Avr is Assembler {
                                          my $reg = $/<avr_reg>.made;
                                          my $val = $/<expression>.made<value>;
                                          if ($reg < 24) || ($reg +& 1) {
-                                           error_listing('*** Register must be r24, r26, r28 or r30');
+                                           error_listing('Register must be r24, r26, r28 or r30');
                                            $reg = 24;
                                          }
                                          $opcode +|= ($reg +< 1) +& 0x0030;
@@ -453,7 +453,7 @@ grammar Avr is Assembler {
                                          my $reg = $/<avr_reg>.made;
                                          my $val = $/<expression>.made<value>;
                                          if $reg < 16 {
-                                           error_listing('*** Register must be r16 - r31');
+                                           error_listing('Register must be r16 - r31');
                                            $reg = 16;
                                          }
                                          $opcode +|= ($reg +< 4) +& 0x00f0;
@@ -468,7 +468,7 @@ grammar Avr is Assembler {
                                          my $reg = $/<avr_reg>.made;
                                          my $val = $/<expression>.made<value> +^ 0xff;
                                          if $reg < 16 {
-                                           error_listing('*** Register must be r16 - r31');
+                                           error_listing('Register must be r16 - r31');
                                            $reg = 16;
                                          }
                                          $opcode +|= ($reg +< 4) +& 0x00f0;
@@ -501,7 +501,7 @@ grammar Avr is Assembler {
                                          my $bit = $/<avr_bit>.made;
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
+                                         error_listing "Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
                                          $opcode +|= ($offset +< 3) +& 0x03f0;
                                          $opcode +|=  $bit          +& 0x0007;
                                          make ( ($opcode,) );
@@ -512,7 +512,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><branch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
+                                         error_listing "Branch out of range (from $pc to $target)" unless -64 <= $offset < 64;
                                          $opcode +|= ($offset +< 3) +& 0x03f0;
                                          make ( ($opcode,) );
                                        }
@@ -522,7 +522,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><lbranch><hash>{~$/<mnemonic>};
                                          my $target = $/<expression>.made<value>;
                                          my $offset = $target - $pc - 1;
-                                         error_listing "*** Branch out of range (from $pc to $target)" unless -2048 <= $offset < 2048;
+                                         error_listing "Branch out of range (from $pc to $target)" unless -2048 <= $offset < 2048;
                                          $opcode +|= $offset +& 0x0fff;
                                          make ( ($opcode,) );
                                        }
@@ -561,7 +561,7 @@ grammar Avr is Assembler {
                                          my $opcode = %instructions<avr><bio><hash>{~$/<mnemonic>};
                                          my $bit = $/<avr_bit>.made;
                                          my $reg = $/<expression>.made<value>;
-                                         error_listing '*** I/O register must be in range 0 to 31' unless 0 <= $reg < 32;
+                                         error_listing 'I/O register must be in range 0 to 31' unless 0 <= $reg < 32;
                                          $opcode +|=  $bit       +& 0x0007;
                                          $opcode +|= ($reg +< 3) +& 0x00f8;
                                          make ( ($opcode,) );
@@ -571,7 +571,7 @@ grammar Avr is Assembler {
                                        {
                                          my $opcode = %instructions<avr><i4><hash>{~$/<mnemonic>};
                                          my $round = $/<expression>.made<value>;
-                                         error_listing '*** Round must be in range 0 to 15' unless 0 <= $round < 16;
+                                         error_listing 'Round must be in range 0 to 15' unless 0 <= $round < 16;
                                          $opcode +|= ($round +< 4) +& 0x00f0;
                                          make ( ($opcode,) );
                                        }
@@ -683,7 +683,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($val +< 7) +& 0x0c00;
                                            $opcode +|= ($val +< 8) +& 0x1000;
                                          } else {
-                                           error_listing '*** Offset must be 0 to 63';
+                                           error_listing 'Offset must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -699,7 +699,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($val +< 7) +& 0x0c00;
                                            $opcode +|= ($val +< 8) +& 0x1000;
                                          } else {
-                                           error_listing '*** Offset must be 0 to 63';
+                                           error_listing 'Offset must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -763,7 +763,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($val +< 7) +& 0x0c00;
                                            $opcode +|= ($val +< 8) +& 0x1000;
                                          } else {
-                                           error_listing '*** Offset must be 0 to 63';
+                                           error_listing 'Offset must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -779,7 +779,7 @@ grammar Avr is Assembler {
                                            $opcode +|= ($val +< 7) +& 0x0c00;
                                            $opcode +|= ($val +< 8) +& 0x1000;
                                          } else {
-                                           error_listing '*** Offset must be 0 to 63';
+                                           error_listing 'Offset must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -816,7 +816,7 @@ grammar Avr is Assembler {
                                            $opcode +|=  $val       +& 0x000f;
                                            $opcode +|= ($val +< 4) +& 0x0f00;
                                          } else {
-                                           error_listing '*** Location must be 0 to 63';
+                                           error_listing 'Location must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -831,7 +831,7 @@ grammar Avr is Assembler {
                                            $opcode +|=  $val       +& 0x000f;
                                            $opcode +|= ($val +< 4) +& 0x0f00;
                                          } else {
-                                           error_listing '*** Location must be 0 to 63';
+                                           error_listing 'Location must be 0 to 63';
                                          }
                                          make ( ($opcode,) );
                                        }
@@ -870,7 +870,7 @@ grammar Pic10 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 7) {
-                                            error_listing '*** bit number must be between 0 and 7';
+                                            error_listing 'bit number must be between 0 and 7';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -880,7 +880,7 @@ grammar Pic10 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 1) {
-                                            error_listing '*** D must be 0 or 1';
+                                            error_listing 'D must be 0 or 1';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -890,7 +890,7 @@ grammar Pic10 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 31) {
-                                            error_listing '*** Registers must be in range 0 to 31';
+                                            error_listing 'Registers must be in range 0 to 31';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -960,7 +960,7 @@ grammar Pic18 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 1) {
-                                            error_listing '*** A must be 0 or 1';
+                                            error_listing 'A must be 0 or 1';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -970,7 +970,7 @@ grammar Pic18 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 1) {
-                                            error_listing '*** D must be 0 or 1';
+                                            error_listing 'D must be 0 or 1';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -980,7 +980,7 @@ grammar Pic18 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 255) {
-                                            error_listing '*** Registers must be in range 0 to 255';
+                                            error_listing 'Registers must be in range 0 to 255';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -990,7 +990,7 @@ grammar Pic18 is Assembler {
                                         {
                                           my  $reg = +$/;
                                           if ! (0 <= $reg <= 7) {
-                                            error_listing '*** bit number must be between 0 and 7';
+                                            error_listing 'bit number must be between 0 and 7';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -1358,55 +1358,55 @@ grammar Mc6809 is Assembler {
                                           for @($/<mc6809_anyreg>) -> $reg {
                                             if $reg eq 'd' {
                                               if $postbyte +& 0x06 {
-                                                 error_listing "*** Register d conflicts with previous register specification";
+                                                 error_listing "Register d conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x06;
                                             }
                                             if $reg eq 'x' {
                                               if $postbyte +& 0x10 {
-                                                 error_listing "*** Register x conflicts with previous register specification";
+                                                 error_listing "Register x conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x10;
                                             }
                                             if $reg eq 'y' {
                                               if $postbyte +& 0x20 {
-                                                 error_listing "*** Register y conflicts with previous register specification";
+                                                 error_listing "Register y conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x20;
                                             }
                                             if $reg eq 'u' | 's' {
                                               if $postbyte +& 0x40 {
-                                                 error_listing "*** Register u/s conflicts with previous register specification";
+                                                 error_listing "Register u/s conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x40;
                                             }
                                             if $reg eq 'pc' {
                                               if $postbyte +& 0x80 {
-                                                 error_listing "*** Register pc conflicts with previous register specification";
+                                                 error_listing "Register pc conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x80;
                                             }
                                             if $reg eq 'a' {
                                               if $postbyte +& 0x02 {
-                                                 error_listing "*** Register a conflicts with previous register specification";
+                                                 error_listing "Register a conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x02;
                                             }
                                             if $reg eq 'b' {
                                               if $postbyte +& 0x04 {
-                                                 error_listing "*** Register b conflicts with previous register specification";
+                                                 error_listing "Register b conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x04;
                                             }
                                             if $reg eq 'cc' {
                                               if $postbyte +& 0x01 {
-                                                 error_listing "*** Register cc conflicts with previous register specification";
+                                                 error_listing "Register cc conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x01;
                                             }
                                             if $reg eq 'dp' {
                                               if $postbyte +& 0x08 {
-                                                 error_listing "*** Register dp conflicts with previous register specification";
+                                                 error_listing "Register dp conflicts with previous register specification";
                                               }
                                               $postbyte +|= 0x08;
                                             }
@@ -1616,7 +1616,7 @@ grammar Arm is Assembler {
                                             $reg += $/[1];
                                           }
                                           if ! (0 <= $reg <= 15) {
-                                            error_listing '*** Registers must be in range r0 to r15';
+                                            error_listing 'Registers must be in range r0 to r15';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -2056,7 +2056,7 @@ grammar Mips32 is Assembler {
                                           my $reg = +$/[0];
 					  $reg += $/[1] if $/[1].defined;
                                           if ! (0 <= $reg <= 31) {
-                                            error_listing '*** Registers must be in range r0 to r31';
+                                            error_listing 'Registers must be in range r0 to r31';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -2067,7 +2067,7 @@ grammar Mips32 is Assembler {
                                           my $reg = +$/[0];
 					  $reg += $/[1] if $/[1].defined;
                                           if ! (0 <= $reg <= 31) {
-                                            error_listing '*** Registers must be in range r0 to r31';
+                                            error_listing 'Registers must be in range r0 to r31';
                                             $reg = 0;
                                           }
                                           make $reg;
@@ -2479,7 +2479,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 31) {
-                                           error_listing '*** Registers must be in range x0 to x31';
+                                           error_listing 'Registers must be in range x0 to x31';
                                            $reg = 0;
                                          }
                                          make $reg;
@@ -2505,7 +2505,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 11) {
-                                           error_listing '*** Saved registers must be in range s0 to s11';
+                                           error_listing 'Saved registers must be in range s0 to s11';
                                            $reg = 0;
                                          }
                                          make $reg + 2;
@@ -2526,7 +2526,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 1) {
-                                           error_listing '*** Return value registers must be in range v0 to v1';
+                                           error_listing 'Return value registers must be in range v0 to v1';
                                            $reg = 0;
                                          }
                                          make $reg + 16;
@@ -2537,7 +2537,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 7) {
-                                           error_listing '*** Function argument registers must be in range a0 to a7';
+                                           error_listing 'Function argument registers must be in range a0 to a7';
                                            $reg = 0;
                                          }
                                          make $reg + 18;
@@ -2548,7 +2548,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 4) {
-                                           error_listing '*** Function argument registers must be in range t0 to t4';
+                                           error_listing 'Function argument registers must be in range t0 to t4';
                                            $reg = 0;
                                          }
                                          make $reg + 26;
@@ -2576,7 +2576,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 31) {
-                                           error_listing '*** Registers must be in range f0 to f31';
+                                           error_listing 'Registers must be in range f0 to f31';
                                            $reg = 0;
                                          }
                                          make $reg;
@@ -2587,7 +2587,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 15) {
-                                           error_listing '*** FP saved registers must be in range fs0 to fs15';
+                                           error_listing 'FP saved registers must be in range fs0 to fs15';
                                            $reg = 0;
                                          }
                                          make $reg;
@@ -2598,7 +2598,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 1) {
-                                           error_listing '*** FP return value registers must be in range fv0 to fv1';
+                                           error_listing 'FP return value registers must be in range fv0 to fv1';
                                            $reg = 0;
                                          }
                                          make $reg + 16;
@@ -2609,7 +2609,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 7) {
-                                           error_listing '*** FP argument registers must be in range fa0 to fa7';
+                                           error_listing 'FP argument registers must be in range fa0 to fa7';
                                            $reg = 0;
                                          }
                                          make $reg + 18;
@@ -2620,7 +2620,7 @@ grammar RiscV is Assembler {
                                          my $reg = +$/[0];
                                          $reg += $/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 5) {
-                                           error_listing '*** FP temporary registers must be in range ft0 to ft5';
+                                           error_listing 'FP temporary registers must be in range ft0 to ft5';
                                            $reg = 0;
                                          }
                                          make $reg + 26;
@@ -3535,7 +3535,7 @@ sub simple_listing(Str $line) {
 
 sub error_listing(Str $msg) {
   return if $nolist;
-  printf "                    %s\n", $msg;
+  printf "                    *** %s\n", $msg;
 }
 
 sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
@@ -3783,7 +3783,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
       last unless ?$m;
       $args = $args.substr(+$m.to); 
     } else {
-      error_listing '*** unknown value';
+      error_listing 'unknown value';
       format_listing($pc, '', $label, $opcode, $rest);
       last;
     }
@@ -3948,7 +3948,7 @@ sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
       }
       $code ~~ s/ ' ' $//; # delete trailing space
     } else {
-      error_listing "*** Unrecognised instruction format";
+      error_listing "Unrecognised instruction format";
     }
   }
   format_listing($pc, $code, $label, $opcode, $orig_rest);
@@ -4050,8 +4050,8 @@ for @*ARGS -> $arg {
 }
 
 {
-#  my $*OUT = open '/dev/null', :w;
-  do_pass(1+0);
+  my $*OUT = open '/dev/null', :w;
+  do_pass(+1);
 }
 
 do_pass(+2);

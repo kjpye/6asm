@@ -1,0 +1,35 @@
+# RV32F standard extension
+ .instruction fi   flw        0x00002007
+ .instruction fs   fsw        0x00002027
+ .instruction fr4  fmadd.s    0x00000043
+ .instruction fr4  fmsub.s    0x00000047
+ .instruction fr4  fnmsub.s   0x0000004b
+ .instruction fr4  fnmadd.s   0x0000004f
+ .instruction fr   fadd.s     0x00000053
+ .instruction fr   fsub.s     0x08000053
+ .instruction fr   fmul.s     0x10000053
+ .instruction fr   fdiv.s     0x18000053
+ .instruction fr2  fsqrt.s    0x58000053 
+ .instruction fr   fsgnj.s    0x20000053
+ .instruction fr   fsgnjn.s   0x20001053
+ .instruction fr   fsgnjx.s   0x20002053
+ .instruction fr   fmin.s     0x28000053
+ .instruction fr   fmax.s     0x28001053
+ .instruction fr2  fcvt.w.s   0xc0000053
+ .instruction fr2  fcvt.wu.s  0xc0100053
+ .instruction fr2  fmv.x.s    0xe0000053
+ .instruction fr   feq.s      0xa0002053
+ .instruction fr   flt.s      0xa0001053
+ .instruction fr   fle.s      0xa0000053
+ .instruction fr2  fclass.s   0xe0001053
+ .instruction fr2  fcvt.s.w   0xd0000053
+ .instruction fr2  fcvt.s.wu  0xd0100053
+ .instruction fr2  fmv.s.x    0xf0000053
+ .instruction rd   frcsr      0x00302073
+ .instruction rd   frrm       0x00202073
+ .instruction rd   frflags    0x00102073
+ .instruction r2   fscsr      0x00301073
+ .instruction r2   fsrm       0x00201073
+ .instruction r2   fsflags    0x00101073
+ .instruction rd   fsrmi      0x00205073 ; which immediate field?
+ .instruction rd   fsflagsi   0x00105073 ; and here also

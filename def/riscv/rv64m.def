@@ -1,0 +1,6 @@
+# RV64M standard extension
+ .instruction r    mulw       0x0200003b
+ .instruction r    divw       0x0200803b
+ .instruction r    divuw      0x0200a03b
+ .instruction r    remw       0x0200c03b
+ .instruction r    remuw      0x0200e03b

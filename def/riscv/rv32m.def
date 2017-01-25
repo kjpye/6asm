@@ -1,0 +1,8 @@
+# RV32M standard extension
+ .instruction r    mul        0x02000033
+ .instruction r    mulh       0x02002033
+ .instruction r    mulhsu     0x02004033
+ .instruction r    div        0x02006033
+ .instruction r    divu       0x0200a033
+ .instruction r    rem        0x0200c033
+ .instruction r    remu       0x0200e033

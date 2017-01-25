@@ -1,0 +1,12 @@
+# RV64A standard extension
+ .instruction ra0  lr.d       0x1000602f
+ .instruction ra   sc.d       0x1800602f
+ .instruction ra   amoswap.d  0x0800602f
+ .instruction ra   amoadd.d   0x0000602f
+ .instruction ra   amoxor.d   0x4000602f
+ .instruction ra   amoand.d   0x6000602f
+ .instruction ra   amoor.d    0x4000602f
+ .instruction ra   amomin.d   0x8000602f
+ .instruction ra   amomax.d   0xa000602f
+ .instruction ra   amominu.d  0xc000602f
+ .instruction ra   amomaxu.d  0xe000602f

@@ -1,0 +1,7 @@
+# RV64D standard extension
+ .instruction fr2  fcvt.l.d   0xc2200053
+ .instruction fr2  fcvt.lu.d  0xc2300053
+ .instruction fr2  fmv.x.d    0xe2000053
+ .instruction fr2  fcvt.d.l   0xd2200053
+ .instruction fr2  fcvt.d.lu  0xd2300053
+ .instruction fr2  fmv.d.x    0xf2000053

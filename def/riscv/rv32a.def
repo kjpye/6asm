@@ -1,0 +1,14 @@
+	.nolist
+
+# RV32A standard extension
+ .instruction ra0  lr.w       0x1000402f
+ .instruction ra   sc.w       0x1800402f
+ .instruction ra   amoswap.w  0x0800402f
+ .instruction ra   amoadd.w   0x0000402f
+ .instruction ra   amoxor.w   0x2000402f
+ .instruction ra   amoand.w   0x6000402f
+ .instruction ra   amoor.w    0x4000402f
+ .instruction ra   amomin.w   0x8000402f
+ .instruction ra   amomax.w   0xa000402f
+ .instruction ra   amominu.w  0xc000402f
+ .instruction ra   amomaxu.w  0xe000402f

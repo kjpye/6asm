@@ -1,0 +1,5 @@
+# RV64F standard extension
+ .instruction fr2  fcvt.l.s   0xc0200053 ; integer registers?
+ .instruction fr2  fcvt.lu.s  0xc0300053
+ .instruction fr2  fcvt.s.l   0xd0200053
+ .instruction fr2  fcvt.s.lu  0xd0300053

@@ -1,0 +1,61 @@
+     31 ar, as, at
+     19 at, as
+     12 as, at, label
+     11 as, 0..1020
+     11 as
+      9 as, label
+      8 as, 0..240
+      7 br, fs, ft
+      6 as, imm, label
+      5 label
+      5 fr, fs, ft
+      5 br, bs, bt
+      5 ar, fs, 0..15
+      4 ft, as, 0..1020
+      4 fr, as, at
+      4 bt, bs
+      4 at
+      4 as, at
+      4 as, 0..31, label
+      4 ar, at
+      4 ar, as
+      3 mx, my
+      3 mx, at
+      3 fr, fs, at
+      3 fr, fs
+      3 at, as, 0..510
+      3 at, as, 0..1020
+      3 as, my
+      3 0..15
+      2 mw, as, mx, my
+      2 mw, as, mx, at
+      2 fr, fs, bt
+      2 fr, as, 0..15
+      2 bs, label
+      2 at, as, 0..60
+      2 at, as, 0..255
+      2 ar, as, 7..22
+      1 mw, as
+      1 label, an
+      1 fr, as
+      1 at, label
+      1 at, as, -64..-4
+      1 at, as, -64..4
+      1 at, as, -32768..32512
+      1 at, as, -128..127
+      1 at, as, 0..1010
+      1 at, as, 0..10020
+      1 at, -2048..2047
+      1 at, 0..15
+      1 as, -23..95
+      1 as, 0..32760
+      1 ar, at, shitftimm, askimm
+      1 ar, at, 1..31
+      1 ar, at, 0..15
+      1 ar, as, imm
+      1 ar, as, bt
+      1 ar, as, 1..31
+      1 ar
+      1 -8..7
+      1 0..31
+      1 0..15, 0..15

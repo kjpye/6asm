@@ -64,7 +64,7 @@
 	.endm
 
 ; instruction definitions
-        .include avr.def
+        .include def/atmel/avr.def
 ; IO register definitions
 
 ;;        .set    portb ;; page 93 in data sheet

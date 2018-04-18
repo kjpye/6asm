@@ -1,4 +1,4 @@
-       .include ATmega32.def
+       .include def/atmel/ATmega32.def
 
         jmp	IRQ_NONE                    ; STORE PROGRAM MEMORY READY
 

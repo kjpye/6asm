@@ -1,0 +1,67 @@
+;         nolist
+; Definitions for Extensa ULP ISA
+
+         .param codewidth = 16
+         .param pcwidth   = 16
+
+        .pushmem ram
+        .defmem bottom = 0
+        .defmem top = 0x3fffff
+        .defmem width = 8
+        .defmem executable = 1
+        .defmem writeable = 1
+        .defmem readable = 1
+        .defmem init = 1
+        .defmem label = ''
+        .defmem pcwidth = 8
+        .defmem pcinc = 4
+
+        .macro .cseg
+        .pushmem ram
+        .endm
+
+        .macro .ram
+        .pushmem ram
+        .endm
+
+; instruction definitions
+ .isa extensa_ulp
+ .instruction alu   add    0x38000000
+ .instruction alu   sub    0x38100000
+ .instruction alu   and    0x38200000
+ .instruction alu   or     0x38300000
+ .instruction alu   move   0x38400000
+ .instruction alu   lsh    0x38500000
+ .instruction alu   rsh    0x38600000
+ .instruction imm   add    0x39000000
+ .instruction imm   sub    0x39100000
+ .instruction imm   and    0x39200000
+ .instruction imm   or     0x39300000
+ .instruction imm   move   0x39400000
+ .instruction imm   lsh    0x39500000
+ .instruction imm   rsh    0x39600000
+ .instruction scr   stage_inc 0x3a000000
+ .instruction scr   stage_dec 0x3a100000
+ .instruction scr   stage_rst 0x3a200000
+ .instruction st    st        0x30000000
+ .instruction ld    ld        0x3c000000
+ .instruction jump  jump      0x80000000
+ .instruction jump  jump.z    0x80200000
+ .instruction jump  jump.o    0x80400000
+ .instruction jumpr jump.lt   0x82000000
+ .instruction jumpr jump.ge   0x82010000
+ .instruction jumps jumps.eq  0x84010000
+ .instruction jumps jumps.lt  0x84000000
+ .instruction jumps jumps.gt  0x84008000
+ .instruction inh   halt      0x58000000
+ .instruction inh   wake      0x48000001
+ .instruction sleep sleep     0x49000000
+ .instruction wait  wait      0x20000000
+ .instruction tsens tsens     0x50000000
+ .instruction adc   adc       0x28000000
+ .instruction i2c_rd i2c_rd    0x30000000
+ .instruction i2c_wr i2c_wr    0x38000000
+ .instruction reg   reg_rd    0x20000000
+ .instruction reg   reg_wr    0x20000000 ; yes -- the last two are the same. I suspect a problem in the doco
+  .assemble
+  .arch extensa_ulp

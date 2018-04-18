@@ -1,4 +1,4 @@
- .include arm.def
+ .include def/arm/arm.def
  .ram
 fred: .long 4
 bill: .long 1

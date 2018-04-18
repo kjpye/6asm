@@ -1,7 +1,5 @@
-rrr_rst      30 ........rrrrsssstttt.... ar, as, at
              20 ........................
              18 ............sssstttt.... at, as
-rri8_bi8     12 iiiiiiii....sssstttt.... as, at, label
              11 ............ssss........ as
              11 iiiiiiii....ssss........ as, 0..1020
               7 ........bbbbSSSSTTTT.... br, fs, ft
@@ -11,7 +9,6 @@ rri8_bi8     12 iiiiiiii....sssstttt.... as, at, label
               5 ........bbbbbbbbbbbb.... br, bs, bt
               4 ............sssstttt.... as, at
               4 ........srsrsrsrtttt.... at
-rrr_rt        4 ........rrrr....tttt.... ar, at
               4 ........RRRRsssstttt.... fr, as, at
               4 iiiiiiii....ssssTTTT.... ft, as, 0..1020
               4 iiiiiiiiiiiissss........ as, label
@@ -22,7 +19,6 @@ rrr_rt        4 ........rrrr....tttt.... ar, at
               3 ............ssss.y...... as, my
               3 ........RRRRSSSSTTTT.... fr, fs, ft
               3 ........rrrrSSSStttt.... ar, fs, 0..15
-rrr_rs        3 ........RRRRSSSS........ fr, fs
               3 iiiiiiii....sssstttt.... at, as, 0..510
               3 iiiiiiii....ssss........ as, label
               2 .........x.......y...... mx, my
@@ -32,22 +28,23 @@ rrr_rs        3 ........RRRRSSSS........ fr, fs
               2 ........rrrrSSSStttt.... ar, fs, 0...5
               2 ........RRRRSSSSbbbb.... fr, fs, bt
               2 ........rrrrssss........ ar, as
+              2 iiiisssstttt....         at, as, 0..60
               2 iiiissss..ii....         as, label
-              2 iiiiiiii....sssstttt.... at, as, 0..1020
               2 iiiiiiii....sssstttt.... at, as, 0..255
+              2 iiiiiiii....sssstttt.... at, as, 0..1020
               2 iiiiiiii....bbbb........ bs, label
               1 .........x..ssss.y...... mx, my
               1 ..........wwssss........ mw, as
-              1 ....ssss........         0..15
-              1 ............sssstttt.... 0..15, 0..15
               1 ....sssstttt....         at, as
               1 ............sssstttt.... ar, as
+              1 ............sssstttt.... 0..15, 0..15
+              1 ....ssss........         0..15
               1 ...............s........
               1 ........RRRRSSSStttt.... fr, fs, ft
               1 ........RRRRsssstttt.... fr, fs, ft
               1 ........RRRRSSSStttt     fr, fs, at
-              1 ........RRRRsssstttt.... fr, as, 0..15
               1 ........RRRRsssstttt.... fr, as, 0...5
+              1 ........RRRRsssstttt.... fr, as, 0..15
               1 ........rrrrsssstttt.... at, as, -64..-4
               1 ........rrrrsssstttt.... at, as, -64..4
               1 rrrrsssstttt....         ar, as, imm
@@ -63,22 +60,24 @@ rrr_rs        3 ........RRRRSSSS........ fr, fs
               1 oooooooooooooooooo...... label, an
               1 oooo...arrrraaaatttt.... ar, at, shitftimm, askimm
               1 ............llll........ 0..15
-              1 ............iiii........ 0..15
               1 ............iiiitttt.... at, 0..15
-              1 iiii........ssss........ 0..240
-              1        iiiisssstttt.... s32i.n at, as, 0..60
-              1 iiiisssstttt....         at, as, 0..60
               1 iiiissss.iii....         as, -23..95
-              1 iiiiiiii....sssstttt.... at, as, 0...020
-              1 iiiiiiii....sssstttt.... at, as, 0..10020
-              1 iiiiiiii....sssstttt.... at, as, 0..1010
-rri8_st       1 iiiiiiii....sssstttt.... at, as, -128..127
+              1 iiii........ssss........ 0..240
               1 iiiiiiii....sssstttt.... at, as, -32768..32512
+              1 iiiiiiii....sssstttt.... at, as, 0..1010
+              1 iiiiiiii....sssstttt.... at, as, 0..10020
+              1 iiiiiiii....sssstttt.... at, as, 0...020
               1 iiiiiiii....ssss........ as, 0..240
               1 iiiiiiii....iiiitttt.... at, -2048..2047
               1 iiiiiiiiiiiissss........ as, 0..32760
               1 iiiiiiiiiiiiiiiitttt.... at, label
               1 ................iiii.... -8..7
+              1 ............iiii........ 0..15
               1 ...a....rrrrssssaaaa.... ar, as, 1..31
               1 ...a....rrrraaaatttt.... ar, at, 1..31
               1 ............aaaa...a.... 0..31
+rrr_rt        4 ........rrrr....tttt.... ar, at
+rrr_rst      30 ........rrrrsssstttt.... ar, as, at
+rrr_rs        3 ........RRRRSSSS........ fr, fs
+rri8_st       1 iiiiiiii....sssstttt.... at, as, -128..127
+rri8_bi8     12 iiiiiiii....sssstttt.... as, at, label

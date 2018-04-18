@@ -104,7 +104,7 @@
  .instruction rri8     iii     0x9979f2   ; iiiiiiii0111ssss11110010 353 iii as, 0..1020
  .instruction rrr      iitlb   0x504000   ; 010100000100ssss00000000 355 iitlb as
  .instruction rri4     iiu     0x0370d2   ; iiii00110111ssss11010010 iiu as, 0..240
- .instruction callx    ill     0x000000   ; 000000000000000000000000 358 ill
+ .instruction inh      ill     0x000000   ; 000000000000000000000000 358 ill
  .instruction rrrn     ill.n   0xf06d     ; 1111000001101101     359 ill.n
  .instruction rri8     ipf     0x0070c2   ; iiiiiiii0111ssss11000010 360 ipf as, 0..1020
  .instruction rri4     ipfl    0x0070d2   ; iiii00000111ssss11010010 362 ipfl as, 0..240
@@ -116,7 +116,7 @@
  .instruction rri8     l16si   0x009002   ; iiiiiiii1001sssstttt0010 370 l16si at, as, 0..510
  .instruction rri8     l16ui   0x001002   ; iiiiiiii0001sssstttt0010 372 l16ui at, as, 0..510
  .instruction rri8     l32ai   0x00b002   ; iiiiiiii1011sssstttt0010 374 l32ai at, as, 0..10020
- .instruction rri4     l32e    0x090000   ; 00001001rrrrsssstttt0000 376 l32e at, as, -64..4
+ .instruction rri4     l32e    0x090000   ; 00001001rrrrsssstttt0000 376 l32e at, as, -64..-4
  .instruction rri8     l32i    0x002002   ; iiiiiiii0010sssstttt0010 378 l32i at, as, 0..1020
  .instruction rrrn     l32i.n  0x0008     ; iiiisssstttt1000 380 l32i.n at, as, 0..60
  .instruction ri6      l32r    0x000001   ; iiiiiiiiiiiiiiiitttt0001 382 l32r at, label
@@ -156,26 +156,74 @@
  .instruction rrr      movt     0xd30000  ; 11010011rrrrssssbbbb0000 428 movt ar, as, bt
  .instruction rrr      movt.s   0xdd0000  ; 11011011RRRRSSSSbbbb0000 449 movt.s fr, fs, bt
  .instruction rrr      msub.s   0x5c0000  ; 01011010RRRRSSSStttt0000 430 msub.s fr, fs, ft
- .instruction rrr      mul.aa.* 0x740004  ; 011101hh0000sssstttt0100 431 mul.aa.* as, at (hh = ll/hl/lh/hgh as *)
- .instruction rrr      mul.ad.* 0x340004  ; 001101hh0000ssss0y000100 432 mul.ad.* as, my
- .instruction rrr      mul.da.* 0x640004  ; 011001hh0x000000tttt0100 433 mul.da.* mx, at
- .instruction rrr      mul.dd.* 0x240004  ; 001001hh0x0000000y000100 434 mul.dd.* mx, my
+ .instruction rrr      mul.aa.ll 0x740004  ; 011101000000sssstttt0100 431 mul.aa.ll as, at
+ .instruction rrr      mul.aa.hl 0x750004  ; 011101010000sssstttt0100 431 mul.aa.lh as, at
+ .instruction rrr      mul.aa.lh 0x760004  ; 011101100000sssstttt0100 431 mul.aa.hl as, at
+ .instruction rrr      mul.aa.hh 0x770004  ; 011101110000sssstttt0100 431 mul.aa.hh as, at
+ .instruction rrr      mul.ad.ll 0x340004  ; 001101000000ssss0y000100 432 mul.ad.ll as, my
+ .instruction rrr      mul.ad.hl 0x350004  ; 001101010000ssss0y000100 432 mul.ad.lh as, my
+ .instruction rrr      mul.ad.lh 0x360004  ; 001101100000ssss0y000100 432 mul.ad.hl as, my
+ .instruction rrr      mul.ad.hh 0x370004  ; 001101110000ssss0y000100 432 mul.ad.hh as, my
+ .instruction rrr      mul.da.ll 0x640004  ; 011001000x000000tttt0100 433 mul.da.ll mx, at
+ .instruction rrr      mul.da.lh 0x650004  ; 011001010x000000tttt0100 433 mul.da.lh mx, at
+ .instruction rrr      mul.da.hl 0x660004  ; 011001100x000000tttt0100 433 mul.da.hl mx, at
+ .instruction rrr      mul.da.hh 0x670004  ; 011001110x000000tttt0100 433 mul.da.hh mx, at
+ .instruction rrr      mul.dd.ll 0x240004  ; 001001000x0000000y000100 434 mul.dd.ll mx, my
+ .instruction rrr      mul.dd.lh 0x250004  ; 001001010x0000000y000100 434 mul.dd.lh mx, my
+ .instruction rrr      mul.dd.hl 0x260004  ; 001001100x0000000y000100 434 mul.dd.hl mx, my
+ .instruction rrr      mul.dd.hh 0x270004  ; 001001110x0000000y000100 434 mul.dd.hh mx, my
  .instruction rrr      mul.s    0x2a0000  ; 00101010RRRRSSSSTTTT0000 435 mul.s fr, fs, ft
  .instruction rrr      mul16s   0xd10000  ; 11010001rrrrsssstttt0000 436 mul16s ar, as, at
  .instruction rrr      mul16u   0xc10000  ; 11000001rrrrsssstttt0000 437 mul16u ar, as, at
- .instruction rrr      mula.aa.* 0x780004 ; 011110hh0000sssstttt0100 438 mula.aa.* as, at
- .instruction rrr      mula.ad.* 0x340004 ; 001110hh0000ssss0y000100 439 mula.ad.* as, my
- .instruction rrr      mula.da.* 0x640004 ; 011010hh0x000000tttt0100 440 mula.da.( mx, at
- .instruction rrr      mula.da.*.lddec 0x580004 ; 010110hh0xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
- .instruction rrr      mula.da.*.ldinc 0xa80004 ; 010010hh0xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
- .instruction rrr      mula.dd.* 0x280004 ; 0x001010hh0x0000000y000100 445 mula.dd.* mx, my
- .instruction rrr      mula.dd.*.lddec 0x180004 ; 000110hh0xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
- .instruction rrr      mula.dd.*.ldinc 0x080004 ; 000010hh0xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
+ .instruction rrr      mula.aa.ll 0x780004 ; 011110000000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.lh 0x790004 ; 011110010000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.hl 0x7a0004 ; 011110100000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.hh 0x7b0004 ; 011110110000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.ad.ll 0x340004 ; 001110000000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.lh 0x350004 ; 001110010000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.hl 0x360004 ; 001110100000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.hh 0x370004 ; 001110110000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.da.ll 0x640004 ; 011010000x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.lh 0x650004 ; 011010010x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.hl 0x660004 ; 011010100x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.hh 0x670004 ; 011010110x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.ll.lddec 0x580004 ; 010110000xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
+ .instruction rrr      mula.da.lh.lddec 0x590004 ; 010110010xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
+ .instruction rrr      mula.da.hl.lddec 0x5a0004 ; 010110100xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
+ .instruction rrr      mula.da.hh.lddec 0x5b0004 ; 010110110xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
+ .instruction rrr      mula.da.ll.ldinc 0xa80004 ; 010010000xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
+ .instruction rrr      mula.da.lh.ldinc 0xa90004 ; 010010010xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
+ .instruction rrr      mula.da.hl.ldinc 0xaa0004 ; 010010100xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
+ .instruction rrr      mula.da.hh.ldinc 0xab0004 ; 010010110xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
+ .instruction rrr      mula.dd.ll 0x280004 ; 0x001010000x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.lh 0x290004 ; 0x001010010x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.hl 0x2a0004 ; 0x001010100x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.hh 0x2b0004 ; 0x001010110x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.ll.lddec 0x180004 ; 000110000xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
+ .instruction rrr      mula.dd.lh.lddec 0x190004 ; 000110010xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
+ .instruction rrr      mula.dd.hl.lddec 0x1a0004 ; 000110100xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
+ .instruction rrr      mula.dd.hh.lddec 0x1b0004 ; 000110110xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
+ .instruction rrr      mula.dd.ll.ldinc 0x080004 ; 000010000xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
+ .instruction rrr      mula.dd.lh.ldinc 0x090004 ; 000010010xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
+ .instruction rrr      mula.dd.hl.ldinc 0x0a0004 ; 000010100xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
+ .instruction rrr      mula.dd.hh.ldinc 0x0b0004 ; 000010110xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
  .instruction rrr      mull      0x820000 ; 10000010rrrrsssstttt0000 450 mull ar, as, at
- .instruction rrr      muls.aa.* 0x7c0004 ; 011111hh0000sssstttt0100 451 muls.aa.* as, at
- .instruction rrr      muls.ad.* 0x3c0004 ; 001111hh0000ssss0y000100 452 muls.ad.* as, my
- .instruction rrr      muls.da.* 0x6c0004 ; 011011hh0x000000tttt0100 453 muls.da.* mx, at
- .instruction rrr      muls.dd.* 0x2c0004 ; 001011hh0x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.aa.ll 0x7c0004 ; 011111000000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.lh 0x7d0004 ; 011111010000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.hl 0x7e0004 ; 011111100000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.hh 0x7f0004 ; 011111110000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.ad.ll 0x3c0004 ; 001111000000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.lh 0x3d0004 ; 001111010000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.hl 0x3e0004 ; 001111100000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.hh 0x3f0004 ; 001111110000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.da.ll 0x6c0004 ; 011011000x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.lh 0x6d0004 ; 011011010x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.hl 0x6e0004 ; 011011100x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.hh 0x6f0004 ; 011011110x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.dd.ll 0x2c0004 ; 001011000x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.lh 0x2d0004 ; 001011010x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.hl 0x2e0004 ; 001011100x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.hh 0x2f0004 ; 001011110x00ssss0y000100 454 muls.dd.* mx, my
  .instruction rrr      mulsh     0xd20000 ; 10110010rrrrsssstttt0000 455 mulsh ar, as, at
  .instruction rrr      muluh     0xa20000 ; 10100010rrrrsssstttt0000 456 muluh ar, as, at
  .instruction rrr      neg       0x600000 ; 01100000rrrr0000tttt0000 457 neg ar, at
@@ -199,11 +247,11 @@
  .instruction rrr      rems      0xf20000 ; 11110010rrrrsssstttt0000 475 rems ar, as, at
  .instruction rrr      remu      0xe20000 ; 11100010rrrrsssstttt0000 476 remu ar, as, at
  .instruction rrr      rer       0x406000 ; 010000000110sssstttt0000 477 rer at, as
- .instruction callx    ret       0x000080 ; 000000000000000010000000 478 ret
+ .instruction inh      ret       0x000080 ; 000000000000000010000000 478 ret
  .instruction rrrn     ret.n       0xf00d ; 1111000000001101         479 ret.n
- .instruction callx    retw      0x000090 ; 000000000000000010010000 480 retw
+ .instruction inh      retw      0x000090 ; 000000000000000010010000 480 retw
  .instruction rrrn     retw.n      0xf01d ;         1111000000011101 482 retw.n
- .instruction rrr      rfdd      0xf1e010 ; 111100011110000s00010000 484 rfdd
+ .instruction inh      rfdd      0xf1e010 ; 111100011110000000010000 484 rfdd
  .instruction rrr      rfde      0x003200 ; 000000000011001000000000 485 rfde
  .instruction rrr      rfdo      0xf1e000 ; 111100011110000000000000 486 rfdo
  .instruction rrr      rfe       0x003000 ; 000000000011000000000000 487 rfe
@@ -260,7 +308,10 @@
  .instruction rrr      ufloat.s  0xda0000 ; 11011010RRRRsssstttt0000 550 ufloat.s fr, as, 0..15
  .instruction rrr      ule.s     0x7b0000 ; 01111011bbbbSSSSTTTT0000 551 ule.s br, fs, ft
  .instruction rrr      ult.s     0x5b0000 ; 01011011bbbbSSSSTTTT0000 552 ult.s br, fs, ft
- .instruction rrr      umul.aa.* 0x700004 ; 011100hh0000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.ll 0x700004 ; 011100000000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.lh 0x710004 ; 011100010000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.hl 0x720004 ; 011100100000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.hh 0x730004 ; 011100110000sssstttt0100 553 umul.aa.* as, at
  .instruction rrr      un.s      0x1b0000 ; 00011011bbbbSSSSTTTT0000 554 un.s br, fs, ft
  .instruction rrr      utrunc.s  0xea0000 ; 11101010rrrrSSSStttt0000 555 utrunc.s ar, fs, 0..15
  .instruction rrr      waiti     0x007000 ; 000000000111iiii00000000 556 waiti 0..15

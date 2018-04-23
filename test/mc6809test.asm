@@ -1,4 +1,4 @@
- .include mc6809.def
+ .include def/motorola/mc6809.def
  .ram
  .setdp 0x12
 

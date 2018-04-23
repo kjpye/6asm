@@ -2,6 +2,8 @@
 
 use v6;
 
+#use Grammar::Tracer;
+
 my $debug = 0;
 
 sub debug ($message) {
@@ -3367,7 +3369,7 @@ grammar Extensa is Assembler {
                                        }
                                      }
 
-  regex instruction:sym<extensa_rrr_rst> { :i $<mnemonic>=(@extensa_instr_rrr_rst) <.ws> <areg> ',' <areg> ',' <areg>
+  regex instruction:sym<extensa_rrr_rst> { :i $<mnemonic>=(@extensa_instr_rrr_rst) <.ws> <areg> <comma> <areg> <comma> <areg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +< 12;
@@ -3376,7 +3378,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_rt> { :i $<mnemonic>=(@extensa_instr_rrr_rt) <.ws> <areg> ',' <areg>
+  regex instruction:sym<extensa_rrr_rt> { :i $<mnemonic>=(@extensa_instr_rrr_rt) <.ws> <areg> <comma> <areg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rt><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +< 12;
@@ -3384,7 +3386,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_rs> { :i $<mnemonic>=(@extensa_instr_rrr_rs) <.ws> <freg> ',' <freg>
+  regex instruction:sym<extensa_rrr_rs> { :i $<mnemonic>=(@extensa_instr_rrr_rs) <.ws> <freg> <comma> <freg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rs><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<freg>[0] +< 12;
@@ -3392,7 +3394,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_st> { :i $<mnemonic>=(@extensa_instr_rri8_st) <.ws> <areg> ',' <areg> ',' <expression>
+  regex instruction:sym<extensa_rri8_st> { :i $<mnemonic>=(@extensa_instr_rri8_st) <.ws> <areg> <comma> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +<  8;
@@ -3401,7 +3403,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_b8> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> ',' <areg> ',' <expression>
+  regex instruction:sym<extensa_rri8_b8> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +<  8;
@@ -3411,7 +3413,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_bi> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> ',' <expression> ',' <expression>
+  regex instruction:sym<extensa_rri8_bi> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <expression> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +<  8;
@@ -3422,7 +3424,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_bii> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> ',' <expression> ',' <expression>
+  regex instruction:sym<extensa_rri8_bii> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <expression> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +<  8;
@@ -3436,7 +3438,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_st8> { :i $<mnemonic>=(@extensa_instr_rri8_st8) <.ws> <areg> ',' <areg> ',' <expression>
+  regex instruction:sym<extensa_rri8_st8> { :i $<mnemonic>=(@extensa_instr_rri8_st8) <.ws> <areg> <comma> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[1] +<  8;
@@ -3445,7 +3447,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_bri12_s> { :i $<mnemonic>=(@extensa_instr_bri12_s) <.ws> <areg> ',' <expression>
+  regex instruction:sym<extensa_bri12_s> { :i $<mnemonic>=(@extensa_instr_bri12_s) <.ws> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><bri12_s><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg> +<  8;
@@ -3455,7 +3457,7 @@ grammar Extensa is Assembler {
                                      }
 # instruction formats for boolean option
 
-  regex instruction:sym<extensa_rrr_bst> { :i $<mnemonic>=(@extensa_instr_rrr_bst) <.ws> <breg> ',' <breg>
+  regex instruction:sym<extensa_rrr_bst> { :i $<mnemonic>=(@extensa_instr_rrr_bst) <.ws> <breg> <comma> <breg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_bst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0].made +<  8;
@@ -3463,7 +3465,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_brst> { :i $<mnemonic>=(@extensa_instr_rrr_brst) <.ws> <breg> ',' <breg>
+  regex instruction:sym<extensa_rrr_brst> { :i $<mnemonic>=(@extensa_instr_rrr_brst) <.ws> <breg> <comma> <breg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_bst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0].made +< 12;
@@ -3475,7 +3477,7 @@ grammar Extensa is Assembler {
 
 # instruction formats for code density option
 
-  regex instruction:sym<extensa_rrrn_rst> { :i $<mnemonic>=(@extensa_instr_rrrn_rst) <.ws> <areg> ',' <areg> ',' <areg>
+  regex instruction:sym<extensa_rrrn_rst> { :i $<mnemonic>=(@extensa_instr_rrrn_rst) <.ws> <areg> <comma> <areg> <comma> <areg>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +< 12;
@@ -3484,7 +3486,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_rrrn_rsi> { :i $<mnemonic>=(@extensa_instr_rrrn_rsi) <.ws> <areg> ',' <areg> ',' <expression>
+  regex instruction:sym<extensa_rrrn_rsi> { :i $<mnemonic>=(@extensa_instr_rrrn_rsi) <.ws> <areg> <comma> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg>[0] +< 12;
@@ -3499,7 +3501,7 @@ grammar Extensa is Assembler {
                                             make ( $opcode, );
 					  }
                                      }
-  regex instruction:sym<extensa_ri6_s> { :i $<mnemonic>=(@extensa_instr_ri6_s) <.ws> <areg> ',' <expression>
+  regex instruction:sym<extensa_ri6_s> { :i $<mnemonic>=(@extensa_instr_ri6_s) <.ws> <areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><ri6_s><hash>{~$/<mnemonic>};
                                             $opcode +|= $/<areg> +<  8;
@@ -3531,167 +3533,168 @@ my @extensa_ulp_instr_i2c_wr; make_hash('extensa_ulp', 'i2c_wr');
 my @extensa_ulp_instr_reg_rd; make_hash('extensa_ulp', 'reg_rd');
 my @extensa_ulp_instr_reg_wr; make_hash('extensa_ulp', 'reg_wr');
 
-grammar Extensa-ULP is Assembler {
-  token reg                         { <.ws>? <wb> <[rR]> ( [0123] ) [ '+' (\d+) ]?
+grammar ExtensaULP is Assembler {
+  token reg                         { <.ws>? <wb> <[rR]> ( <[0123]> ) [ '+' (\d+) ]?
                                        {
-                                         my  $reg = $/[0];
+                                         my  $reg = +$/[0];
                                          debug "Found reg: " ~ $/;
                                          $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 3) {
                                            error_listing 'Registers must be in range r0 to r3';
                                            $reg = 0;
                                          }
+debug "Register $reg";
                                          make $reg;
                                        }
                                      }
-  regex instruction:sym<extensa_ulp-inh> { :i $<mnemonic>=(@extensa_ulp_instr_inh) <.ws> <reg> <comma> <reg> <comma> <reg>
+  regex instruction:sym<extensa_ulp-inh> { :i $<mnemonic>=(@extensa_ulp_instr_inh)
                                           {
-                                            my $opcode = %instructions<extensa_ulp_instr_inh><alu><hash>{~$/<mnemonic>};
+                                            my $opcode = %instructions<extensa_ulp><inh><hash>{~$/<mnemonic>};
                                             make ( $opcode, );
 					  }
                                        }
-  regex instruction:sym<extensa_ulp-alu> { :i $<mnemonic>=(@extensa_ulp_instr_alu) { note "Found alu"; } <.ws> <reg> <comma> <reg> <comma> <reg>
+  regex instruction:sym<extensa_ulp-alu> { :i $<mnemonic>=(@extensa_ulp_instr_alu) <.ws> <reg> <comma> <reg> <comma> <reg>
                                           {
-                                            my $opcode = %instructions<extensa_ulp_instr_ulp><alu><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<reg>[0];
-                                            $opcode +|= $/<reg>[1] +< 2;
-                                            $opcode +|= $/<reg>[2] +< 4;
+                                            my $opcode = %instructions<extensa_ulp><alu><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<reg>[0].made;
+                                            $opcode +|= $/<reg>[1].made +< 2;
+                                            $opcode +|= $/<reg>[2].made +< 4;
                                             make ( $opcode, );
 					  }
                                        }
-  regex instruction:sym<extensa_ulp-imm> { :i $<mnemonic>=(@extensa_ulp_instr_imm) { note "Found imm"; } <.ws> <reg> <comma> <reg> <comma> <expression>
+  regex instruction:sym<extensa_ulp-imm> { :i $<mnemonic>=(@extensa_ulp_instr_imm) <.ws> <reg> <comma> <reg> <comma> <expression>
                                           {
-                                            my $opcode = %instructions<extensa_ulp_instr_imm><alu><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<reg>[0];
-                                            $opcode +|= $/<reg>[1] +< 2;
-                                            $opcode +|= ($/<expression> +& 0xffff) +< 4;
+                                            my $opcode = %instructions<extensa_ulp><imm><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<reg>[0].made;
+                                            $opcode +|= $/<reg>[1].made +< 2;
+                                            $opcode +|= ($/<expression>.made<value> +& 0xffff) +< 4;
                                             make ( $opcode, );
 					  }
                                          }
   regex instruction:sym<extensa_ulp_scr> { :i $<mnemonic>=(@extensa_ulp_instr_scr) <.ws> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_scr><alu><hash>{~$/<mnemonic>};
-                                              $opcode +|= ($/<expression> +& 0xff) +<4;
+                                              my $opcode = %instructions<extensa_ulp><scr><hash>{~$/<mnemonic>};
+                                              $opcode +|= ($/<expression>.made<value> +& 0xff) +< 4;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_st> { :i $<mnemonic>=(@extensa_ulp_instr_st) <.ws> <expression> <comma> <reg> <comma> <reg>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_st><alu><hash>{~$/<mnemonic>};
-                                              $opcode +|= $/<reg>[0];
-                                              $opcode +|= $/<reg>[1] +< 2;
-                                              $opcode +|= ($/<expression> +& 0x07ff) +< 10;
-                                              make ( $opcode, );
-                                           }
-                                         }
-  regex instruction:sym<extensa_ulp_jumpi> { :i $<mnemonic>=(@extensa_ulp_instr_jump) <.ws> <expression>
-                                           {
-                                              my $opcode = %instructions<extensa_ulp_instr_jump><alu><hash>{~$/<mnemonic>};
-                                              $opcode +|= $/<expression> +& 0x0fff; # assumes bottom two bits are zero
+                                              my $opcode = %instructions<extensa_ulp><st><hash>{~$/<mnemonic>};
+                                              $opcode +|= $/<reg>[0].made;
+                                              $opcode +|= $/<reg>[1].made +< 2;
+                                              $opcode +|= ($/<expression>.made<value> +& 0x07ff) +< 10;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_jumpreg> { :i $<mnemonic>=(@extensa_ulp_instr_jump) <.ws> <reg>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_jump><alu><hash>{~$/<mnemonic>};
+                                              my $opcode = %instructions<extensa_ulp><jump><hash>{~$/<mnemonic>};
 					      $opcode +|= 0x02000000;
-                                              $opcode +|= $/<reg>;
+                                              $opcode +|= $/<reg>.made;
+                                              make ( $opcode, );
+                                           }
+                                         }
+  regex instruction:sym<extensa_ulp_jump> { :i $<mnemonic>=(@extensa_ulp_instr_jump) <.ws> <expression>
+                                           {
+                                              my $opcode = %instructions<extensa_ulp><jump><hash>{~$/<mnemonic>};
+                                              $opcode +|= $/<expression>.made<value> +& 0x0ffc;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_jumpr> { :i $<mnemonic>=(@extensa_ulp_instr_jumpr) <.ws> <expression> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_jumpr><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x00ff) +< 17;
-                                              $opcode +|= ($/<expression>[1] +& 0xffff);
+                                              my $opcode = %instructions<extensa_ulp><jumpr><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x00ff) +< 17;
+                                              $opcode +|= ($/<expression>[1].made<value> +& 0xffff);
                                               make ( $opcode, );
                                            }
                                          }
-  regex instruction:sym<extensa_ulp_jumps> { :i $<mnemonic>=(@extensa_ulp_instr_jumps) <.ws> <expression> <comma>y <expression>
+  regex instruction:sym<extensa_ulp_jumps> { :i $<mnemonic>=(@extensa_ulp_instr_jumps) <.ws> <expression> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_jumps><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x00ff) +< 17;
-                                              $opcode +|= ($/<expression>[1] +& 0x00ff);
+                                              my $opcode = %instructions<extensa_ulp><jumps><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x00ff) +< 17;
+                                              $opcode +|= ($/<expression>[1].made<value> +& 0x00ff);
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_sleep> { :i $<mnemonic>=(@extensa_ulp_instr_sleep) <.ws> [sens_ulp_cp_sleep_cyc | 'reg']?(\d)['_reg']?
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_sleep><alu><hash>{~$/<mnemonic>};
+                                              my $opcode = %instructions<extensa_ulp><sleep><hash>{~$/<mnemonic>};
 					      $opcode +|= $0;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_wait> { :i $<mnemonic>=(@extensa_ulp_instr_wait) <.ws> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_wait><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= $/<expression> +& 0xffff;
+                                              my $opcode = %instructions<extensa_ulp><wait><hash>{~$/<mnemonic>};
+					      $opcode +|= $/<expression>.made<value> +& 0xffff;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_tsens> { :i $<mnemonic>=(@extensa_ulp_instr_tsens) <.ws> <reg> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_tsens><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression> +& 0x3fff) +< 2;
-					      $opcode +|= $/<reg>;
+                                              my $opcode = %instructions<extensa_ulp><tsens><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>.made<value> +& 0x3fff) +< 2;
+					      $opcode +|= $/<reg>.made;
                                               make ( $opcode, );
                                            }
                                          }
-  regex instruction:sym<extensa_ulp_adc> { :i $<mnemonic>=(@extensa_ulp_instr_tsens) <.ws> <reg> <comma> <expression> <comma> <expression>
+  regex instruction:sym<extensa_ulp_adc> { :i $<mnemonic>=(@extensa_ulp_instr_adc) <.ws> <reg> <comma> <expression> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_tsens><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= $/<reg>;
-					      $opcode +|= ($/<expression>[0] +& 0x0001) +< 5;
-					      $opcode +|= ($/<expression>[1] +& 0x000f) +< 2;
+                                              my $opcode = %instructions<extensa_ulp><adc><hash>{~$/<mnemonic>};
+					      $opcode +|= $/<reg>.made;
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x0001) +< 5;
+					      $opcode +|= ($/<expression>[1].made<value> +& 0x000f) +< 2;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_i2c_rd> { :i $<mnemonic>=(@extensa_ulp_instr_i2c_rd) <.ws> <expression> <comma> <expression> <comma> ['sens_i2c_slave_addr'|'reg'](\d)
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_i2c_rd><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x00ff)      ;
-					      $opcode +|= ($/<expression>[1] +& 0x003f) +< 16;
-					      $opcode +|= ($/[0]             +& 0x0007) +< 22;
+                                              my $opcode = %instructions<extensa_ulp><i2c_rd><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x00ff)      ;
+					      $opcode +|= ($/<expression>[1].made<value> +& 0x003f) +< 16;
+					      $opcode +|= (+$/[0]                 +& 0x0007) +< 22;
                                               make ( $opcode, );
                                            }
                                          }
   regex instruction:sym<extensa_ulp_i2c_wr> { :i $<mnemonic>=(@extensa_ulp_instr_i2c_wr) <.ws> <expression> <comma> <expression> <comma> <expression> <comma> ['sens_i2c_slave_addr'|'reg'](\d)
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_i2c_wr><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x00ff)      ;
-					      $opcode +|= ($/<expression>[1] +& 0x00ff) +<  8;
-					      $opcode +|= ($/<expression>[2] +& 0x003f) +< 16;
-					      $opcode +|= ($/[0]             +& 0x0007) +< 22;
+                                              my $opcode = %instructions<extensa_ulp><i2c_wr><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x00ff)      ;
+					      $opcode +|= ($/<expression>[1].made<value> +& 0x00ff) +<  8;
+					      $opcode +|= ($/<expression>[2].made<value> +& 0x003f) +< 16;
+					      $opcode +|= ($/[0]                  +& 0x0007) +< 22;
                                               make ( $opcode, );
                                            }
                                          }
-  regex instruction:sym<extensa_ulp_reg_rd> { :i $<mnemonic>=(@extensa_ulp_instr_i2c_rd) <.ws> <expression> <comma> <expression>
+  regex instruction:sym<extensa_ulp_reg_rd> { :i $<mnemonic>=(@extensa_ulp_instr_reg_rd) <.ws> <expression> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_i2c_rd><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x03ff)      ;
-					      $opcode +|= ($/<expression>[1] +& 0x03ff) +< 18;
+                                              my $opcode = %instructions<extensa_ulp><reg_rd><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x03ff)      ;
+					      $opcode +|= ($/<expression>[1].made<value> +& 0x03ff) +< 18;
                                               make ( $opcode, );
                                            }
                                          }
-  regex instruction:sym<extensa_ulp_reg_wr> { :i $<mnemonic>=(@extensa_ulp_instr_i2c_wr) <.ws> <expression> <comma> <expression> <comma> <expression>
+  regex instruction:sym<extensa_ulp_reg_wr> { :i $<mnemonic>=(@extensa_ulp_instr_reg_wr) <.ws> <expression> <comma> <expression> <comma> <expression>
                                            {
-                                              my $opcode = %instructions<extensa_ulp_instr_i2c_wr><alu><hash>{~$/<mnemonic>};
-					      $opcode +|= ($/<expression>[0] +& 0x03ff)      ;
-					      $opcode +|= ($/<expression>[1] +& 0x00ff) +< 10;
-					      $opcode +|= ($/<expression>[2] +& 0x03ff) +< 18;
+                                              my $opcode = %instructions<extensa_ulp><reg_wr><hash>{~$/<mnemonic>};
+					      $opcode +|= ($/<expression>[0].made<value> +& 0x03ff)      ;
+					      $opcode +|= ($/<expression>[1].made<value> +& 0x00ff) +< 10;
+					      $opcode +|= ($/<expression>[2].made<value> +& 0x03ff) +< 18;
                                               make ( $opcode, );
                                            }
                                          }
 }
 
-%instructionset<extensa_ulp> = Extensa-ULP.new();
+%instructionset<extensa_ulp> = ExtensaULP.new();
 
 # Skeleton for new architectures
 
-my @arch_instr_inh;   make_hash('arch', 'inh');
-grammar Arch is Assembler {
-}
-%instructionset<arch> = Arch.new();
+#my @arch_instr_inh;   make_hash('arch', 'inh');
+#grammar Arch is Assembler {
+#}
+#%instructionset<arch> = Arch.new();
 
 # Input routines
 
@@ -3931,9 +3934,9 @@ sub error_listing(Str $msg) {
 
 sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
   return if $nolist;
-  my $code_str = $code;
+  my $code-str = $code;
   if $code.chars > %param<codewidth> {
-    $code_str = substr($code, 0, 9) ~ '>';
+    $code-str = substr($code, 0, 9) ~ '>';
   }
   my $pcformat = '';
   my $pc_str;
@@ -3949,7 +3952,7 @@ sub format_listing(Int $pc, Str $code, Str $label, Str $opcode, Str $rest) {
     $pc_str = ' ' x (%param<pcwidth> + 2);
   }
   my $fmt = '%4d %s %-' ~ %param<codewidth>+1 ~ 's %8s %8s %s' ~ "\n";
-  printf $fmt, $line_number, $pc_str, $code_str, $label, $opcode, $rest;
+  printf $fmt, $line_number, $pc_str, $code-str, $label, $opcode, $rest;
 }
 
 # S1 output
@@ -4290,6 +4293,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   my $value = +$m.made<value>;
   if %instructions{$isa}{$instr_type}<array>.defined {
     format_listing(-1, '', $label, $opcode, $rest);
+    debug "Adding $opc to $isa as type $instr_type with opcode $value";
     %instructions{$isa}{$instr_type}<hash>{$opc} = $value;
   } else {
     error_listing "Unknown instruction type $instr_type";
@@ -4319,7 +4323,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 # This code is called when the input line is not otherwise processed as a comment, macro definition, directive...
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
-dd $isa;
+  debug "$label $opcode $orig_rest $rest";
   my $words = ();
   my $code = '';
   my $instruction_length = 0;
@@ -4443,9 +4447,6 @@ for @*ARGS -> $arg {
   my $*OUT = open '/dev/null', :w;
   do_pass(+1);
 }
-
-dd %instructions;
-dd @extensa_ulp_instr_alu;
 
 do_pass(+2);
 

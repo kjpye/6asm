@@ -3319,22 +3319,35 @@ my %extensa-shortimmediate = (
 			     128 => 14,
 			     256 => 15,
                             );
-my @extensa_instr_rrr_rs;   make_hash('extensa', 'rrr_rs');
-my @extensa_instr_rrr_bst;  make_hash('extensa', 'rrr_bst');
-my @extensa_instr_rrr_rst;  make_hash('extensa', 'rrr_rst');
-my @extensa_instr_rrr_brst; make_hash('extensa', 'rrr_brst');
-my @extensa_instr_rrr_rt;   make_hash('extensa', 'rrr_rt');
-my @extensa_instr_rrrn_rsi; make_hash('extensa', 'rrrn_rsi');
-my @extensa_instr_rrrn_rst; make_hash('extensa', 'rrrn_rst');
-my @extensa_instr_rri8_st;  make_hash('extensa', 'rri8_st');
-my @extensa_instr_rri8_st8; make_hash('extensa', 'rri8_st8');
-my @extensa_instr_rri8_b8;  make_hash('extensa', 'rri8_b8');
-my @extensa_instr_bri12_s;  make_hash('extensa', 'bri12_s');
-my @extensa_instr_ri6_s;    make_hash('extensa', 'ri6_s');
+my @extensa_instr_inh;       make_hash('extensa', 'inh');
+my @extensa_instr_inhn;      make_hash('extensa', 'inhn');
+my @extensa_instr_rrr_rs;    make_hash('extensa', 'rrr_rs');
+my @extensa_instr_rrr_rst;   make_hash('extensa', 'rrr_rst');
+my @extensa_instr_rrr_brst;  make_hash('extensa', 'rrr_brst');
+my @extensa_instr_rrr_rt;    make_hash('extensa', 'rrr_rt');
+my @extensa_instr_rrrn_rsi;  make_hash('extensa', 'rrrn_rsi');
+my @extensa_instr_rrrn_rst;  make_hash('extensa', 'rrrn_rst');
+my @extensa_instr_rri8_stl;  make_hash('extensa', 'rri8_stl');
+my @extensa_instr_rri8_s5l;  make_hash('extensa', 'rri8_s5l');
+my @extensa_instr_rri8_sil;  make_hash('extensa', 'rri8_sil');
+my @extensa_instr_rri8_ts16; make_hash('extensa', 'rri8_ts16');
+my @extensa_instr_bri12_sl;  make_hash('extensa', 'bri12_sl');
+my @extensa_instr_rrr_bts;   make_hash('extensa', 'rrr_bts');
+my @extensa_instr_ri6_sl;    make_hash('extensa', 'ri6_sl');
+my @extensa_instr_rrr_Rs4;   make_hash('extensa', 'rrr_Rs4');
+my @extensa_instr_rrr_rs4;   make_hash('extensa', 'rrr_rs4');
+my @extensa_instr_call_l;    make_hash('extensa', 'call_l');
+my @extensa_instr_callx_s;   make_hash('extensa', 'callx_s');
+my @extensa_instr_rrr_rtii;  make_hash('extensa', 'rrr_rtii');
+my @extensa_instr_rrr_55;    make_hash('extensa', 'rrr_55');
+my @extensa_instr_rrrn_s;    make_hash('extensa', 'rrrn_s');
+
+my @extensa_instr_rri8_st;    make_hash('extensa', 'rri8_st');
+
 grammar Extensa is Assembler {
   token areg                         { <.ws>? <wb> <[aA]> ( \d+ ) [ '+' (\d+) ]?
                                        {
-                                         my  $reg = $/[0];
+                                         my  $reg = +$/[0];
                                          #debug "Found areg: ", $/;
                                          $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 15) {
@@ -3346,7 +3359,7 @@ grammar Extensa is Assembler {
                                      }
   token breg                         { <.ws>? <wb> <[bB]> ( \d+ ) [ '+' (\d+) ]?
                                        {
-                                         my  $reg = $/[0];
+                                         my  $reg = +$/[0];
                                          #debug "Found breg: ", $/;
                                          $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 15) {
@@ -3358,7 +3371,7 @@ grammar Extensa is Assembler {
                                      }
   token freg                         { <.ws>? <wb> <[fF]> ( \d+ ) [ '+' (\d+) ]?
                                        {
-                                         my  $reg = $/[0];
+                                         my  $reg = +$/[0];
                                          #debug "Found freg: ", $/;
                                          $reg += +$/[1] if $/[1].defined;
                                          if ! (0 <= $reg <= 15) {
@@ -3369,145 +3382,213 @@ grammar Extensa is Assembler {
                                        }
                                      }
 
-  regex instruction:sym<extensa_rrr_rst> { :i $<mnemonic>=(@extensa_instr_rrr_rst) <.ws> <areg> <comma> <areg> <comma> <areg>
+  regex instruction:sym<extensa_inhn> { :i $<mnemonic>=(@extensa_instr_inhn)
+                                          {
+                                            my $opcode = %instructions<extensa><inhn><hash>{~$/<mnemonic>};
+                                            make make-le-bytes(2, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_inh> { :i $<mnemonic>=(@extensa_instr_inh)
+                                          {
+                                            my $opcode = %instructions<extensa><inh><hash>{~$/<mnemonic>};
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrr_rst> { :i $<mnemonic>=(@extensa_instr_rrr_rst) <.ws> <ar=areg> <comma> <as=areg> <comma> <at=areg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +< 12;
-                                            $opcode +|= $/<areg>[1] +<  8;
-                                            $opcode +|= $/<areg>[2] +<  4;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<ar>.made +< 12;
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= $/<at>.made +<  4;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_rt> { :i $<mnemonic>=(@extensa_instr_rrr_rt) <.ws> <areg> <comma> <areg>
+  regex instruction:sym<extensa_rrr_rt> { :i $<mnemonic>=(@extensa_instr_rrr_rt) <.ws> <ar=areg> <comma> <at=areg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rt><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +< 12;
-                                            $opcode +|= $/<areg>[1] +< 4;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<ar>.made +< 12;
+                                            $opcode +|= $/<at>.made +< 4;
+                                            make make-le-bytes(3,  $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_rs> { :i $<mnemonic>=(@extensa_instr_rrr_rs) <.ws> <freg> <comma> <freg>
+  regex instruction:sym<extensa_rrr_rs> { :i $<mnemonic>=(@extensa_instr_rrr_rs) <.ws> <fr=freg> <comma> <fs=freg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_rs><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<freg>[0] +< 12;
-                                            $opcode +|= $/<freg>[1] +< 8;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<fr>.made +< 12;
+                                            $opcode +|= $/<fs>.made +< 8;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_st> { :i $<mnemonic>=(@extensa_instr_rri8_st) <.ws> <areg> <comma> <areg> <comma> <expression>
+  regex instruction:sym<extensa_rri8_st> { :i $<mnemonic>=(@extensa_instr_rri8_st) <.ws> <as=areg> <comma> <at=areg> <comma> <expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +<  8;
-                                            $opcode +|= $/<areg>[1] +<  4;
-                                            $opcode +|= $/<expression>.made +< 16;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= $/<at>.made +<  4;
+                                            $opcode +|= $/<expression>.made<value> +< 16;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_b8> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <areg> <comma> <expression>
+  regex instruction:sym<extensa_rri8_stl> { :i $<mnemonic>=(@extensa_instr_rri8_stl) <.ws> <as=areg> <comma> <at=areg> <comma> <label=expression>
                                           {
-                                            my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +<  8;
-                                            $opcode +|= $/<areg>[1] +<  4;
-                                            my $offset = $/<expression>.made - $pc - 4;
+                                            my $opcode = %instructions<extensa><rrri8_stl><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= $/<at>.made +<  4;
+                                            my $offset = $/<label>.made<value> - $pc - 4;
                                             $opcode +|= ($offset +< 16) +& 0xff0000;
-                                            make ( $opcode, );
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_bi> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <expression> <comma> <expression>
+  regex instruction:sym<extensa_rri8_s5l> { :i $<mnemonic>=(@extensa_instr_rri8_s5l) <.ws> <as=areg> <comma> <imm=expression> <comma> <label=expression>
                                           {
-                                            my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +<  8;
-                                            $opcode +|= ($/<expresion>[0].made +& 0x0f) +< 4;
-                                            $opcode +|= ($/<expresion>[0].made +& 0x10) +< 8;
-                                            my $offset = $/<expression>[1].made - $pc - 4;
+                                            my $opcode = %instructions<extensa><rri8_s5l><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= ($/<imm>.made<value> +& 0x0f) +< 4;
+                                            $opcode +|= ($/<imm>.made<value> +& 0x10) +< 8;
+                                            my $offset = $/<label>.made<value> - $pc - 4;
                                             $opcode +|= ($offset +< 16) +& 0xff0000;
-                                            make ( $opcode, );
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_bii> { :i $<mnemonic>=(@extensa_instr_rri8_b8) <.ws> <areg> <comma> <expression> <comma> <expression>
+  regex instruction:sym<extensa_rri8_sil> { :i $<mnemonic>=(@extensa_instr_rri8_sil) <.ws> <as=areg> <comma> <imm=expression> <comma> <label=expression>
                                           {
-                                            my $opcode = %instructions<extensa><rrrn_b8t><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +<  8;
-                                            my $value = $/<expression>[0].made;
+                                            my $opcode = %instructions<extensa><rrrn_sil><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +<  8;
+                                            my $value = $/<imm>.made<value>;
                                             $value = %extensa-shortimmediate{$value}.defined
                                               ?? %extensa-shortimmediate{$value}
                                               !! 0;
                                             $opcode +|= $value +& 0x0f;
-                                            my $offset = $/<expression>[1].made - $pc - 4;
+                                            my $offset = $/<label>.made<value> - $pc - 4;
                                             $opcode +|= ($offset +< 16) +& 0xff0000;
-                                            make ( $opcode, );
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rri8_st8> { :i $<mnemonic>=(@extensa_instr_rri8_st8) <.ws> <areg> <comma> <areg> <comma> <expression>
+  regex instruction:sym<extensa_rri8_ts16> { :i $<mnemonic>=(@extensa_instr_rri8_ts16) <.ws> <at=areg> <comma> <as=areg> <comma> <imm=expression>
                                           {
-                                            my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[1] +<  8;
-                                            $opcode +|= $/<areg>[2] +<  4;
-                                            $opcode +|= ($/<expression>.made +< 8) +& 0xff0000;
-                                            make ( $opcode, );
+                                            my $opcode = %instructions<extensa><rri8_ts16><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<at>.made +<  4;
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= ($/<imm>.made<value> +< 8) +& 0xff0000;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_bri12_s> { :i $<mnemonic>=(@extensa_instr_bri12_s) <.ws> <areg> <comma> <expression>
+  regex instruction:sym<extensa_bri12_sl> { :i $<mnemonic>=(@extensa_instr_bri12_sl) <.ws> <as=areg> <comma> <label=expression>
                                           {
-                                            my $opcode = %instructions<extensa><bri12_s><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg> +<  8;
-                                            $opcode +|= ($/<expression>.made +< 12) +& 0xfff000;
-                                            make ( $opcode, );
+                                            my $opcode = %instructions<extensa><bri12_sl><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= ($/<label>.made<value> +< 12) +& 0xfff000;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
 # instruction formats for boolean option
 
-  regex instruction:sym<extensa_rrr_bst> { :i $<mnemonic>=(@extensa_instr_rrr_bst) <.ws> <breg> <comma> <breg>
+  regex instruction:sym<extensa_rrr_bts> { :i $<mnemonic>=(@extensa_instr_rrr_bts) <.ws> <bt=breg> <comma> <bs=breg>
                                           {
-                                            my $opcode = %instructions<extensa><rrr_bst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0].made +<  8;
-                                            $opcode +|= $/<areg>[1].made +<  4;
-                                            make ( $opcode, );
+                                            my $opcode = %instructions<extensa><rrr_bts><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<bt>.made +<  8;
+                                            $opcode +|= $/<bs>.made +<  4;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rrr_brst> { :i $<mnemonic>=(@extensa_instr_rrr_brst) <.ws> <breg> <comma> <breg>
+  regex instruction:sym<extensa_rrr_brst> { :i $<mnemonic>=(@extensa_instr_rrr_brst) <.ws> <br=breg> <comma> <bs=breg> <comma> <bt=breg>
                                           {
                                             my $opcode = %instructions<extensa><rrr_bst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0].made +< 12;
-                                            $opcode +|= $/<areg>[1].made +<  8;
-                                            $opcode +|= $/<areg>[2].made +<  4;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<br>.made +< 12;
+                                            $opcode +|= $/<bs>.made +<  8;
+                                            $opcode +|= $/<bt>.made +<  4;
+                                            make make-le-bytes(3, $opcode);
 					  }
                                      }
 
 # instruction formats for code density option
 
-  regex instruction:sym<extensa_rrrn_rst> { :i $<mnemonic>=(@extensa_instr_rrrn_rst) <.ws> <areg> <comma> <areg> <comma> <areg>
+  regex instruction:sym<extensa_rrrn_rst> { :i $<mnemonic>=(@extensa_instr_rrrn_rst) <.ws> <ar=areg> <comma> <as=areg> <comma> <at=areg>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +< 12;
-                                            $opcode +|= $/<areg>[1] +<  8;
-                                            $opcode +|= $/<areg>[2] +<  4;
-                                            make ( $opcode, );
+                                            $opcode +|= $/<ar>.made +< 12;
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= $/<at>.made +<  4;
+                                            make make-le-bytes(2, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_rrrn_rsi> { :i $<mnemonic>=(@extensa_instr_rrrn_rsi) <.ws> <areg> <comma> <areg> <comma> <expression>
+  regex instruction:sym<extensa_rrrn_rsi> { :i $<mnemonic>=(@extensa_instr_rrrn_rsi) <.ws> <ar=areg> <comma> <as=areg> <comma> <imm=expression>
                                           {
                                             my $opcode = %instructions<extensa><rrrn_rst><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg>[0] +< 12;
-                                            $opcode +|= $/<areg>[1] +<  8;
-                                            if $/<expression>.made == -1 {
+                                            $opcode +|= $/<ar>.made +< 12;
+                                            $opcode +|= $/<as>.made +<  8;
+                                            if $/<imm>.made<value> == -1 {
                                               # 0 in rt field
-                                            } elsif 0 < $/<expression>.made < 16 {
-                                              $opcode +|= $/<expression> +<  4;
+                                            } elsif 0 < $/<imm>.made<value> < 16 {
+                                              $opcode +|= $/<imm>.made<value> +<  4;
                                             } else {
                                               error_listing('Immediate field out of range');
                                             }
-                                            make ( $opcode, );
+                                            make make-le-bytes(2, $opcode);
 					  }
                                      }
-  regex instruction:sym<extensa_ri6_s> { :i $<mnemonic>=(@extensa_instr_ri6_s) <.ws> <areg> <comma> <expression>
+  regex instruction:sym<extensa_ri6_sl> { :i $<mnemonic>=(@extensa_instr_ri6_sl) <.ws> <as=areg> <comma> <label=expression>
                                           {
-                                            my $opcode = %instructions<extensa><ri6_s><hash>{~$/<mnemonic>};
-                                            $opcode +|= $/<areg> +<  8;
-                                            $opcode +|= ($/<expression>.made +< 4) +& 0x0030;
-                                            $opcode +|= ($/<expression>.made +< 10) +& 0xf000;
-                                            make ( $opcode, );
+                                            my $opcode = %instructions<extensa><ri6_sl><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +<  8;
+                                            $opcode +|= ($/<label>.made<value> +< 4) +& 0x0030;
+                                            $opcode +|= ($/<label>.made<value> +< 10) +& 0xf000;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrr_Rs4> { :i $<mnemonic>=(@extensa_instr_rrr_Rs4) <.ws> <fr=freg> <comma> <as=areg> <comma> <imm=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><rrr_Rs4><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<fr>.made +<  12;
+                                            $opcode +|= ($/<imm>.made<label> +< 4) +& 0x00f0;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrr_rs4> { :i $<mnemonic>=(@extensa_instr_rrr_rs4) <.ws> <ar=areg> <comma> <as=areg> <comma> <imm=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><rrr_rs4><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<ar>.made +<  12;
+                                            $opcode +|= ($/<imm>.made<value> +< 4) +& 0x00f0;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_call_l> { :i $<mnemonic>=(@extensa_instr_call_l) <.ws> <label=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><call_l><hash>{~$/<mnemonic>};
+                                            $opcode +|= ($/<label>.made<value> +< 6) +& 0xffffc0;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_callx_s> { :i $<mnemonic>=(@extensa_instr_callx_s) <.ws> <as=areg>
+                                          {
+                                            my $opcode = %instructions<extensa><callx_s><hash>{~$/<mnemonic>};
+                                            $opcode +|= $/<as>.made +< 8;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrr_rtii> { :i $<mnemonic>=(@extensa_instr_rrr_rtii) <.ws> <ar=areg> <comma> <at=areg> <comma> <shiftimm=expression> <comma> <maskimm=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><rrr_rtii><hash>{~$/<mnemonic>};
+                                            $opcode +|= ($/<ar>).made +< 12;
+                                            $opcode +|= ($/<at>).made +<  4;
+                                            $opcode +|= ($/<shiftimm>.made<value> +& 0x0f) +<  8;
+                                            $opcode +|= ($/<shiftimm>.made<value> +& 0x10) +< 16;
+					    $opcode +|= ($/<maskimm>.made<value>  +& 0x0f) +< 20;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrr_55> { :i $<mnemonic>=(@extensa_instr_rrr_55) <.ws> <imm1=expression> <comma> <imm2=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><rrr_55><hash>{~$/<mnemonic>};
+                                            $opcode +|= ($/<imm1>.made<value> +& 0x0f) +<  8;
+                                            $opcode +|= ($/<imm2>.made<value> +& 0x10) +<  4;
+                                            make make-le-bytes(3, $opcode);
+					  }
+                                     }
+  regex instruction:sym<extensa_rrrn_s> { :i $<mnemonic>=(@extensa_instr_rrrn_s) <.ws> <imm=expression>
+                                          {
+                                            my $opcode = %instructions<extensa><rrrn_s><hash>{~$/<mnemonic>};
+                                            $opcode +|= ($/<imm>.made<value> +& 0x0f) +<  8;
+                                            make make-le-bytes(2, $opcode);
 					  }
                                      }
 }
@@ -3705,6 +3786,18 @@ my $line_number = 0;
 
 # Override the line input routine with a routine which reads the next line of
 # a file and restores the previous routine at end of file
+
+sub
+make-le-bytes($count, *@words) {
+  my @bytes;
+  for @words -> $word is copy {
+    for ^$count {
+      @bytes.push: $word +& 0xff;
+      $word +>= 8;
+    }
+  }
+  @bytes;
+}
 
 sub
 include_file(Str $filename) {
@@ -4136,6 +4229,7 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
   $m = Assembler.subparse($args,
 		       :rule(<id>));
   my $value = ~$m[0];
+note "defining $symbol as $value";
   simple_listing ".def $symbol = $value";
   %define{$symbol} = $value;
 };
@@ -4323,7 +4417,6 @@ my %constantsize = '.db' => 1, 'fsb' => 1,
 # This code is called when the input line is not otherwise processed as a comment, macro definition, directive...
 
 sub assemble_instruction($label, $opcode, $orig_rest, $rest) {
-  debug "$label $opcode $orig_rest $rest";
   my $words = ();
   my $code = '';
   my $instruction_length = 0;

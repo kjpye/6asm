@@ -2,191 +2,211 @@
 ; Definitions for Extensa ISA
 
          .param codewidth = 10
-         .para, pcwidth   =  8
+         .param pcwidth   =  8
+
+        .pushmem ram
+        .defmem bottom = 0
+        .defmem top = 0xffffffff
+        .defmem width = 8
+        .defmem executable = 1
+        .defmem writeable = 1
+        .defmem readable = 1
+        .defmem init = 1
+        .defmem label = ''
+        .defmem pcwidth = 8
+        .defmem pcinc = 1
+
+        .macro .cseg
+        .pushmem ram
+        .endm
+
+        .macro .ram
+        .pushmem ram
+        .endm
 
 ; instruction definitions
  .isa extensa
 ; core
- .instruction rrr_rt   abs    0x600100    ; 01100000rrrr0001tttt0000 246 abs ar, at
- .instruction rrr_rst  add    0x800000    ; 10000000rrrrsssstttt0000 248 add ar, as, at
- .instruction rri8_st  addi   0x00c002    ; iiiiiiii1100sssstttt0010 251 addi at, as, -128..127
- .instruction rri8_st8 addmi  0x00d002    ; iiiiiiii1101sssstttt0010 253 addmi at, as, -32768..32512
- .instruction rrr_rst  addx2  0x900000    ; 10010000rrrrsssstttt0000 254 addx2 ar, as, at
- .instruction rrr_rst  addx4  0xa00000    ; 10100000rrrrsssstttt0000 254 addx4 ar, as, at
- .instruction rrr_rst  addx8  0xb00000    ; 10110000rrrrsssstttt0000 256 addx8 ar, as, at
- .instruction rrr_rst  and    0x100000    ; 00010000rrrrsssstttt0000 259 and ar, as, at
- .instruction rri8_st  ball   0x004007    ; iiiiiiii0100sssstttt0111 264 ball as, at, label
- .instruction rri8_b8  bany   0x008007    ; iiiiiiii1000sssstttt0111 265 bany as, at, label
- .instruction rri8_b8  bbc    0x005007    ; iiiiiiii0101sssstttt0111 266 bbc as, at, label
- .instruction rri8_bi  bbci   0x006007    ; iiiiiiii011assssaaaa0111 267 bbci as, 0..31, label
- .instruction rri8_bi  bbci.l 0x006007    ; iiiiiiii011assssaaaa0111 268 bbci.l as, 0..31, label
- .instruction rri8_b8  bbs    0x00d007    ; iiiiiiii1101sssstttt0111 269 bbs as, at, label
- .instruction rri8_bi  bbsi   0x00e007    ; iiiiiiii111assssaaaa0111 270 bbsi as, 0..31, label
- .instruction rri8_bi  bbsi.l 0x00e007    ; iiiiiiii111assssaaaa0111 271 bsi.l as, 0..31, label
- .instruction rri8_b8  beq    0x001007    ; iiiiiiii0001sssstttt0111 272 beq as, at, label
- .instruction rri8_bii beqi   0x000026    ; iiiiiiiirrrrssss00101001 273 beqi as, imm, label
- .instruction bri12_s  beqz   0x000016    ; iiiiiiiiiiiissss00010110 274 beqz as, label
- .instruction rri8_b8  bge    0x00a007    ; iiiiiiii1010sssstttt0111 277 bge as, at, label
- .instruction rri8_bii bgei   0x0000e6    ; iiiiiiiirrrrssss11100100 278 bgei as, imm, label
- .instruction rri8_b8  bgeu   0x00b007    ; iiiiiiii1011sssstttt0111 279 bgeu as, at, label
- .instruction rri8_bii bgeui  0x0000f6    ; iiiiiiiirrrrssss11110100 280 bgeui as, imm, label
- .instruction bru12_s  bgez   0x0000d6    ; iiiiiiiiiiiissss11010110 281 bgez as, label
- .instruction rri8_b8  blt    0x002007    ; iiiiiiii0010sssstttt0111 282 blt as, at, label
- .instruction rri8_bi  blti   0x0000a6    ; iiiiiiiirrrrssss10100110 283 blti as, imm, label
- .instruction rri8_b8  bltu   0x003007    ; iiiiiiii0011sssstttt0111 284 bltu as, at, label
- .instruction bri8_rs  bltui  0x0000b6    ; iiiiiiiirrrrssss10110110 285 bltui as, imm, label
- .instruction bri12_s  bltz   0x000096    ; iiiiiiiiiiiissss10010110 286 bltz as, label
- .instruction rri8_st  bnall  0x00c007    ; iiiiiiii1100sssstttt0111 287 bnall as, at, label
- .instruction rri8_st  bne    0x009007    ; iiiiiiii1001sssstttt0111 288 bne as, at, label
- .instruction bri8_rs  bnei   0x000066    ; iiiiiiiirrrrssss01100110 289 bnei as, imm, label
- .instruction bri12_s  bnez   0x000056    ; iiiiiiiiiiiissss01010110 290 bnez as, label
- .instruction rri8_bi  bnone  0x000007    ; iiiiiiii0000sssstttt0111 292 bnone as, at, label
- .instruction call     call0  0x000005    ; oooooooooooooooooo000101 297 call0 label
- .instruction callx    callx0 0x0000c0    ; 000000000000ssss11000000 304 callx0 as
- .instruction rrr      dsync   0x002030   ; 000000000010000000110000 dsync
- .instruction rrr      esync   0x002020   ; 000000000010000000100000 342 esync
- .instruction rrr      extui   0x040000   ; oooo010arrrraaaatttt0000 344 extui ar, at, shitftimm, askimm
- .instruction rrr      extw    0x0020d0   ; 000000000010000011010000 345 extw
+ .instruction rrr_rt    abs           0x600100    ; 01100000rrrr0001tttt0000 246 abs ar, at
+ .instruction rrr_rst   add           0x800000    ; 10000000rrrrsssstttt0000 248 add ar, as, at
+ .instruction rri8_ts8  addi          0x00c002    ; iiiiiiii1100sssstttt0010 251 addi at, as, -128..127
+ .instruction rri8_ts16 addmi         0x00d002    ; iiiiiiii1101sssstttt0010 253 addmi at, as, -32768..32512
+ .instruction rrr_rst   addx2         0x900000    ; 10010000rrrrsssstttt0000 254 addx2 ar, as, at
+ .instruction rrr_rst   addx4         0xa00000    ; 10100000rrrrsssstttt0000 254 addx4 ar, as, at
+ .instruction rrr_rst   addx8         0xb00000    ; 10110000rrrrsssstttt0000 256 addx8 ar, as, at
+ .instruction rrr_rst   and           0x100000    ; 00010000rrrrsssstttt0000 259 and ar, as, at
+ .instruction rri8_stl  ball          0x004007    ; iiiiiiii0100sssstttt0111 264 ball as, at, label
+ .instruction rri8_stl  bany          0x008007    ; iiiiiiii1000sssstttt0111 265 bany as, at, label
+ .instruction rri8_stl  bbc           0x005007    ; iiiiiiii0101sssstttt0111 266 bbc as, at, label
+ .instruction rri8_s5l  bbci          0x006007    ; iiiiiiii011assssaaaa0111 267 bbci as, 0..31, label
+ .instruction rri8_s5l  bbci.l        0x006007    ; iiiiiiii011assssaaaa0111 268 bbci.l as, 0..31, label
+ .instruction rri8_stl  bbs           0x00d007    ; iiiiiiii1101sssstttt0111 269 bbs as, at, label
+ .instruction rri8_s5l  bbsi          0x00e007    ; iiiiiiii111assssaaaa0111 270 bbsi as, 0..31, label
+ .instruction rri8_s5l  bbsi.l        0x00e007    ; iiiiiiii111assssaaaa0111 271 bsi.l as, 0..31, label
+ .instruction rri8_stl  beq           0x001007    ; iiiiiiii0001sssstttt0111 272 beq as, at, label
+ .instruction rri8_sil  beqi          0x000026    ; iiiiiiiirrrrssss00101001 273 beqi as, imm, label
+ .instruction bri12_sl  beqz          0x000016    ; iiiiiiiiiiiissss00010110 274 beqz as, label
+ .instruction rri8_stl  bge           0x00a007    ; iiiiiiii1010sssstttt0111 277 bge as, at, label
+ .instruction rri8_sil  bgei          0x0000e6    ; iiiiiiiirrrrssss11100100 278 bgei as, imm, label
+ .instruction rri8_stl  bgeu          0x00b007    ; iiiiiiii1011sssstttt0111 279 bgeu as, at, label
+ .instruction rri8_bii  bgeui         0x0000f6    ; iiiiiiiirrrrssss11110100 280 bgeui as, imm, label
+ .instruction bru12_s   bgez          0x0000d6    ; iiiiiiiiiiiissss11010110 281 bgez as, label
+ .instruction rri8_stl blt            0x002007    ; iiiiiiii0010sssstttt0111 282 blt as, at, label
+ .instruction rri8_s5l blti           0x0000a6    ; iiiiiiiirrrrssss10100110 283 blti as, imm, label
+ .instruction rri8_stl bltu           0x003007    ; iiiiiiii0011sssstttt0111 284 bltu as, at, label
+ .instruction bri8_rs  bltui          0x0000b6    ; iiiiiiiirrrrssss10110110 285 bltui as, imm, label
+ .instruction bri12_sl bltz           0x000096    ; iiiiiiiiiiiissss10010110 286 bltz as, label
+ .instruction rri8_st  bnall          0x00c007    ; iiiiiiii1100sssstttt0111 287 bnall as, at, label
+ .instruction rri8_st  bne            0x009007    ; iiiiiiii1001sssstttt0111 288 bne as, at, label
+ .instruction bri8_rs  bnei           0x000066    ; iiiiiiiirrrrssss01100110 289 bnei as, imm, label
+ .instruction bri12_sl bnez           0x000056    ; iiiiiiiiiiiissss01010110 290 bnez as, label
+ .instruction rri8_s5l bnone          0x000007    ; iiiiiiii0000sssstttt0111 292 bnone as, at, label
+ .instruction call_l   call0          0x000005    ; oooooooooooooooooo000101 297 call0 label
+ .instruction callx_s  callx0         0x0000c0    ; 000000000000ssss11000000 304 callx0 as
+ .instruction inh      dsync          0x002030    ; 000000000010000000110000     dsync
+ .instruction inh      esync          0x002020    ; 000000000010000000100000 342 esync
+ .instruction rrr_rtii extui          0x040000    ; oooo010arrrraaaatttt0000 344 extui ar, at, shiftimm, maskimm
+ .instruction inh      extw           0x0020d0    ; 000000000010000011010000 345 extw
 ; debug option
- .instruction rrr_ab   break  0x004000    ; 000000000100sssstttt0000 293 break 0..15, 0..15
- .instruction rrrn_s   break.n  0xf02d    ;         1111ssss00101101 295 break.n 0..15 only with code density option
+ .instruction rrr_55   break          0x004000    ; 000000000100sssstttt0000 293 break 0..15, 0..15
+ .instruction rrrn_s   break.n        0xf02d      ;         1111ssss00101101 295 break.n 0..15 only with code density option
 ; boolean option
- .instruction rrr_bst  all4   0x009000    ; 000000001001bbbbbbbb0000 257 all4 bt, bs
- .instruction rrr_bst  all8   0x00b000    ; 000000001011bbbbbbbb0000 258 all8 bt, bs
- .instruction rrr_brst andb   0x020000    ; 00000010bbbbbbbbbbbb0000 260 andb br, bs, bt
- .instruction rrr_brst andbc  0x120000    ; 00010010bbbbbbbbbbbb0000 261 andbc br, bs, bt
- .instruction rrr_bst  any4   0x008000    ; 000000001000bbbbbbbb0000 262 any4 bt, bs
- .instruction rrr_bst  any8   0x00a000    ; 000000001010bbbbbbbb0000 263 any8 bt, bs
- .instruction rri8_b8  bf     0x000076    ; iiiiiiii0000bbbb01110110 276 bf bs, label
- .instruction rri8_b8  bt     0x001076    ; iiiiiiii0001bbbb01110110 296 bt bs, label
+ .instruction rrr_bts  all4           0x009000    ; 000000001001bbbbbbbb0000 257 all4 bt, bs
+ .instruction rrr_bts  all8           0x00b000    ; 000000001011bbbbbbbb0000 258 all8 bt, bs
+ .instruction rrr_brst andb           0x020000    ; 00000010bbbbbbbbbbbb0000 260 andb br, bs, bt
+ .instruction rrr_brst andbc          0x120000    ; 00010010bbbbbbbbbbbb0000 261 andbc br, bs, bt
+ .instruction rrr_bts  any4           0x008000    ; 000000001000bbbbbbbb0000 262 any4 bt, bs
+ .instruction rrr_bst  any8           0x00a000    ; 000000001010bbbbbbbb0000 263 any8 bt, bs
+ .instruction rri8_bstl bf             0x000076    ; iiiiiiii0000bbbb01110110 276 bf bs, label
+ .instruction rri8_b8  bt             0x001076    ; iiiiiiii0001bbbb01110110 296 bt bs, label
 ; floating point option
- .instruction rrr_rs   abs.s  0xfa0010    ; 11111010RRRRSSSS00010000 247 abs.s fr, fs
- .instruction rrr_rst  add.s  0x0a0000    ; 00001010RRRRSSSSTTTT0000 250 add.s fr, fs, ft
- .instruction rfs_rst  ceil.s 0xda0000    ; 10111010rrrrSSSStttt0000 311 ceil.s ar, fs, 0..15
- .instruction rrr      float.s 0xca0000   ; 11001010RRRRsssstttt0000 346 float.s fr, as, 0..15
- .instruction rrr      floor.s 0xaa0000   ; 10101010rrrrSSSStttt0000 347 floor.s ar, fs, 0..15
+ .instruction rrr_rs   abs.s          0xfa0010    ; 11111010RRRRSSSS00010000 247 abs.s fr, fs
+ .instruction rrr_rst  add.s          0x0a0000    ; 00001010RRRRSSSSTTTT0000 250 add.s fr, fs, ft
+ .instruction rfs_rst  ceil.s         0xda0000    ; 10111010rrrrSSSStttt0000 311 ceil.s ar, fs, 0..15
+ .instruction rrr_Rs4   float.s        0xca0000    ; 11001010RRRRsssstttt0000 346 float.s fr, as, 0..15
+ .instruction rrr_rs4  floor.s        0xaa0000    ; 10101010rrrrSSSStttt0000 347 floor.s ar, fs, 0..15
 ; code density option
- .instruction rrrn_rst add.n    0x000a    ;         rrrrsssstttt1010 249 add.n ar, as, at
- .instruction rrrn_rsi addi.n   0x000b    ;         rrrrsssstttt1011 252 addi.n ar, as, imm
- .instruction ri6_s    beqz.n   0x008c    ;         iiiissss10ii1100 275 beqz.n as, label
- .instruction ri6_s    bnez.n   0x00cc    ;         iiiissss11ii1100 291 bnez.n as, label
+ .instruction rrrn_rst add.n           0x000a     ;         rrrrsssstttt1010 249 add.n ar, as, at
+ .instruction rrrn_rsi addi.n          0x000b     ;         rrrrsssstttt1011 252 addi.n ar, as, imm
+ .instruction ri6_sl    beqz.n          0x008c     ;         iiiissss10ii1100 275 beqz.n as, label
+ .instruction ri6_sl    bnez.n          0x00cc     ;         iiiissss11ii1100 291 bnez.n as, label
 ; windowed register option
- .instruction call     call4  0x000015    ; oooooooooooooooooo010101 298 call4 label
- .instruction call     call8  0x000025    ; oooooooooooooooooo100101 300 call8 label
- .instruction call     call12 0x000035    ; oooooooooooooooooo110101 302 call12 label
- .instruction callx    callx4 0x0000d0    ; 000000000000ssss11010000 305 callx4 as
- .instruction callx    callx8  0x0000e0   ; 000000000000ssss11100000 307 callx8 as
- .instruction callx    callx12 0x0000f0   ; 000000000000ssss11110000 309 callx12 as
- .instruction bri12    entry   0x000036   ; iiiiiiiiiiiissss00110110 entry as, 0..32760
+ .instruction call_l   call4           0x000015   ; oooooooooooooooooo010101 298 call4 label
+ .instruction call_l   call8           0x000025   ; oooooooooooooooooo100101 300 call8 label
+ .instruction call_l   call12          0x000035   ; oooooooooooooooooo110101 302 call12 label
+ .instruction callx_s  callx4          0x0000d0   ; 000000000000ssss11010000 305 callx4 as
+ .instruction callx_s  callx8          0x0000e0   ; 000000000000ssss11100000 307 callx8 as
+ .instruction callx_s  callx12         0x0000f0   ; 000000000000ssss11110000 309 callx12 as
+ .instruction bri12    entry           0x000036   ; iiiiiiiiiiiissss00110110 entry as, 0..32760
 ; miscellaneous operation option
- .instruction rri      clamps  0x330000   ; 00110011rrrrssssiiii0000 312 clamps ar, as, 7..22
+ .instruction rri      clamps          0x330000   ; 00110011rrrrssssiiii0000 312 clamps ar, as, 7..22
 ; data cache option
- .instruction rri8     dhi     0x007062   ; iiiiiiii0111ssss01100010 313 dhi as, 0..1020
- .instruction rri8     dhwb    0x007042   ; iiiiiiii0111ssss01000010 317 dhwb as, 0..1020
- .instruction rri8     dhwbi   0x007052   ; iiiiiiii0111ssss01010010 319 dhwbi as, 0..1020
- .instruction rri8     dii     0x007072   ; iiiiiiii0111ssss01110010 321 dii as, 0..1020
- .instruction rri4     diwb    0x047042   ; iiii01000111ssss10000010 325 diwb as, 0..240
- .instruction rri4     diwbi   0x057042   ; iiii01010111ssss10000010 327 diwbi as, 0..240
- .instruction rri8     dpfr    0x007002   ; iiiiiiii0111ssss00000010 331 dpfr as, 0..1020
- .instruction rri8     dpfro   0x007022   ; iiiiiiii0111ssss00100010 dpfro as, 0..1020
- .instruction rri8     dpfw    0x007012   ; iiiiiiii0111ssss00010010 dpfw as, 0..1020
- .instruction rri8     dpfwo   0x007032   ; iiiiiiii0111ssss00110010 dpfwo as, 0..1020
+ .instruction rri8     dhi             0x007062   ; iiiiiiii0111ssss01100010 313 dhi as, 0..1020
+ .instruction rri8     dhwb            0x007042   ; iiiiiiii0111ssss01000010 317 dhwb as, 0..1020
+ .instruction rri8     dhwbi           0x007052   ; iiiiiiii0111ssss01010010 319 dhwbi as, 0..1020
+ .instruction rri8     dii             0x007072   ; iiiiiiii0111ssss01110010 321 dii as, 0..1020
+ .instruction rri4     diwb            0x047042   ; iiii01000111ssss10000010 325 diwb as, 0..240
+ .instruction rri4     diwbi           0x057042   ; iiii01010111ssss10000010 327 diwbi as, 0..240
+ .instruction rri8     dpfr            0x007002   ; iiiiiiii0111ssss00000010 331 dpfr as, 0..1020
+ .instruction rri8     dpfro           0x007022   ; iiiiiiii0111ssss00100010 dpfro as, 0..1020
+ .instruction rri8     dpfw            0x007012   ; iiiiiiii0111ssss00010010 dpfw as, 0..1020
+ .instruction rri8     dpfwo           0x007032   ; iiiiiiii0111ssss00110010 dpfwo as, 0..1020
 ; data cache index lock option
- .instruction rri4     dhu     0x027082   ; iiiiiiii0111ssss01000010 315 dhu as, 0..240
- .instruction rri4     diu     0x037042   ; iiii00110111ssss10000010 323 diu as, 0..240
- .instruction rri4     dpfl    0x007042   ; iiii00000111ssss10000010 329 dpfl as, 0..240
+ .instruction rri4     dhu             0x027082   ; iiiiiiii0111ssss01000010 315 dhu as, 0..240
+ .instruction rri4     diu             0x037042   ; iiii00110111ssss10000010 323 diu as, 0..240
+ .instruction rri4     dpfl            0x007042   ; iiii00000111ssss10000010 329 dpfl as, 0..240
 ; exception option
- .instruction rrr      excw    0x002080   ; 000000000010000010000000 343 excw
+ .instruction rrr      excw            0x002080   ; 000000000010000010000000 343 excw
   
- .instruction rrr      idtlb   0x50c000   ; 010100001100ssss00000000 348 idtlb as
- .instruction rri8     ihi     0x0070c2   ; iiiiiiii0111ssss11100010 349 ihi as, 0..1020
- .instruction rri4     ihu     0x0270d2   ; iiii00100111ssss11010010 351 ihu as, 0..240
- .instruction rri8     iii     0x9979f2   ; iiiiiiii0111ssss11110010 353 iii as, 0..1020
- .instruction rrr      iitlb   0x504000   ; 010100000100ssss00000000 355 iitlb as
- .instruction rri4     iiu     0x0370d2   ; iiii00110111ssss11010010 iiu as, 0..240
- .instruction inh      ill     0x000000   ; 000000000000000000000000 358 ill
- .instruction rrrn     ill.n   0xf06d     ; 1111000001101101     359 ill.n
- .instruction rri8     ipf     0x0070c2   ; iiiiiiii0111ssss11000010 360 ipf as, 0..1020
- .instruction rri4     ipfl    0x0070d2   ; iiii00000111ssss11010010 362 ipfl as, 0..240
- .instruction rrr      isync   0x002000   ; 000000000010000000000000 364 isync
- .instruction call     j       0x000006   ; oooooooooooooooooo000110 366 j label
- .instruction call     j.l     0x000006   ; oooooooooooooooooo000110 367 j.l label, an
- .instruction callx    jx      0x0000a0   ; 000000000000ssss10100000 368 jx as
- .instruction rri8     l8ui    0x000002   ; iiiiiiii0000sssstttt0010 369 l8ui at, as, 0..255
- .instruction rri8     l16si   0x009002   ; iiiiiiii1001sssstttt0010 370 l16si at, as, 0..510
- .instruction rri8     l16ui   0x001002   ; iiiiiiii0001sssstttt0010 372 l16ui at, as, 0..510
- .instruction rri8     l32ai   0x00b002   ; iiiiiiii1011sssstttt0010 374 l32ai at, as, 0..10020
- .instruction rri4     l32e    0x090000   ; 00001001rrrrsssstttt0000 376 l32e at, as, -64..-4
- .instruction rri8     l32i    0x002002   ; iiiiiiii0010sssstttt0010 378 l32i at, as, 0..1020
- .instruction rrrn     l32i.n  0x0008     ; iiiisssstttt1000 380 l32i.n at, as, 0..60
- .instruction ri6      l32r    0x000001   ; iiiiiiiiiiiiiiiitttt0001 382 l32r at, label
- .instruction rrr      ldct    0xf18000   ; 111100011000sssstttt0000 384 ldct at, as
- .instruction rrr      lddec   0x900004   ; 1001000000wwssss00000100 386 lddec mw, as
- .instruction rrr      lict    0xf10000   ; 111100010000sssstttt0000 388 lict at, as
- .instruction rrr      licw    0xf12000   ; 111100010010sssstttt0000 390 licw at, as
- .instruction rri8     loop    0x008076   ; iiiiiiii1000ssss01110110 392 loop as, label
- .instruction rri8     loopgtz 0x00a076   ; iiiiiiii1010ssss01110110 394 looptz as, label
- .instruction rri8     loopnez 0x009076   ; iiiiiiii1001ssss01110110 396 loopnz as, label
- .instruction rri8     lsi     0x000003   ; iiiiiiii0000ssssTTTT0011 398 lsi ft, as, 0..1020
- .instruction rri8     lsiu    0x008003   ; iiiiiiii1000ssssTTTT0011 400 lsiu ft, as, 0..1020
- .instruction rrr      lsx     0x080000   ; 00001000RRRRsssstttt0000 402 ldx fr, as, at
- .instruction rrr      lsxu    0x180000   ; 00011000RRRRsssstttt0000 404 lsxu fr, as, at
- .instruction rrr      madd.s  0x4a0000   ; 01001010RRRRsssstttt0000 406 madd.s fr, fs, ft
- .instruction rrr      max     0x530000   ; 01010011rrrrsssstttt0000 407 max ar, as, at
- .instruction rrr      maxu    0x730000   ; 01110011rrrrsssstttt0000 408 maxu ar, as, at
- .instruction rrr      memw    0x0020c0   ; 000000000010000011000000 409 memw
- .instruction rrr      min     0x430000   ; 01000011rrrrsssstttt0000 410 min ar, as, at
- .instruction rrr      minu    0x630000   ; 01100011rrrrsssstttt0000 411 minu ar, as, at
- .instruction rrr      mov     0x200000   ; 00100000rrrrsssstttt0000 412 mov ar, as (-> or ar, as, as; ar != as)
- .instruction rrrn     mov.n   0x000d     ; 0000sssstttt1101     413 mov.n at, as
- .instruction rrr      mov.s   0xfa0000   ; 11111010RRRRSSSS00000000 414 mov.s fr, fs
- .instruction rrr      moveqz  0x830000   ; 10000011rrrrsssstttt0000 415 moveqz ar, as, at
- .instruction rrr      moveqz.s 0x8b0000  ; 10001011RRRRSSSStttt0000 416 moveqz.s fr, fs, at
- .instruction rrr      movf     0xc30000  ; 11000011rrrrsssstttt0000 417 movf ar, as, at
- .instruction rrr      movf.s   0xcb0000  ; 11001011RRRRSSSSbbbb0000 418 movf.s fr, fs, bt
- .instruction rrr      movgez   0xb30000  ; 10110011rrrrsssstttt0000 419 movgez ar, as, at
- .instruction rrr      movgez.s 0xbb0000  ; 10111011RRRRSSSStttt0000 420 movgez fr, fs, at
- .instruction rri8     movi     0x00a002  ; iiiiiiii1010iiiitttt0010 421 movi at, -2048..2047
- .instruction ri7      movi.n     0x000c  ; iiiissss0iii1100     422 movi.n as, -23..95
- .instruction rrr      movltz   0xa30000  ; 10100011rrrrsssstttt0000 423 movltz ar, as, at
- .instruction rrr      movltz.s 0xab0000  ; 10101011rrrrsssstttt0000
- .instruction rrr      movnez   0x930000  ; 10010011rrrrsssstttt0000 425 movnez ar, as, at
- .instruction rrr      movnez.s 0x9b0000  ; 10011011RRRRSSSStttt 426 movnez.s fr, fs, at
- .instruction rrr      movsp    0x001000  ; 000000000001sssstttt0000 427 movsp at, as
- .instruction rrr      movt     0xd30000  ; 11010011rrrrssssbbbb0000 428 movt ar, as, bt
- .instruction rrr      movt.s   0xdd0000  ; 11011011RRRRSSSSbbbb0000 449 movt.s fr, fs, bt
- .instruction rrr      msub.s   0x5c0000  ; 01011010RRRRSSSStttt0000 430 msub.s fr, fs, ft
- .instruction rrr      mul.aa.ll 0x740004  ; 011101000000sssstttt0100 431 mul.aa.ll as, at
- .instruction rrr      mul.aa.hl 0x750004  ; 011101010000sssstttt0100 431 mul.aa.lh as, at
- .instruction rrr      mul.aa.lh 0x760004  ; 011101100000sssstttt0100 431 mul.aa.hl as, at
- .instruction rrr      mul.aa.hh 0x770004  ; 011101110000sssstttt0100 431 mul.aa.hh as, at
- .instruction rrr      mul.ad.ll 0x340004  ; 001101000000ssss0y000100 432 mul.ad.ll as, my
- .instruction rrr      mul.ad.hl 0x350004  ; 001101010000ssss0y000100 432 mul.ad.lh as, my
- .instruction rrr      mul.ad.lh 0x360004  ; 001101100000ssss0y000100 432 mul.ad.hl as, my
- .instruction rrr      mul.ad.hh 0x370004  ; 001101110000ssss0y000100 432 mul.ad.hh as, my
- .instruction rrr      mul.da.ll 0x640004  ; 011001000x000000tttt0100 433 mul.da.ll mx, at
- .instruction rrr      mul.da.lh 0x650004  ; 011001010x000000tttt0100 433 mul.da.lh mx, at
- .instruction rrr      mul.da.hl 0x660004  ; 011001100x000000tttt0100 433 mul.da.hl mx, at
- .instruction rrr      mul.da.hh 0x670004  ; 011001110x000000tttt0100 433 mul.da.hh mx, at
- .instruction rrr      mul.dd.ll 0x240004  ; 001001000x0000000y000100 434 mul.dd.ll mx, my
- .instruction rrr      mul.dd.lh 0x250004  ; 001001010x0000000y000100 434 mul.dd.lh mx, my
- .instruction rrr      mul.dd.hl 0x260004  ; 001001100x0000000y000100 434 mul.dd.hl mx, my
- .instruction rrr      mul.dd.hh 0x270004  ; 001001110x0000000y000100 434 mul.dd.hh mx, my
- .instruction rrr      mul.s    0x2a0000  ; 00101010RRRRSSSSTTTT0000 435 mul.s fr, fs, ft
- .instruction rrr      mul16s   0xd10000  ; 11010001rrrrsssstttt0000 436 mul16s ar, as, at
- .instruction rrr      mul16u   0xc10000  ; 11000001rrrrsssstttt0000 437 mul16u ar, as, at
- .instruction rrr      mula.aa.ll 0x780004 ; 011110000000sssstttt0100 438 mula.aa.* as, at
- .instruction rrr      mula.aa.lh 0x790004 ; 011110010000sssstttt0100 438 mula.aa.* as, at
- .instruction rrr      mula.aa.hl 0x7a0004 ; 011110100000sssstttt0100 438 mula.aa.* as, at
- .instruction rrr      mula.aa.hh 0x7b0004 ; 011110110000sssstttt0100 438 mula.aa.* as, at
- .instruction rrr      mula.ad.ll 0x340004 ; 001110000000ssss0y000100 439 mula.ad.* as, my
- .instruction rrr      mula.ad.lh 0x350004 ; 001110010000ssss0y000100 439 mula.ad.* as, my
- .instruction rrr      mula.ad.hl 0x360004 ; 001110100000ssss0y000100 439 mula.ad.* as, my
- .instruction rrr      mula.ad.hh 0x370004 ; 001110110000ssss0y000100 439 mula.ad.* as, my
- .instruction rrr      mula.da.ll 0x640004 ; 011010000x000000tttt0100 440 mula.da.( mx, at
- .instruction rrr      mula.da.lh 0x650004 ; 011010010x000000tttt0100 440 mula.da.( mx, at
- .instruction rrr      mula.da.hl 0x660004 ; 011010100x000000tttt0100 440 mula.da.( mx, at
- .instruction rrr      mula.da.hh 0x670004 ; 011010110x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      idtlb           0x50c000   ; 010100001100ssss00000000 348 idtlb as
+ .instruction rri8     ihi             0x0070c2   ; iiiiiiii0111ssss11100010 349 ihi as, 0..1020
+ .instruction rri4     ihu             0x0270d2   ; iiii00100111ssss11010010 351 ihu as, 0..240
+ .instruction rri8     iii             0x9979f2   ; iiiiiiii0111ssss11110010 353 iii as, 0..1020
+ .instruction rrr      iitlb           0x504000   ; 010100000100ssss00000000 355 iitlb as
+ .instruction rri4     iiu             0x0370d2   ; iiii00110111ssss11010010 iiu as, 0..240
+ .instruction inh      ill             0x000000   ; 000000000000000000000000 358 ill
+ .instruction inhn     ill.n           0xf06d     ;         1111000001101101     359 ill.n
+ .instruction rri8     ipf             0x0070c2   ; iiiiiiii0111ssss11000010 360 ipf as, 0..1020
+ .instruction rri4     ipfl            0x0070d2   ; iiii00000111ssss11010010 362 ipfl as, 0..240
+ .instruction rrr      isync           0x002000   ; 000000000010000000000000 364 isync
+ .instruction call_l   j               0x000006   ; oooooooooooooooooo000110 366 j label
+ .instruction call     j.l             0x000006   ; oooooooooooooooooo000110 367 j.l label, an
+ .instruction callx_s  jx              0x0000a0   ; 000000000000ssss10100000 368 jx as
+ .instruction rri8     l8ui            0x000002   ; iiiiiiii0000sssstttt0010 369 l8ui at, as, 0..255
+ .instruction rri8     l16si           0x009002   ; iiiiiiii1001sssstttt0010 370 l16si at, as, 0..510
+ .instruction rri8     l16ui           0x001002   ; iiiiiiii0001sssstttt0010 372 l16ui at, as, 0..510
+ .instruction rri8     l32ai           0x00b002   ; iiiiiiii1011sssstttt0010 374 l32ai at, as, 0..10020
+ .instruction rri4     l32e            0x090000   ; 00001001rrrrsssstttt0000 376 l32e at, as, -64..-4
+ .instruction rri8     l32i            0x002002   ; iiiiiiii0010sssstttt0010 378 l32i at, as, 0..1020
+ .instruction rrrn     l32i.n          0x0008     ;         iiiisssstttt1000 380 l32i.n at, as, 0..60
+ .instruction ri6      l32r            0x000001   ; iiiiiiiiiiiiiiiitttt0001 382 l32r at, label
+ .instruction rrr      ldct            0xf18000   ; 111100011000sssstttt0000 384 ldct at, as
+ .instruction rrr      lddec           0x900004   ; 1001000000wwssss00000100 386 lddec mw, as
+ .instruction rrr      lict            0xf10000   ; 111100010000sssstttt0000 388 lict at, as
+ .instruction rrr      licw            0xf12000   ; 111100010010sssstttt0000 390 licw at, as
+ .instruction rri8     loop            0x008076   ; iiiiiiii1000ssss01110110 392 loop as, label
+ .instruction rri8     loopgtz         0x00a076   ; iiiiiiii1010ssss01110110 394 looptz as, label
+ .instruction rri8     loopnez         0x009076   ; iiiiiiii1001ssss01110110 396 loopnz as, label
+ .instruction rri8     lsi             0x000003   ; iiiiiiii0000ssssTTTT0011 398 lsi ft, as, 0..1020
+ .instruction rri8     lsiu            0x008003   ; iiiiiiii1000ssssTTTT0011 400 lsiu ft, as, 0..1020
+ .instruction rrr      lsx             0x080000   ; 00001000RRRRsssstttt0000 402 ldx fr, as, at
+ .instruction rrr      lsxu            0x180000   ; 00011000RRRRsssstttt0000 404 lsxu fr, as, at
+ .instruction rrr      madd.s          0x4a0000   ; 01001010RRRRsssstttt0000 406 madd.s fr, fs, ft
+ .instruction rrr      max             0x530000   ; 01010011rrrrsssstttt0000 407 max ar, as, at
+ .instruction rrr      maxu            0x730000   ; 01110011rrrrsssstttt0000 408 maxu ar, as, at
+ .instruction rrr      memw            0x0020c0   ; 000000000010000011000000 409 memw
+ .instruction rrr      min             0x430000   ; 01000011rrrrsssstttt0000 410 min ar, as, at
+ .instruction rrr      minu            0x630000   ; 01100011rrrrsssstttt0000 411 minu ar, as, at
+ .instruction rrr      mov             0x200000   ; 00100000rrrrsssstttt0000 412 mov ar, as (-> or ar, as, as; ar != as)
+ .instruction rrrn     mov.n           0x000d     ;         0000sssstttt1101 413 mov.n at, as
+ .instruction rrr      mov.s           0xfa0000   ; 11111010RRRRSSSS00000000 414 mov.s fr, fs
+ .instruction rrr      moveqz          0x830000   ; 10000011rrrrsssstttt0000 415 moveqz ar, as, at
+ .instruction rrr      moveqz.s        0x8b0000   ; 10001011RRRRSSSStttt0000 416 moveqz.s fr, fs, at
+ .instruction rrr      movf            0xc30000   ; 11000011rrrrsssstttt0000 417 movf ar, as, at
+ .instruction rrr      movf.s          0xcb0000   ; 11001011RRRRSSSSbbbb0000 418 movf.s fr, fs, bt
+ .instruction rrr      movgez          0xb30000   ; 10110011rrrrsssstttt0000 419 movgez ar, as, at
+ .instruction rrr      movgez.s        0xbb0000   ; 10111011RRRRSSSStttt0000 420 movgez fr, fs, at
+ .instruction rri8     movi            0x00a002   ; iiiiiiii1010iiiitttt0010 421 movi at, -2048..2047
+ .instruction ri7      movi.n            0x000c   ;         iiiissss0iii1100 422 movi.n as, -23..95
+ .instruction rrr      movltz          0xa30000   ; 10100011rrrrsssstttt0000 423 movltz ar, as, at
+ .instruction rrr      movltz.s        0xab0000   ; 10101011rrrrsssstttt0000
+ .instruction rrr      movnez          0x930000   ; 10010011rrrrsssstttt0000 425 movnez ar, as, at
+ .instruction rrr      movnez.s        0x9b0000   ; 10011011RRRRSSSStttt 426 movnez.s fr, fs, at
+ .instruction rrr      movsp           0x001000   ; 000000000001sssstttt0000 427 movsp at, as
+ .instruction rrr      movt            0xd30000   ; 11010011rrrrssssbbbb0000 428 movt ar, as, bt
+ .instruction rrr      movt.s          0xdd0000   ; 11011011RRRRSSSSbbbb0000 449 movt.s fr, fs, bt
+ .instruction rrr      msub.s          0x5c0000   ; 01011010RRRRSSSStttt0000 430 msub.s fr, fs, ft
+ .instruction rrr      mul.aa.ll        0x740004  ; 011101000000sssstttt0100 431 mul.aa.ll as, at
+ .instruction rrr      mul.aa.hl        0x750004  ; 011101010000sssstttt0100 431 mul.aa.lh as, at
+ .instruction rrr      mul.aa.lh        0x760004  ; 011101100000sssstttt0100 431 mul.aa.hl as, at
+ .instruction rrr      mul.aa.hh        0x770004  ; 011101110000sssstttt0100 431 mul.aa.hh as, at
+ .instruction rrr      mul.ad.ll        0x340004  ; 001101000000ssss0y000100 432 mul.ad.ll as, my
+ .instruction rrr      mul.ad.hl        0x350004  ; 001101010000ssss0y000100 432 mul.ad.lh as, my
+ .instruction rrr      mul.ad.lh        0x360004  ; 001101100000ssss0y000100 432 mul.ad.hl as, my
+ .instruction rrr      mul.ad.hh        0x370004  ; 001101110000ssss0y000100 432 mul.ad.hh as, my
+ .instruction rrr      mul.da.ll        0x640004  ; 011001000x000000tttt0100 433 mul.da.ll mx, at
+ .instruction rrr      mul.da.lh        0x650004  ; 011001010x000000tttt0100 433 mul.da.lh mx, at
+ .instruction rrr      mul.da.hl        0x660004  ; 011001100x000000tttt0100 433 mul.da.hl mx, at
+ .instruction rrr      mul.da.hh        0x670004  ; 011001110x000000tttt0100 433 mul.da.hh mx, at
+ .instruction rrr      mul.dd.ll        0x240004  ; 001001000x0000000y000100 434 mul.dd.ll mx, my
+ .instruction rrr      mul.dd.lh        0x250004  ; 001001010x0000000y000100 434 mul.dd.lh mx, my
+ .instruction rrr      mul.dd.hl        0x260004  ; 001001100x0000000y000100 434 mul.dd.hl mx, my
+ .instruction rrr      mul.dd.hh        0x270004  ; 001001110x0000000y000100 434 mul.dd.hh mx, my
+ .instruction rrr      mul.s            0x2a0000  ; 00101010RRRRSSSSTTTT0000 435 mul.s fr, fs, ft
+ .instruction rrr      mul16s           0xd10000  ; 11010001rrrrsssstttt0000 436 mul16s ar, as, at
+ .instruction rrr      mul16u           0xc10000  ; 11000001rrrrsssstttt0000 437 mul16u ar, as, at
+ .instruction rrr      mula.aa.ll       0x780004 ; 011110000000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.lh       0x790004 ; 011110010000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.hl       0x7a0004 ; 011110100000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.aa.hh       0x7b0004 ; 011110110000sssstttt0100 438 mula.aa.* as, at
+ .instruction rrr      mula.ad.ll       0x340004 ; 001110000000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.lh       0x350004 ; 001110010000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.hl       0x360004 ; 001110100000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.ad.hh       0x370004 ; 001110110000ssss0y000100 439 mula.ad.* as, my
+ .instruction rrr      mula.da.ll       0x640004 ; 011010000x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.lh       0x650004 ; 011010010x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.hl       0x660004 ; 011010100x000000tttt0100 440 mula.da.( mx, at
+ .instruction rrr      mula.da.hh       0x670004 ; 011010110x000000tttt0100 440 mula.da.( mx, at
  .instruction rrr      mula.da.ll.lddec 0x580004 ; 010110000xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
  .instruction rrr      mula.da.lh.lddec 0x590004 ; 010110010xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
  .instruction rrr      mula.da.hl.lddec 0x5a0004 ; 010110100xwwsssstttt0100 441 mula.da.*.lddec mw, as, mx, at
@@ -195,10 +215,10 @@
  .instruction rrr      mula.da.lh.ldinc 0xa90004 ; 010010010xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
  .instruction rrr      mula.da.hl.ldinc 0xaa0004 ; 010010100xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
  .instruction rrr      mula.da.hh.ldinc 0xab0004 ; 010010110xwwsssstttt0100 443 mula.da.*.ldinc mw, as, mx, at
- .instruction rrr      mula.dd.ll 0x280004 ; 0x001010000x0000000y000100 445 mula.dd.* mx, my
- .instruction rrr      mula.dd.lh 0x290004 ; 0x001010010x0000000y000100 445 mula.dd.* mx, my
- .instruction rrr      mula.dd.hl 0x2a0004 ; 0x001010100x0000000y000100 445 mula.dd.* mx, my
- .instruction rrr      mula.dd.hh 0x2b0004 ; 0x001010110x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.ll       0x280004 ; 0x001010000x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.lh       0x290004 ; 0x001010010x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.hl       0x2a0004 ; 0x001010100x0000000y000100 445 mula.dd.* mx, my
+ .instruction rrr      mula.dd.hh       0x2b0004 ; 0x001010110x0000000y000100 445 mula.dd.* mx, my
  .instruction rrr      mula.dd.ll.lddec 0x180004 ; 000110000xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
  .instruction rrr      mula.dd.lh.lddec 0x190004 ; 000110010xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
  .instruction rrr      mula.dd.hl.lddec 0x1a0004 ; 000110100xwwssss0y000100 446 mula.dd.*.lddec mw, as, mx, my
@@ -207,120 +227,121 @@
  .instruction rrr      mula.dd.lh.ldinc 0x090004 ; 000010010xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
  .instruction rrr      mula.dd.hl.ldinc 0x0a0004 ; 000010100xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
  .instruction rrr      mula.dd.hh.ldinc 0x0b0004 ; 000010110xwwssss0y000100 448 mula.dd.*.ldinc mw, as, mx, my
- .instruction rrr      mull      0x820000 ; 10000010rrrrsssstttt0000 450 mull ar, as, at
- .instruction rrr      muls.aa.ll 0x7c0004 ; 011111000000sssstttt0100 451 muls.aa.* as, at
- .instruction rrr      muls.aa.lh 0x7d0004 ; 011111010000sssstttt0100 451 muls.aa.* as, at
- .instruction rrr      muls.aa.hl 0x7e0004 ; 011111100000sssstttt0100 451 muls.aa.* as, at
- .instruction rrr      muls.aa.hh 0x7f0004 ; 011111110000sssstttt0100 451 muls.aa.* as, at
- .instruction rrr      muls.ad.ll 0x3c0004 ; 001111000000ssss0y000100 452 muls.ad.* as, my
- .instruction rrr      muls.ad.lh 0x3d0004 ; 001111010000ssss0y000100 452 muls.ad.* as, my
- .instruction rrr      muls.ad.hl 0x3e0004 ; 001111100000ssss0y000100 452 muls.ad.* as, my
- .instruction rrr      muls.ad.hh 0x3f0004 ; 001111110000ssss0y000100 452 muls.ad.* as, my
- .instruction rrr      muls.da.ll 0x6c0004 ; 011011000x000000tttt0100 453 muls.da.* mx, at
- .instruction rrr      muls.da.lh 0x6d0004 ; 011011010x000000tttt0100 453 muls.da.* mx, at
- .instruction rrr      muls.da.hl 0x6e0004 ; 011011100x000000tttt0100 453 muls.da.* mx, at
- .instruction rrr      muls.da.hh 0x6f0004 ; 011011110x000000tttt0100 453 muls.da.* mx, at
- .instruction rrr      muls.dd.ll 0x2c0004 ; 001011000x00ssss0y000100 454 muls.dd.* mx, my
- .instruction rrr      muls.dd.lh 0x2d0004 ; 001011010x00ssss0y000100 454 muls.dd.* mx, my
- .instruction rrr      muls.dd.hl 0x2e0004 ; 001011100x00ssss0y000100 454 muls.dd.* mx, my
- .instruction rrr      muls.dd.hh 0x2f0004 ; 001011110x00ssss0y000100 454 muls.dd.* mx, my
- .instruction rrr      mulsh     0xd20000 ; 10110010rrrrsssstttt0000 455 mulsh ar, as, at
- .instruction rrr      muluh     0xa20000 ; 10100010rrrrsssstttt0000 456 muluh ar, as, at
- .instruction rrr      neg       0x600000 ; 01100000rrrr0000tttt0000 457 neg ar, at
- .instruction rrr      neg.s     0xfa0060 ; 11111010RRRRSSSS01100000 458 neg.s fr, fs
- .instruction rrr      nop       0x0020f0 ; 000000000010000011110000 459 nop (or macro for "or an, an, an")
- .instruction rrrn     nop.n       0xf03d ; 1111000000111101         460 nop.n
- .instruction rrr      nsa       0x40e000 ; 010000001110sssstttt0000 461 nsa at, as
- .instruction rrr      nsau      0x40f000 ; 010000001111sssstttt0000 462 nsau at, as
- .instruction rrr      oeq.s     0x2b0000 ; 00101011bbbbSSSSTTTT0000 463 oeq.s br, fs, ft
- .instruction rrr      ole.s     0x6b0000 ; 01101011bbbbSSSSTTTT0000 464 ole.s br, fs, ft
- .instruction rrr      olt.s     0x4b0000 ; 01001011bbbbSSSSTTTT0000 465 olt.s br, fs, ft
- .instruction rrr      or        0x200000 ; 00100000rrrrsssstttt0000 466 or ar, as, at
- .instruction rrr      orb       0x220000 ; 00100010bbbbbbbbbbbb0000 467 orb br, bs, bt
- .instruction rrr      orbc      0x320000 ; 00110010bbbbbbbbbbbb0000 468 orbc br, bs, bt
- .instruction rrr      pdtlb     0x50d000 ; 010100001101sssstttt0000 469 pdtlb at, as
- .instruction rrr      pitlb     0x505000 ; 010100000101sssstttt0000 470 pitlb at, as
- .instruction rrr      quos      0xd20000 ; 11010010rrrrsssstttt0000 471 quos ar, as, at
- .instruction rrr      quou      0xc20000 ; 11000010rrrrsssstttt0000 472 quou ar, as, at
- .instruction rrr      rdtlb0    0x50b000 ; 010100001011sssstttt0000 473 rdtlb0 at, as
- .instruction rrr      rdtlb1    0x50f000 ; 010100001111sssstttt0000 474 rdtlb1 at, as
- .instruction rrr      rems      0xf20000 ; 11110010rrrrsssstttt0000 475 rems ar, as, at
- .instruction rrr      remu      0xe20000 ; 11100010rrrrsssstttt0000 476 remu ar, as, at
- .instruction rrr      rer       0x406000 ; 010000000110sssstttt0000 477 rer at, as
- .instruction inh      ret       0x000080 ; 000000000000000010000000 478 ret
- .instruction rrrn     ret.n       0xf00d ; 1111000000001101         479 ret.n
- .instruction inh      retw      0x000090 ; 000000000000000010010000 480 retw
- .instruction rrrn     retw.n      0xf01d ;         1111000000011101 482 retw.n
- .instruction inh      rfdd      0xf1e010 ; 111100011110000000010000 484 rfdd
- .instruction rrr      rfde      0x003200 ; 000000000011001000000000 485 rfde
- .instruction rrr      rfdo      0xf1e000 ; 111100011110000000000000 486 rfdo
- .instruction rrr      rfe       0x003000 ; 000000000011000000000000 487 rfe
- .instruction rrr      rfi       0x003010 ; 000000000011llll00010000 488 rfi 0..15
- .instruction rrr      rfme      0x003020 ; 000000000011000000100000 489 rfme
- .instruction rrr      rfr       0xfa0040 ; 11111010rrrrssss01000000 490 rfr ar, as
- .instruction rrr      rfue      0x003100 ; 000000000011000100000000 491 rfue
- .instruction rrr      rfwo      0x003400 ; 000000000011010000000000 492 rfwo
- .instruction rrr      rfwu      0x003500 ; 000000000011010100000000 493 rfwu
- .instruction rrr      ritlb0    0x503000 ; 010100000011sssstttt0000 494 ritlb0 at, as
- .instruction rrr      ritlb1    0x507000 ; 010100000111sssstttt0000 495 ritlb1 ar, as
- .instruction rrr      rotw      0x408000 ; 0100000010000000iiii0000 496 rotw -8..7
- .instruction rrr      round.s   0x8a0000 ; 10001010rrrrSSSStttt0000 497 round.s ar, fs, 0..15
- .instruction rrr      rsil      0x006000 ; 000000000110iiiitttt0000 498 rsil at, 0..15
- .instruction rsr      rsr.*     0x030000 ; 00000011srsrsrsrtttt0000 500 rsr.* at; rsr at, *; rsr at, 0..255
- .instruction rrr      rsync     0x002010 ; 000000000010000000010000 502 rsync
- .instruction rrr      rur.*     0xe30000 ; 11100011rrrrsssstttt0000 503 rur.* ar; rur ar, *
- .instruction rri8     s8i       0x004002 ; iiiiiiii0100sssstttt0010 504 s8i at, as, 0..255
- .instruction rri8     s16i      0x005002 ; iiiiiiii0101sssstttt0010 505 s16i at, as, 0..510
- .instruction rri8     s32c1i    0x00e002 ; iiiiiiii1110sssstttt0010 506 s32ci at, as, 0..1020
- .instruction rri4     s32e      0x490000 ; 01001001rrrrsssstttt0000 508 s32e at, as, -64..-4
- .instruction rri8     s32i      0x006002 ; iiiiiiii0110sssstttt0010 510 s32i at, as, 0..1010
- .instruction rrrn     s32i.n      0x0009 ;         iiiisssstttt1001 512 s32i.n at, as, 0..60
- .instruction rri8     s32ri     0x00f002 ; iiiiiiii1111sssstttt0010 514 s32ri at, as, 0..1020
- .instruction rrr      sdct      0xf19000 ; 111100011001sssstttt0000 516 sdct at, as
- .instruction rrr      sext      0x230000 ; 00100011rrrrsssstttt0000 518 sext ar, as, 7..22
- .instruction rrr      sict      0xf11000 ; 111100010001sssstttt0000 519 sict at, as
- .instruction rrr      sicw      0xf13000 ; 111100010011sssstttt0000 521 sicw at, as
- .instruction rrr      simcall   0x005100 ; 000000000101000100000000 523 simcall
- .instruction rrr      sll       0xa10000 ; 10100001rrrrssss00000000 524 sll ar, as
- .instruction rrr      slli      0x010000 ; 000a0001rrrrssssaaaa0000 525 slli ar, as, 1..31
- .instruction rrr      sra       0xb10000 ; 10110001rrrr0000tttt0000 526 sra ar, at
- .instruction rrr      srai      0x210000 ; 001a0001rrrraaaatttt0000 527 srai ar, at, 1..31
- .instruction rrr      src       0x810000 ; 10000001rrrrsssstttt0000 528 src ar, as, at
- .instruction rrr      srl       0x910000 ; 10010001rrrr0000tttt0000 529 srl ar, at
- .instruction rrr      srli      0x410000 ; 01000001rrrraaaatttt0000 530 srli ar, at, 0..15
- .instruction rrr      ssa8b     0x403000 ; 010000000011ssss00000000 531 ssa8b as
- .instruction rrr      ssa8l     0x402000 ; 010000000010ssss00000000 532 ssa8l as
- .instruction rrr      ssai      0x404000 ; 010000000100aaaa000a0000 533 ssai 0..31
- .instruction rri8     ssi       0x004003 ; iiiiiiii0100ssssTTTT0011 534 ssi ft, as, 0..1020
- .instruction rri8     ssiu      0x00c003 ; iiiiiiii1100ssssTTTT0011 536 ssiu ft, as, 0..1020
- .instruction rrr      ssl       0x401000 ; 010000000001ssss00000000 538 ssl as
- .instruction rrr      ssr       0x400000 ; 010000000000ssss00000000 539 ssr as
- .instruction rrr      ssx       0x480000 ; 01001000RRRRsssstttt0000 540 ssx fr, as, at
- .instruction rrr      ssxu      0x580000 ; 01011000RRRRsssstttt0000 541 ssxu fr, as, at
- .instruction rrr      sub       0xc00000 ; 11000000rrrrsssstttt0000 542 sub ar, as, at
- .instruction rrr      sub.s     0x1a0000 ; 00011010RRRRSSSSTTTT0000 543 sub.s fr, fs, ft
- .instruction rrr      subx2     0xd00000 ; 11010000rrrrsssstttt0000 544 subx2 ar, as, at
- .instruction rrr      subx4     0xe00000 ; 11100000rrrrsssstttt0000 545 subx4 ar, as, at
- .instruction rrr      subx8     0xf00000 ; 11110000rrrrsssstttt0000 546 subx8 ar, as, at
- .instruction rrr      syscall   0x005000 ; 000000000101000000000000 547 syscall
- .instruction rrr      trunc.s   0x9a0000 ; 10011010rrrrSSSStttt0000 548 trunc.s ar, fs, 0..15
- .instruction rrr      ueq.s     0x3b0000 ; 00111011bbbbSSSSTTTT0000 549 ueq.s br, fs, ft
- .instruction rrr      ufloat.s  0xda0000 ; 11011010RRRRsssstttt0000 550 ufloat.s fr, as, 0..15
- .instruction rrr      ule.s     0x7b0000 ; 01111011bbbbSSSSTTTT0000 551 ule.s br, fs, ft
- .instruction rrr      ult.s     0x5b0000 ; 01011011bbbbSSSSTTTT0000 552 ult.s br, fs, ft
- .instruction rrr      umul.aa.ll 0x700004 ; 011100000000sssstttt0100 553 umul.aa.* as, at
- .instruction rrr      umul.aa.lh 0x710004 ; 011100010000sssstttt0100 553 umul.aa.* as, at
- .instruction rrr      umul.aa.hl 0x720004 ; 011100100000sssstttt0100 553 umul.aa.* as, at
- .instruction rrr      umul.aa.hh 0x730004 ; 011100110000sssstttt0100 553 umul.aa.* as, at
- .instruction rrr      un.s      0x1b0000 ; 00011011bbbbSSSSTTTT0000 554 un.s br, fs, ft
- .instruction rrr      utrunc.s  0xea0000 ; 11101010rrrrSSSStttt0000 555 utrunc.s ar, fs, 0..15
- .instruction rrr      waiti     0x007000 ; 000000000111iiii00000000 556 waiti 0..15
- .instruction rrr      wdtlb     0x50e000 ; 010100001110sssstttt0000 557 wdtlb at, as
- .instruction rrr      wer       0x407000 ; 010000000111sssstttt0000 558 wer at, as
- .instruction rrr      wfr       0xfa0050 ; 11111010RRRRssss01010000 559 wfr fr, as
- .instruction rrr      witlb     0x506000 ; 010100000110sssstttt0000 560 witlb at, as
- .instruction rsr      wsr.*     0x130000 ; 00010011srsrsrsrtttt0000 561 wsr.* at; wsr at,* ; wsr at, 0..255
- .instruction rsr      wur.*     0xf30000 ; 11110011srsrsrsrtttt0000 563 wur.* at; wur at, *
- .instruction rrr      xor       0x300000 ; 00110000rrrrsssstttt0000 564 xor ar, as, at
- .instruction rrr      xorb      0x420000 ; 01000010bbbbbbbbbbbb0000 565 xorb br, bs, bt
- .instruction rsr      xsr.*     0x610000 ; 01100001srsrsrsrtttt0000 566 xsr.* at; xsr at, *; xsr at, 0..255
+ .instruction rrr      mull             0x820000 ; 10000010rrrrsssstttt0000 450 mull ar, as, at
+ .instruction rrr      muls.aa.ll       0x7c0004 ; 011111000000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.lh       0x7d0004 ; 011111010000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.hl       0x7e0004 ; 011111100000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.aa.hh       0x7f0004 ; 011111110000sssstttt0100 451 muls.aa.* as, at
+ .instruction rrr      muls.ad.ll       0x3c0004 ; 001111000000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.lh       0x3d0004 ; 001111010000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.hl       0x3e0004 ; 001111100000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.ad.hh       0x3f0004 ; 001111110000ssss0y000100 452 muls.ad.* as, my
+ .instruction rrr      muls.da.ll       0x6c0004 ; 011011000x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.lh       0x6d0004 ; 011011010x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.hl       0x6e0004 ; 011011100x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.da.hh       0x6f0004 ; 011011110x000000tttt0100 453 muls.da.* mx, at
+ .instruction rrr      muls.dd.ll       0x2c0004 ; 001011000x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.lh       0x2d0004 ; 001011010x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.hl       0x2e0004 ; 001011100x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      muls.dd.hh       0x2f0004 ; 001011110x00ssss0y000100 454 muls.dd.* mx, my
+ .instruction rrr      mulsh            0xd20000 ; 10110010rrrrsssstttt0000 455 mulsh ar, as, at
+ .instruction rrr      muluh            0xa20000 ; 10100010rrrrsssstttt0000 456 muluh ar, as, at
+ .instruction rrr      neg              0x600000 ; 01100000rrrr0000tttt0000 457 neg ar, at
+ .instruction rrr      neg.s            0xfa0060 ; 11111010RRRRSSSS01100000 458 neg.s fr, fs
+ .instruction rrr      nop              0x0020f0 ; 000000000010000011110000 459 nop (or macro for "or an, an, an")
+ .instruction inhn     nop.n              0xf03d ; 1111000000111101         460 nop.n
+ .instruction rrr      nsa              0x40e000 ; 010000001110sssstttt0000 461 nsa at, as
+ .instruction rrr      nsau             0x40f000 ; 010000001111sssstttt0000 462 nsau at, as
+ .instruction rrr      oeq.s            0x2b0000 ; 00101011bbbbSSSSTTTT0000 463 oeq.s br, fs, ft
+ .instruction rrr      ole.s            0x6b0000 ; 01101011bbbbSSSSTTTT0000 464 ole.s br, fs, ft
+ .instruction rrr      olt.s            0x4b0000 ; 01001011bbbbSSSSTTTT0000 465 olt.s br, fs, ft
+ .instruction rrr      or               0x200000 ; 00100000rrrrsssstttt0000 466 or ar, as, at
+ .instruction rrr      orb              0x220000 ; 00100010bbbbbbbbbbbb0000 467 orb br, bs, bt
+ .instruction rrr      orbc             0x320000 ; 00110010bbbbbbbbbbbb0000 468 orbc br, bs, bt
+ .instruction rrr      pdtlb            0x50d000 ; 010100001101sssstttt0000 469 pdtlb at, as
+ .instruction rrr      pitlb            0x505000 ; 010100000101sssstttt0000 470 pitlb at, as
+ .instruction rrr      quos             0xd20000 ; 11010010rrrrsssstttt0000 471 quos ar, as, at
+ .instruction rrr      quou             0xc20000 ; 11000010rrrrsssstttt0000 472 quou ar, as, at
+ .instruction rrr      rdtlb0           0x50b000 ; 010100001011sssstttt0000 473 rdtlb0 at, as
+ .instruction rrr      rdtlb1           0x50f000 ; 010100001111sssstttt0000 474 rdtlb1 at, as
+ .instruction rrr      rems             0xf20000 ; 11110010rrrrsssstttt0000 475 rems ar, as, at
+ .instruction rrr      remu             0xe20000 ; 11100010rrrrsssstttt0000 476 remu ar, as, at
+ .instruction rrr      rer              0x406000 ; 010000000110sssstttt0000 477 rer at, as
+ .instruction inh      ret              0x000080 ; 000000000000000010000000 478 ret
+ .instruction inhn     ret.n              0xf00d ; 1111000000001101         479 ret.n
+ .instruction inh      retw             0x000090 ; 000000000000000010010000 480 retw
+ .instruction inhn     retw.n             0xf01d ;         1111000000011101 482 retw.n
+ .instruction inh      rfdd             0xf1e010 ; 111100011110000000010000 484 rfdd
+ .instruction inh      rfde             0x003200 ; 000000000011001000000000 485 rfde
+ .instruction inh      rfdo             0xf1e000 ; 111100011110000000000000 486 rfdo
+ .instruction inh      rfe              0x003000 ; 000000000011000000000000 487 rfe
+ .instruction rrr      rfi              0x003010 ; 000000000011llll00010000 488 rfi 0..15
+ .instruction inh      rfme             0x003020 ; 000000000011000000100000 489 rfme
+ .instruction rrr      rfr              0xfa0040 ; 11111010rrrrssss01000000 490 rfr ar, as
+ .instruction inh      rfue             0x003100 ; 000000000011000100000000 491 rfue
+ .instruction inh      rfwo             0x003400 ; 000000000011010000000000 492 rfwo
+ .instruction inh      rfwu             0x003500 ; 000000000011010100000000 493 rfwu
+ .instruction rrr      ritlb0           0x503000 ; 010100000011sssstttt0000 494 ritlb0 at, as
+ .instruction rrr      ritlb1           0x507000 ; 010100000111sssstttt0000 495 ritlb1 ar, as
+ .instruction rrr      rotw             0x408000 ; 0100000010000000iiii0000 496 rotw -8..7
+ .instruction rrr      round.s          0x8a0000 ; 10001010rrrrSSSStttt0000 497 round.s ar, fs, 0..15
+ .instruction rrr      rsil             0x006000 ; 000000000110iiiitttt0000 498 rsil at, 0..15
+; .instruction rsr      rsr.*            0x030000 ; 00000011srsrsrsrtttt0000 500 rsr.* at; rsr at, *; rsr at, 0..255
+ .instruction inh      rsync            0x002010 ; 000000000010000000010000 502 rsync
+; .instruction rrr      rur.*            0xe30000 ; 11100011rrrrsssstttt0000 503 rur.* ar; rur ar, *
+ .instruction rri8     s8i              0x004002 ; iiiiiiii0100sssstttt0010 504 s8i at, as, 0..255
+ .instruction rri8     s16i             0x005002 ; iiiiiiii0101sssstttt0010 505 s16i at, as, 0..510
+ .instruction rri8     s32c1i           0x00e002 ; iiiiiiii1110sssstttt0010 506 s32ci at, as, 0..1020
+ .instruction rri4     s32e             0x490000 ; 01001001rrrrsssstttt0000 508 s32e at, as, -64..-4
+ .instruction rri8     s32i             0x006002 ; iiiiiiii0110sssstttt0010 510 s32i at, as, 0..1010
+ .instruction rrrn     s32i.n             0x0009 ;         iiiisssstttt1001 512 s32i.n at, as, 0..60
+ .instruction rri8     s32ri            0x00f002 ; iiiiiiii1111sssstttt0010 514 s32ri at, as, 0..1020
+ .instruction rrr      sdct             0xf19000 ; 111100011001sssstttt0000 516 sdct at, as
+ .instruction rrr      sext             0x230000 ; 00100011rrrrsssstttt0000 518 sext ar, as, 7..22
+ .instruction rrr      sict             0xf11000 ; 111100010001sssstttt0000 519 sict at, as
+ .instruction rrr      sicw             0xf13000 ; 111100010011sssstttt0000 521 sicw at, as
+ .instruction rrr      simcall          0x005100 ; 000000000101000100000000 523 simcall
+ .instruction rrr      sll              0xa10000 ; 10100001rrrrssss00000000 524 sll ar, as
+ .instruction rrr      slli             0x010000 ; 000a0001rrrrssssaaaa0000 525 slli ar, as, 1..31
+ .instruction rrr      sra              0xb10000 ; 10110001rrrr0000tttt0000 526 sra ar, at
+ .instruction rrr      srai             0x210000 ; 001a0001rrrraaaatttt0000 527 srai ar, at, 1..31
+ .instruction rrr      src              0x810000 ; 10000001rrrrsssstttt0000 528 src ar, as, at
+ .instruction rrr      srl              0x910000 ; 10010001rrrr0000tttt0000 529 srl ar, at
+ .instruction rrr      srli             0x410000 ; 01000001rrrraaaatttt0000 530 srli ar, at, 0..15
+ .instruction rrr      ssa8b            0x403000 ; 010000000011ssss00000000 531 ssa8b as
+ .instruction rrr      ssa8l            0x402000 ; 010000000010ssss00000000 532 ssa8l as
+ .instruction rrr      ssai             0x404000 ; 010000000100aaaa000a0000 533 ssai 0..31
+ .instruction rri8     ssi              0x004003 ; iiiiiiii0100ssssTTTT0011 534 ssi ft, as, 0..1020
+ .instruction rri8     ssiu             0x00c003 ; iiiiiiii1100ssssTTTT0011 536 ssiu ft, as, 0..1020
+ .instruction rrr      ssl              0x401000 ; 010000000001ssss00000000 538 ssl as
+ .instruction rrr      ssr              0x400000 ; 010000000000ssss00000000 539 ssr as
+ .instruction rrr      ssx              0x480000 ; 01001000RRRRsssstttt0000 540 ssx fr, as, at
+ .instruction rrr      ssxu             0x580000 ; 01011000RRRRsssstttt0000 541 ssxu fr, as, at
+ .instruction rrr      sub              0xc00000 ; 11000000rrrrsssstttt0000 542 sub ar, as, at
+ .instruction rrr      sub.s            0x1a0000 ; 00011010RRRRSSSSTTTT0000 543 sub.s fr, fs, ft
+ .instruction rrr      subx2            0xd00000 ; 11010000rrrrsssstttt0000 544 subx2 ar, as, at
+ .instruction rrr      subx4            0xe00000 ; 11100000rrrrsssstttt0000 545 subx4 ar, as, at
+ .instruction rrr      subx8            0xf00000 ; 11110000rrrrsssstttt0000 546 subx8 ar, as, at
+ .instruction inh      syscall          0x005000 ; 000000000101000000000000 547 syscall
+ .instruction rrr      trunc.s          0x9a0000 ; 10011010rrrrSSSStttt0000 548 trunc.s ar, fs, 0..15
+ .instruction rrr      ueq.s            0x3b0000 ; 00111011bbbbSSSSTTTT0000 549 ueq.s br, fs, ft
+ .instruction rrr      ufloat.s         0xda0000 ; 11011010RRRRsssstttt0000 550 ufloat.s fr, as, 0..15
+ .instruction rrr      ule.s            0x7b0000 ; 01111011bbbbSSSSTTTT0000 551 ule.s br, fs, ft
+ .instruction rrr      ult.s            0x5b0000 ; 01011011bbbbSSSSTTTT0000 552 ult.s br, fs, ft
+ .instruction rrr      umul.aa.ll       0x700004 ; 011100000000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.lh       0x710004 ; 011100010000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.hl       0x720004 ; 011100100000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      umul.aa.hh       0x730004 ; 011100110000sssstttt0100 553 umul.aa.* as, at
+ .instruction rrr      un.s             0x1b0000 ; 00011011bbbbSSSSTTTT0000 554 un.s br, fs, ft
+ .instruction rrr      utrunc.s         0xea0000 ; 11101010rrrrSSSStttt0000 555 utrunc.s ar, fs, 0..15
+ .instruction rrr      waiti            0x007000 ; 000000000111iiii00000000 556 waiti 0..15
+ .instruction rrr      wdtlb            0x50e000 ; 010100001110sssstttt0000 557 wdtlb at, as
+ .instruction rrr      wer              0x407000 ; 010000000111sssstttt0000 558 wer at, as
+ .instruction rrr      wfr              0xfa0050 ; 11111010RRRRssss01010000 559 wfr fr, as
+ .instruction rrr      witlb            0x506000 ; 010100000110sssstttt0000 560 witlb at, as
+; .instruction rsr      wsr.*            0x130000 ; 00010011srsrsrsrtttt0000 561 wsr.* at; wsr at,* ; wsr at, 0..255
+; .instruction rsr      wur.*            0xf30000 ; 11110011srsrsrsrtttt0000 563 wur.* at; wur at, *
+ .instruction rrr      xor              0x300000 ; 00110000rrrrsssstttt0000 564 xor ar, as, at
+ .instruction rrr      xorb             0x420000 ; 01000010bbbbbbbbbbbb0000 565 xorb br, bs, bt
+; .instruction rsr      xsr.*            0x610000 ; 01100001srsrsrsrtttt0000 566 xsr.* at; xsr at, *; xsr at, 0..255
+ .assemble

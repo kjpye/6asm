@@ -7,7 +7,7 @@
  .instruction lsh  srai       0x40005013
  .instruction i    addiw      0x0000001b
  .macro sext.w
- addiw @0, @1, 0
+  addiw @0, @1, 0
  .endm
  .instruction sh   slliw      0x0000101b
  .instruction sh   srliw      0x0000501b

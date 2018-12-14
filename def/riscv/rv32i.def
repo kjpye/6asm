@@ -5,35 +5,35 @@
  .instruction u    auipc      0x00000017
  .instruction uj   jal        0x0000006f
  .macro j
- jal x0, @0
+  jal x0, @0
  .endm
  .instruction i    jalr       0x00000067
  .macro jr
- jalr x0, @0, 0
+  jalr x0, @0, 0
  .endm
  .instruction sb   beq        0x00000063
  .macro beqz
- beq @0, x0, @1
+  beq @0, x0, @1
  .endm
  .instruction sb   bne        0x00001063
  .macro bnez
- bne @0, x0, @1
+  bne @0, x0, @1
  .endm
  .instruction sb   blt        0x00004063
  .macro bgt
- blt @1, @0, @2
+  blt @1, @0, @2
  .endm
  .instruction sb   bge        0x00005063
  .macro ble
- bge @1, @0, @2
+  bge @1, @0, @2
  .endm
  .instruction sb   bltu       0x00006063
  .macro bgtu
- bltu @1, @0, @2
+  bltu @1, @0, @2
  .endm
  .instruction sb   bgeu       0x00007063
  .macro bleu
- bgeu @1, @0, @2
+  bgeu @1, @0, @2
  .endm
  .instruction i    lb         0x00000003
  .instruction i    lh         0x00001003
@@ -45,22 +45,22 @@
  .instruction s    sw         0x00002023
  .instruction i    addi       0x00000013
  .macro mv
- addi @0, @1, 0
+  addi @0, @1, 0
  .endm
  .macro nop
- addi x0, x0, 0
+  addi x0, x0, 0
  .endm
  .macro li
- addi @0, x0, @1
+  addi @0, x0, @1
  .endm
  .instruction i    slti       0x00002013
  .instruction i    sltiu      0x00003013
  .macro seqz
- sltiu @0, @1, 1
+  sltiu @0, @1, 1
  .endm
  .instruction i    xori       0x00004013
  .macro not
- xori @0, @1, -1
+  xori @0, @1, -1
  .endm
  .instruction i    ori        0x00006013
  .instruction i    andi       0x00007013
@@ -73,7 +73,7 @@
  .instruction r    slt        0x00002033
  .instruction r    sltu       0x00003033
  .macro snez
- sltu @0, x0, @1
+  sltu @0, x0, @1
  .endm
  .instruction r    xor        0x00004033
  .instruction r    srl        0x00005033

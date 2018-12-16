@@ -89,15 +89,18 @@
         .define fa7  f17
         .define fs2  f18
         .define fs3  f19
-        .define fs4  f10
-        .define fs5  f11
-        .define fs6  f12
-        .define fs7  f13
-        .define fs8  f14
-        .define fs9  f15
-        .define fs10 f16
-        .define fs11 f17
-        .define ft8  f17
+        .define fs4  f20
+        .define fs5  f21
+        .define fs6  f22
+        .define fs7  f23
+        .define fs8  f24
+        .define fs9  f25
+        .define fs10 f26
+        .define fs11 f27
+        .define ft8  f28
+        .define ft9  f29
+        .define ft10 f30
+        .define ft11 f31
   
  .assemble
 

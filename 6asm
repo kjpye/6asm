@@ -107,7 +107,7 @@ my $isa = '';
 my %instructions;
 
 # This should be a macro!
-sub make_hash(Str $isa, Str $instr) {
+sub make-hash(Str $isa, Str $instr) {
   %instructions{$isa}{$instr}<array> = "{$isa}_instr_{$instr}";
 }
 
@@ -254,55 +254,55 @@ my $instructionset = %instructionset<assembler>;
 
 # Variables required for AVR
 
-my @avr_instr_inh;      make_hash('avr', 'inh'    );
-my @avr_instr_rr;       make_hash('avr', 'rr'     );
-my @avr_instr_ww;       make_hash('avr', 'ww'     );
-my @avr_instr_rr3;      make_hash('avr', 'rr3'    );
-my @avr_instr_rr4;      make_hash('avr', 'rr4'    );
-my @avr_instr_r2;       make_hash('avr', 'r2'     );
-my @avr_instr_r;        make_hash('avr', 'r'      );
-my @avr_instr_r_reg;    make_hash('avr', 'r_reg'  );
-my @avr_instr_iw;       make_hash('avr', 'iw'     );
-my @avr_instr_ir;       make_hash('avr', 'ir'     );
-my @avr_instr_i6r;      make_hash('avr', 'i6r'    );
-my @avr_instr_out;      make_hash('avr', 'out'    );
-my @avr_instr_irc;      make_hash('avr', 'irc'    );
-my @avr_instr_sreg;     make_hash('avr', 'sreg'   );
-my @avr_instr_tbit;     make_hash('avr', 'tbit'   );
-my @avr_instr_brb;      make_hash('avr', 'brb'    );
-my @avr_instr_branch;   make_hash('avr', 'branch' );
-my @avr_instr_lbranch;  make_hash('avr', 'lbranch');
-my @avr_instr_long;     make_hash('avr', 'long'   );
-my @avr_instr_lds;      make_hash('avr', 'lds'    );
-my @avr_instr_sts;      make_hash('avr', 'sts'    );
-my @avr_instr_bio;      make_hash('avr', 'bio'    );
-my @avr_instr_i4;       make_hash('avr', 'i4'     );
-my @avr_instr_rx;       make_hash('avr', 'rx'     );
-my @avr_instr_xr;       make_hash('avr', 'xr'     );
-my @avr_instr_rxplus;   make_hash('avr', 'rxplus' );
-my @avr_instr_xrplus;   make_hash('avr', 'xrplus' );
-my @avr_instr_rxminus;  make_hash('avr', 'rxminus');
-my @avr_instr_xrminus;  make_hash('avr', 'xrminus');
-my @avr_instr_ry;       make_hash('avr', 'ry'     );
-my @avr_instr_yr;       make_hash('avr', 'yr'     );
-my @avr_instr_ryplus;   make_hash('avr', 'ryplus' );
-my @avr_instr_yrplus;   make_hash('avr', 'yrplus' );
-my @avr_instr_ryminus;  make_hash('avr', 'ryminus');
-my @avr_instr_yrminus;  make_hash('avr', 'yrminus');
-my @avr_instr_ryq;      make_hash('avr', 'ryq'    );
-my @avr_instr_yrq;      make_hash('avr', 'yrq'    );
-my @avr_instr_rz;       make_hash('avr', 'rz'     );
-my @avr_instr_stzr;     make_hash('avr', 'stzr'   );
-my @avr_instr_rzplus;   make_hash('avr', 'rzplus' );
-my @avr_instr_zrplus;   make_hash('avr', 'zrplus' );
-my @avr_instr_rzminus;  make_hash('avr', 'rzminus');
-my @avr_instr_zrminus;  make_hash('avr', 'zrminus');
-my @avr_instr_rzq;      make_hash('avr', 'rzq'    );
-my @avr_instr_zrq;      make_hash('avr', 'zrq'    );
-my @avr_instr_z;        make_hash('avr', 'z'      );
-my @avr_instr_zr;       make_hash('avr', 'zr'     );
-my @avr_instr_zplus;    make_hash('avr', 'zplus'  );
-my @avr_instr_noz;      make_hash('avr', 'noz'    );
+my @avr_instr_inh;      make-hash('avr', 'inh'    );
+my @avr_instr_rr;       make-hash('avr', 'rr'     );
+my @avr_instr_ww;       make-hash('avr', 'ww'     );
+my @avr_instr_rr3;      make-hash('avr', 'rr3'    );
+my @avr_instr_rr4;      make-hash('avr', 'rr4'    );
+my @avr_instr_r2;       make-hash('avr', 'r2'     );
+my @avr_instr_r;        make-hash('avr', 'r'      );
+my @avr_instr_r_reg;    make-hash('avr', 'r_reg'  );
+my @avr_instr_iw;       make-hash('avr', 'iw'     );
+my @avr_instr_ir;       make-hash('avr', 'ir'     );
+my @avr_instr_i6r;      make-hash('avr', 'i6r'    );
+my @avr_instr_out;      make-hash('avr', 'out'    );
+my @avr_instr_irc;      make-hash('avr', 'irc'    );
+my @avr_instr_sreg;     make-hash('avr', 'sreg'   );
+my @avr_instr_tbit;     make-hash('avr', 'tbit'   );
+my @avr_instr_brb;      make-hash('avr', 'brb'    );
+my @avr_instr_branch;   make-hash('avr', 'branch' );
+my @avr_instr_lbranch;  make-hash('avr', 'lbranch');
+my @avr_instr_long;     make-hash('avr', 'long'   );
+my @avr_instr_lds;      make-hash('avr', 'lds'    );
+my @avr_instr_sts;      make-hash('avr', 'sts'    );
+my @avr_instr_bio;      make-hash('avr', 'bio'    );
+my @avr_instr_i4;       make-hash('avr', 'i4'     );
+my @avr_instr_rx;       make-hash('avr', 'rx'     );
+my @avr_instr_xr;       make-hash('avr', 'xr'     );
+my @avr_instr_rxplus;   make-hash('avr', 'rxplus' );
+my @avr_instr_xrplus;   make-hash('avr', 'xrplus' );
+my @avr_instr_rxminus;  make-hash('avr', 'rxminus');
+my @avr_instr_xrminus;  make-hash('avr', 'xrminus');
+my @avr_instr_ry;       make-hash('avr', 'ry'     );
+my @avr_instr_yr;       make-hash('avr', 'yr'     );
+my @avr_instr_ryplus;   make-hash('avr', 'ryplus' );
+my @avr_instr_yrplus;   make-hash('avr', 'yrplus' );
+my @avr_instr_ryminus;  make-hash('avr', 'ryminus');
+my @avr_instr_yrminus;  make-hash('avr', 'yrminus');
+my @avr_instr_ryq;      make-hash('avr', 'ryq'    );
+my @avr_instr_yrq;      make-hash('avr', 'yrq'    );
+my @avr_instr_rz;       make-hash('avr', 'rz'     );
+my @avr_instr_stzr;     make-hash('avr', 'stzr'   );
+my @avr_instr_rzplus;   make-hash('avr', 'rzplus' );
+my @avr_instr_zrplus;   make-hash('avr', 'zrplus' );
+my @avr_instr_rzminus;  make-hash('avr', 'rzminus');
+my @avr_instr_zrminus;  make-hash('avr', 'zrminus');
+my @avr_instr_rzq;      make-hash('avr', 'rzq'    );
+my @avr_instr_zrq;      make-hash('avr', 'zrq'    );
+my @avr_instr_z;        make-hash('avr', 'z'      );
+my @avr_instr_zr;       make-hash('avr', 'zr'     );
+my @avr_instr_zplus;    make-hash('avr', 'zplus'  );
+my @avr_instr_noz;      make-hash('avr', 'noz'    );
 
 # Rules for AVR
 
@@ -846,26 +846,26 @@ grammar Avr is Assembler {
 
 # Variables required for PIC
 
-my @pic10_instr_inh;      make_hash('pic10', 'inh');
-my @pic10_instr_byte;     make_hash('pic10', 'byte');
-my @pic10_instr_bytes;    make_hash('pic10', 'bytes');
-my @pic10_instr_bit;      make_hash('pic10', 'bit');
-my @pic10_instr_lit;      make_hash('pic10', 'lit');
-my @pic10_instr_goto;     make_hash('pic10', 'goto');
-my @pic10_instr_tris;     make_hash('pic10', 'tris');
+my @pic10_instr_inh;      make-hash('pic10', 'inh');
+my @pic10_instr_byte;     make-hash('pic10', 'byte');
+my @pic10_instr_bytes;    make-hash('pic10', 'bytes');
+my @pic10_instr_bit;      make-hash('pic10', 'bit');
+my @pic10_instr_lit;      make-hash('pic10', 'lit');
+my @pic10_instr_goto;     make-hash('pic10', 'goto');
+my @pic10_instr_tris;     make-hash('pic10', 'tris');
 
-my @pic18_instr_inh;      make_hash('pic18', 'inh');
-my @pic18_instr_bytefda;  make_hash('pic18', 'bytefda');
-my @pic18_instr_bytefa;   make_hash('pic18', 'bytefa');
-my @pic18_instr_byteff;   make_hash('pic18', 'byteff');
-my @pic18_instr_bit;      make_hash('pic18', 'bit');
-my @pic18_instr_branch;   make_hash('pic18', 'branch');
-my @pic18_instr_lbranch;  make_hash('pic18', 'lbranch');
-my @pic18_instr_call;     make_hash('pic18', 'call');
-my @pic18_instr_ret;      make_hash('pic18', 'ret');
-my @pic18_instr_lit;      make_hash('pic18', 'lit');
-my @pic18_instr_bsr;      make_hash('pic18', 'bsr');
-my @pic18_instr_tblrd;    make_hash('pic18', 'tblrd');
+my @pic18_instr_inh;      make-hash('pic18', 'inh');
+my @pic18_instr_bytefda;  make-hash('pic18', 'bytefda');
+my @pic18_instr_bytefa;   make-hash('pic18', 'bytefa');
+my @pic18_instr_byteff;   make-hash('pic18', 'byteff');
+my @pic18_instr_bit;      make-hash('pic18', 'bit');
+my @pic18_instr_branch;   make-hash('pic18', 'branch');
+my @pic18_instr_lbranch;  make-hash('pic18', 'lbranch');
+my @pic18_instr_call;     make-hash('pic18', 'call');
+my @pic18_instr_ret;      make-hash('pic18', 'ret');
+my @pic18_instr_lit;      make-hash('pic18', 'lit');
+my @pic18_instr_bsr;      make-hash('pic18', 'bsr');
+my @pic18_instr_tblrd;    make-hash('pic18', 'tblrd');
 
 # Rules for PIC
 
@@ -1122,14 +1122,14 @@ grammar Pic18 is Assembler {
 
 # Variables required for mc6809
 
-my @mc6809_instr_inh;   make_hash('mc6809', 'inh');
-my @mc6809_instr_imm8;  make_hash('mc6809', 'imm8');
-my @mc6809_instr_imm16; make_hash('mc6809', 'imm16');
-my @mc6809_instr_die;   make_hash('mc6809', 'die');
-my @mc6809_instr_br;    make_hash('mc6809', 'br');
-my @mc6809_instr_lbr;   make_hash('mc6809', 'lbr');
-my @mc6809_instr_tfr;   make_hash('mc6809', 'tfr');
-my @mc6809_instr_psh;   make_hash('mc6809', 'psh');
+my @mc6809_instr_inh;   make-hash('mc6809', 'inh');
+my @mc6809_instr_imm8;  make-hash('mc6809', 'imm8');
+my @mc6809_instr_imm16; make-hash('mc6809', 'imm16');
+my @mc6809_instr_die;   make-hash('mc6809', 'die');
+my @mc6809_instr_br;    make-hash('mc6809', 'br');
+my @mc6809_instr_lbr;   make-hash('mc6809', 'lbr');
+my @mc6809_instr_tfr;   make-hash('mc6809', 'tfr');
+my @mc6809_instr_psh;   make-hash('mc6809', 'psh');
 
 # Rules for mc6809
 
@@ -1424,14 +1424,14 @@ grammar Mc6809 is Assembler {
 
 # Variables required for 68hc11
 
-my @mc68hc11_instr_inh;   make_hash('mc68hc11', 'inh');
-my @mc68hc11_instr_br;    make_hash('mc68hc11', 'br');
-my @mc68hc11_instr_die;   make_hash('mc68hc11', 'die');
-my @mc68hc11_instr_imm8;  make_hash('mc68hc11', 'imm8');
-my @mc68hc11_instr_imm16; make_hash('mc68hc11', 'imm16');
-my @mc68hc11_instr_ei;    make_hash('mc68hc11', 'ei');
-my @mc68hc11_instr_bit;   make_hash('mc68hc11', 'bit');
-my @mc68hc11_instr_bbr;   make_hash('mc68hc11', 'bbr');
+my @mc68hc11_instr_inh;   make-hash('mc68hc11', 'inh');
+my @mc68hc11_instr_br;    make-hash('mc68hc11', 'br');
+my @mc68hc11_instr_die;   make-hash('mc68hc11', 'die');
+my @mc68hc11_instr_imm8;  make-hash('mc68hc11', 'imm8');
+my @mc68hc11_instr_imm16; make-hash('mc68hc11', 'imm16');
+my @mc68hc11_instr_ei;    make-hash('mc68hc11', 'ei');
+my @mc68hc11_instr_bit;   make-hash('mc68hc11', 'bit');
+my @mc68hc11_instr_bbr;   make-hash('mc68hc11', 'bbr');
 
 grammar Mc68hc11 is Assembler {
   token mc68hc11_acc                  { < a b >
@@ -1670,15 +1670,15 @@ grammar Arm is Assembler {
 
 # Variables required for standard ARM instruction set
 
-my @armfull_instr_inh;      make_hash('armfull', 'inh');
-my @armfull_instr_mul;      make_hash('armfull', 'mul');
-my @armfull_instr_mla;      make_hash('armfull', 'mla');
-my @armfull_instr_mull;     make_hash('armfull', 'mull');
-my @armfull_instr_sds;      make_hash('armfull', 'sds');
-my @armfull_instr_brx;      make_hash('armfull', 'brx');
-my @armfull_instr_hdt;      make_hash('armfull', 'hdt');
-my @armfull_instr_sdt;      make_hash('armfull', 'sdt');
-my @armfull_instr_bdt;      make_hash('armfull', 'bdt');
+my @armfull_instr_inh;      make-hash('armfull', 'inh');
+my @armfull_instr_mul;      make-hash('armfull', 'mul');
+my @armfull_instr_mla;      make-hash('armfull', 'mla');
+my @armfull_instr_mull;     make-hash('armfull', 'mull');
+my @armfull_instr_sds;      make-hash('armfull', 'sds');
+my @armfull_instr_brx;      make-hash('armfull', 'brx');
+my @armfull_instr_hdt;      make-hash('armfull', 'hdt');
+my @armfull_instr_sdt;      make-hash('armfull', 'sdt');
+my @armfull_instr_bdt;      make-hash('armfull', 'bdt');
 
 grammar Armfull is Arm {
   proto regex arm_shift               { <*>                                                                                }
@@ -1924,9 +1924,9 @@ grammar Armfull is Arm {
 
 # Variables required for ARM thumb instruction sets
 
-my @thumb_instr_inh;    make_hash('thumb', 'inh');
-my @thumb_instr_arimm;  make_hash('thumb', 'arimm');
-my @thumb_instr_arreg;  make_hash('thumb', 'arreg');
+my @thumb_instr_inh;    make-hash('thumb', 'inh');
+my @thumb_instr_arimm;  make-hash('thumb', 'arimm');
+my @thumb_instr_arreg;  make-hash('thumb', 'arreg');
 
 grammar Thumb is Arm {
   token thumb_width                  { [ '.' (<[nNwW]>) ]?
@@ -2012,47 +2012,47 @@ grammar Thumb is Arm {
 
 # MIPS32 architectures
 
-my @mips32_instr_inh;    make_hash('mips32', 'inh'   );
-my @mips32_instr_dst;    make_hash('mips32', 'dst'   );
-my @mips32_instr_dts;    make_hash('mips32', 'dts'   );
-my @mips32_instr_dtc;    make_hash('mips32', 'dtc'   );
-my @mips32_instr_td;     make_hash('mips32', 'td'    );
-my @mips32_instr_tdselq; make_hash('mips32', 'tdselq');
-my @mips32_instr_dt;     make_hash('mips32', 'dt'    );
-my @mips32_instr_d;      make_hash('mips32', 'd'     );
-my @mips32_instr_st;     make_hash('mips32', 'st'    );
-my @mips32_instr_dsd;    make_hash('mips32', 'dsd'   );
-my @mips32_instr_tsi;    make_hash('mips32', 'tsi'   );
-my @mips32_instr_ti;     make_hash('mips32', 'ti'    );
-my @mips32_instr_b16;    make_hash('mips32', 'b16'   );
-my @mips32_instr_sto;    make_hash('mips32', 'sto'   );
-my @mips32_instr_so;     make_hash('mips32', 'so'    );
-my @mips32_instr_si;     make_hash('mips32', 'si'    );
-my @mips32_instr_oob;    make_hash('mips32', 'oob'   );
-my @mips32_instr_hib;    make_hash('mips32', 'hib'   );
-my @mips32_instr_qt;     make_hash('mips32', 'qt'    );
-my @mips32_instr_ext;    make_hash('mips32', 'ext'   );
-my @mips32_instr_ins;    make_hash('mips32', 'ins'   );
-my @mips32_instr_j;      make_hash('mips32', 'j'     );
-my @mips32_instr_s;      make_hash('mips32', 's'     );
-my @mips32_instr_jalr;   make_hash('mips32', 'jalr'  );
-my @mips32_instr_tob;    make_hash('mips32', 'tob'   );
-my @mips32_instr_ftob;   make_hash('mips32', 'ftob'  );
-my @mips32_instr_ob;     make_hash('mips32', 'ob'    );
-my @mips32_instr_sys;    make_hash('mips32', 'sys'   );
-my @mips32_instr_cqo;    make_hash('mips32', 'cqo'   );
-my @mips32_instr_cqfst;  make_hash('mips32', 'cqfst' );
-my @mips32_instr_func;   make_hash('mips32', 'func'  );
-my @mips32_instr_tisq;   make_hash('mips32', 'tisq'  );
-my @mips32_instr_fds;    make_hash('mips32', 'fds'   );
-my @mips32_instr_fdst;   make_hash('mips32', 'fdst'  );
-my @mips32_instr_fdsrt;  make_hash('mips32', 'fdsrt' );
-my @mips32_instr_fdsts;  make_hash('mips32', 'fdsts' );
-my @mips32_instr_fdrst;  make_hash('mips32', 'fdrst' );
-my @mips32_instr_tfs;    make_hash('mips32', 'tfs'   );
-my @mips32_instr_fdib;   make_hash('mips32', 'fdib'  );
-my @mips32_instr_dsc;    make_hash('mips32', 'dsc'   );
-my @mips32_instr_fdsc;   make_hash('mips32', 'fdsc'  );
+my @mips32_instr_inh;    make-hash('mips32', 'inh'   );
+my @mips32_instr_dst;    make-hash('mips32', 'dst'   );
+my @mips32_instr_dts;    make-hash('mips32', 'dts'   );
+my @mips32_instr_dtc;    make-hash('mips32', 'dtc'   );
+my @mips32_instr_td;     make-hash('mips32', 'td'    );
+my @mips32_instr_tdselq; make-hash('mips32', 'tdselq');
+my @mips32_instr_dt;     make-hash('mips32', 'dt'    );
+my @mips32_instr_d;      make-hash('mips32', 'd'     );
+my @mips32_instr_st;     make-hash('mips32', 'st'    );
+my @mips32_instr_dsd;    make-hash('mips32', 'dsd'   );
+my @mips32_instr_tsi;    make-hash('mips32', 'tsi'   );
+my @mips32_instr_ti;     make-hash('mips32', 'ti'    );
+my @mips32_instr_b16;    make-hash('mips32', 'b16'   );
+my @mips32_instr_sto;    make-hash('mips32', 'sto'   );
+my @mips32_instr_so;     make-hash('mips32', 'so'    );
+my @mips32_instr_si;     make-hash('mips32', 'si'    );
+my @mips32_instr_oob;    make-hash('mips32', 'oob'   );
+my @mips32_instr_hib;    make-hash('mips32', 'hib'   );
+my @mips32_instr_qt;     make-hash('mips32', 'qt'    );
+my @mips32_instr_ext;    make-hash('mips32', 'ext'   );
+my @mips32_instr_ins;    make-hash('mips32', 'ins'   );
+my @mips32_instr_j;      make-hash('mips32', 'j'     );
+my @mips32_instr_s;      make-hash('mips32', 's'     );
+my @mips32_instr_jalr;   make-hash('mips32', 'jalr'  );
+my @mips32_instr_tob;    make-hash('mips32', 'tob'   );
+my @mips32_instr_ftob;   make-hash('mips32', 'ftob'  );
+my @mips32_instr_ob;     make-hash('mips32', 'ob'    );
+my @mips32_instr_sys;    make-hash('mips32', 'sys'   );
+my @mips32_instr_cqo;    make-hash('mips32', 'cqo'   );
+my @mips32_instr_cqfst;  make-hash('mips32', 'cqfst' );
+my @mips32_instr_func;   make-hash('mips32', 'func'  );
+my @mips32_instr_tisq;   make-hash('mips32', 'tisq'  );
+my @mips32_instr_fds;    make-hash('mips32', 'fds'   );
+my @mips32_instr_fdst;   make-hash('mips32', 'fdst'  );
+my @mips32_instr_fdsrt;  make-hash('mips32', 'fdsrt' );
+my @mips32_instr_fdsts;  make-hash('mips32', 'fdsts' );
+my @mips32_instr_fdrst;  make-hash('mips32', 'fdrst' );
+my @mips32_instr_tfs;    make-hash('mips32', 'tfs'   );
+my @mips32_instr_fdib;   make-hash('mips32', 'fdib'  );
+my @mips32_instr_dsc;    make-hash('mips32', 'dsc'   );
+my @mips32_instr_fdsc;   make-hash('mips32', 'fdsc'  );
 
 grammar Mips32 is Assembler {
   token mips32_reg                    { <[rR]> ( \d+ ) [ '+' (\d+) ]?
@@ -2456,25 +2456,25 @@ grammar Mips32 is Assembler {
 
 # Risc-V
 
-my @riscv_instr_inh;   make_hash('riscv', 'inh');
-my @riscv_instr_rd;    make_hash('riscv', 'rd');
-my @riscv_instr_r;     make_hash('riscv', 'r');
-my @riscv_instr_r2;    make_hash('riscv', 'r2');
-my @riscv_instr_fr;    make_hash('riscv', 'fr');
-my @riscv_instr_fr2;   make_hash('riscv', 'fr2');
-my @riscv_instr_fr4;   make_hash('riscv', 'fr4');
-my @riscv_instr_ra;    make_hash('riscv', 'ra');
-my @riscv_instr_ra0;   make_hash('riscv', 'ra0');
-my @riscv_instr_sh;    make_hash('riscv', 'sh');
-my @riscv_instr_lsh;   make_hash('riscv', 'lsh');
-my @riscv_instr_i;     make_hash('riscv', 'i');
-my @riscv_instr_fi;    make_hash('riscv', 'fi');
-my @riscv_instr_s;     make_hash('riscv', 's');
-my @riscv_instr_fs;    make_hash('riscv', 'fs');
-my @riscv_instr_sb;    make_hash('riscv', 'sb');
-my @riscv_instr_u;     make_hash('riscv', 'u');
-my @riscv_instr_uj;    make_hash('riscv', 'uj');
-my @riscv_instr_fence; make_hash('riscv', 'fence');
+my @riscv_instr_inh;   make-hash('riscv', 'inh');
+my @riscv_instr_rd;    make-hash('riscv', 'rd');
+my @riscv_instr_r;     make-hash('riscv', 'r');
+my @riscv_instr_r2;    make-hash('riscv', 'r2');
+my @riscv_instr_fr;    make-hash('riscv', 'fr');
+my @riscv_instr_fr2;   make-hash('riscv', 'fr2');
+my @riscv_instr_fr4;   make-hash('riscv', 'fr4');
+my @riscv_instr_ra;    make-hash('riscv', 'ra');
+my @riscv_instr_ra0;   make-hash('riscv', 'ra0');
+my @riscv_instr_sh;    make-hash('riscv', 'sh');
+my @riscv_instr_lsh;   make-hash('riscv', 'lsh');
+my @riscv_instr_i;     make-hash('riscv', 'i');
+my @riscv_instr_fi;    make-hash('riscv', 'fi');
+my @riscv_instr_s;     make-hash('riscv', 's');
+my @riscv_instr_fs;    make-hash('riscv', 'fs');
+my @riscv_instr_sb;    make-hash('riscv', 'sb');
+my @riscv_instr_u;     make-hash('riscv', 'u');
+my @riscv_instr_uj;    make-hash('riscv', 'uj');
+my @riscv_instr_fence; make-hash('riscv', 'fence');
 
 grammar RiscV is Assembler {
   proto regex riscv_reg              { <*>                                                                                }
@@ -2830,31 +2830,31 @@ grammar RiscV is Assembler {
 
 # 8051 type cpus
 
-my @i8051_instr_inh;    make_hash('i8051', 'inh');
-my @i8051_instr_single; make_hash('i8051', 'single');
-my @i8051_instr_arith;  make_hash('i8051', 'arith');
-my @i8051_instr_addr11; make_hash('i8051', 'addr11');
-my @i8051_instr_addr16; make_hash('i8051', 'addr16');
-my @i8051_instr_bitoff; make_hash('i8051', 'bitoff');
-my @i8051_instr_acc;    make_hash('i8051', 'acc');
-my @i8051_instr_offset; make_hash('i8051', 'offset');
-my @i8051_instr_rarith; make_hash('i8051', 'rarith');
-my @i8051_instr_logic;  make_hash('i8051', 'logic');
-my @i8051_instr_rlogic; make_hash('i8051', 'rlogic');
-my @i8051_instr_adptr;  make_hash('i8051', 'adptr');
-my @i8051_instr_mov;    make_hash('i8051', 'mov');
-my @i8051_instr_mov2;   make_hash('i8051', 'mov2');
-my @i8051_instr_mov3;   make_hash('i8051', 'mov3');
-my @i8051_instr_mov4;   make_hash('i8051', 'mov4');
-my @i8051_instr_movc;   make_hash('i8051', 'movc');
-my @i8051_instr_movC;   make_hash('i8051', 'movC');
-my @i8051_instr_movd;   make_hash('i8051', 'movd');
-my @i8051_instr_mul;    make_hash('i8051', 'mul');
-my @i8051_instr_dptr;   make_hash('i8051', 'dptr');
-my @i8051_instr_bit;    make_hash('i8051', 'bit');
-my @i8051_instr_cjne;   make_hash('i8051', 'cjne');
-my @i8051_instr_djnz;   make_hash('i8051', 'djnz');
-my @i8051_instr_direct; make_hash('i8051', 'direct');
+my @i8051_instr_inh;    make-hash('i8051', 'inh');
+my @i8051_instr_single; make-hash('i8051', 'single');
+my @i8051_instr_arith;  make-hash('i8051', 'arith');
+my @i8051_instr_addr11; make-hash('i8051', 'addr11');
+my @i8051_instr_addr16; make-hash('i8051', 'addr16');
+my @i8051_instr_bitoff; make-hash('i8051', 'bitoff');
+my @i8051_instr_acc;    make-hash('i8051', 'acc');
+my @i8051_instr_offset; make-hash('i8051', 'offset');
+my @i8051_instr_rarith; make-hash('i8051', 'rarith');
+my @i8051_instr_logic;  make-hash('i8051', 'logic');
+my @i8051_instr_rlogic; make-hash('i8051', 'rlogic');
+my @i8051_instr_adptr;  make-hash('i8051', 'adptr');
+my @i8051_instr_mov;    make-hash('i8051', 'mov');
+my @i8051_instr_mov2;   make-hash('i8051', 'mov2');
+my @i8051_instr_mov3;   make-hash('i8051', 'mov3');
+my @i8051_instr_mov4;   make-hash('i8051', 'mov4');
+my @i8051_instr_movc;   make-hash('i8051', 'movc');
+my @i8051_instr_movC;   make-hash('i8051', 'movC');
+my @i8051_instr_movd;   make-hash('i8051', 'movd');
+my @i8051_instr_mul;    make-hash('i8051', 'mul');
+my @i8051_instr_dptr;   make-hash('i8051', 'dptr');
+my @i8051_instr_bit;    make-hash('i8051', 'bit');
+my @i8051_instr_cjne;   make-hash('i8051', 'cjne');
+my @i8051_instr_djnz;   make-hash('i8051', 'djnz');
+my @i8051_instr_direct; make-hash('i8051', 'direct');
 
 grammar I8051 is Assembler {
   token i8051_reg                    { :i 'r' $<regno>=( \d+ )
@@ -3319,30 +3319,30 @@ my %extensa-shortimmediate = (
 			     128 => 14,
 			     256 => 15,
                             );
-my @extensa_instr_inh;       make_hash('extensa', 'inh');
-my @extensa_instr_inhn;      make_hash('extensa', 'inhn');
-my @extensa_instr_rrr_rs;    make_hash('extensa', 'rrr_rs');
-my @extensa_instr_rrr_rst;   make_hash('extensa', 'rrr_rst');
-my @extensa_instr_rrr_brst;  make_hash('extensa', 'rrr_brst');
-my @extensa_instr_rrr_rt;    make_hash('extensa', 'rrr_rt');
-my @extensa_instr_rrrn_rsi;  make_hash('extensa', 'rrrn_rsi');
-my @extensa_instr_rrrn_rst;  make_hash('extensa', 'rrrn_rst');
-my @extensa_instr_rri8_stl;  make_hash('extensa', 'rri8_stl');
-my @extensa_instr_rri8_s5l;  make_hash('extensa', 'rri8_s5l');
-my @extensa_instr_rri8_sil;  make_hash('extensa', 'rri8_sil');
-my @extensa_instr_rri8_ts16; make_hash('extensa', 'rri8_ts16');
-my @extensa_instr_bri12_sl;  make_hash('extensa', 'bri12_sl');
-my @extensa_instr_rrr_bts;   make_hash('extensa', 'rrr_bts');
-my @extensa_instr_ri6_sl;    make_hash('extensa', 'ri6_sl');
-my @extensa_instr_rrr_Rs4;   make_hash('extensa', 'rrr_Rs4');
-my @extensa_instr_rrr_rs4;   make_hash('extensa', 'rrr_rs4');
-my @extensa_instr_call_l;    make_hash('extensa', 'call_l');
-my @extensa_instr_callx_s;   make_hash('extensa', 'callx_s');
-my @extensa_instr_rrr_rtii;  make_hash('extensa', 'rrr_rtii');
-my @extensa_instr_rrr_55;    make_hash('extensa', 'rrr_55');
-my @extensa_instr_rrrn_s;    make_hash('extensa', 'rrrn_s');
+my @extensa_instr_inh;       make-hash('extensa', 'inh');
+my @extensa_instr_inhn;      make-hash('extensa', 'inhn');
+my @extensa_instr_rrr_rs;    make-hash('extensa', 'rrr_rs');
+my @extensa_instr_rrr_rst;   make-hash('extensa', 'rrr_rst');
+my @extensa_instr_rrr_brst;  make-hash('extensa', 'rrr_brst');
+my @extensa_instr_rrr_rt;    make-hash('extensa', 'rrr_rt');
+my @extensa_instr_rrrn_rsi;  make-hash('extensa', 'rrrn_rsi');
+my @extensa_instr_rrrn_rst;  make-hash('extensa', 'rrrn_rst');
+my @extensa_instr_rri8_stl;  make-hash('extensa', 'rri8_stl');
+my @extensa_instr_rri8_s5l;  make-hash('extensa', 'rri8_s5l');
+my @extensa_instr_rri8_sil;  make-hash('extensa', 'rri8_sil');
+my @extensa_instr_rri8_ts16; make-hash('extensa', 'rri8_ts16');
+my @extensa_instr_bri12_sl;  make-hash('extensa', 'bri12_sl');
+my @extensa_instr_rrr_bts;   make-hash('extensa', 'rrr_bts');
+my @extensa_instr_ri6_sl;    make-hash('extensa', 'ri6_sl');
+my @extensa_instr_rrr_Rs4;   make-hash('extensa', 'rrr_Rs4');
+my @extensa_instr_rrr_rs4;   make-hash('extensa', 'rrr_rs4');
+my @extensa_instr_call_l;    make-hash('extensa', 'call_l');
+my @extensa_instr_callx_s;   make-hash('extensa', 'callx_s');
+my @extensa_instr_rrr_rtii;  make-hash('extensa', 'rrr_rtii');
+my @extensa_instr_rrr_55;    make-hash('extensa', 'rrr_55');
+my @extensa_instr_rrrn_s;    make-hash('extensa', 'rrrn_s');
 
-my @extensa_instr_rri8_st;    make_hash('extensa', 'rri8_st');
+my @extensa_instr_rri8_st;    make-hash('extensa', 'rri8_st');
 
 grammar Extensa is Assembler {
   token areg                         { <.ws>? <wb> <[aA]> ( \d+ ) [ '+' (\d+) ]?
@@ -3596,23 +3596,23 @@ grammar Extensa is Assembler {
 
 # Extensa ULP architecture
 
-my @extensa_ulp_instr_alu;    make_hash('extensa_ulp', 'alu');
-my @extensa_ulp_instr_imm;    make_hash('extensa_ulp', 'imm');
-my @extensa_ulp_instr_inh;    make_hash('extensa_ulp', 'inh');
-my @extensa_ulp_instr_scr;    make_hash('extensa_ulp', 'scr');
-my @extensa_ulp_instr_st;     make_hash('extensa_ulp', 'st');
-my @extensa_ulp_instr_ld;     make_hash('extensa_ulp', 'ld');
-my @extensa_ulp_instr_jump;   make_hash('extensa_ulp', 'jump');
-my @extensa_ulp_instr_jumpr;  make_hash('extensa_ulp', 'jumpr');
-my @extensa_ulp_instr_jumps;  make_hash('extensa_ulp', 'jumps');
-my @extensa_ulp_instr_sleep;  make_hash('extensa_ulp', 'sleep');
-my @extensa_ulp_instr_wait;   make_hash('extensa_ulp', 'wait');
-my @extensa_ulp_instr_tsens;  make_hash('extensa_ulp', 'tsens');
-my @extensa_ulp_instr_adc;    make_hash('extensa_ulp', 'adc');
-my @extensa_ulp_instr_i2c_rd; make_hash('extensa_ulp', 'i2c_rd');
-my @extensa_ulp_instr_i2c_wr; make_hash('extensa_ulp', 'i2c_wr');
-my @extensa_ulp_instr_reg_rd; make_hash('extensa_ulp', 'reg_rd');
-my @extensa_ulp_instr_reg_wr; make_hash('extensa_ulp', 'reg_wr');
+my @extensa_ulp_instr_alu;    make-hash('extensa_ulp', 'alu');
+my @extensa_ulp_instr_imm;    make-hash('extensa_ulp', 'imm');
+my @extensa_ulp_instr_inh;    make-hash('extensa_ulp', 'inh');
+my @extensa_ulp_instr_scr;    make-hash('extensa_ulp', 'scr');
+my @extensa_ulp_instr_st;     make-hash('extensa_ulp', 'st');
+my @extensa_ulp_instr_ld;     make-hash('extensa_ulp', 'ld');
+my @extensa_ulp_instr_jump;   make-hash('extensa_ulp', 'jump');
+my @extensa_ulp_instr_jumpr;  make-hash('extensa_ulp', 'jumpr');
+my @extensa_ulp_instr_jumps;  make-hash('extensa_ulp', 'jumps');
+my @extensa_ulp_instr_sleep;  make-hash('extensa_ulp', 'sleep');
+my @extensa_ulp_instr_wait;   make-hash('extensa_ulp', 'wait');
+my @extensa_ulp_instr_tsens;  make-hash('extensa_ulp', 'tsens');
+my @extensa_ulp_instr_adc;    make-hash('extensa_ulp', 'adc');
+my @extensa_ulp_instr_i2c_rd; make-hash('extensa_ulp', 'i2c_rd');
+my @extensa_ulp_instr_i2c_wr; make-hash('extensa_ulp', 'i2c_wr');
+my @extensa_ulp_instr_reg_rd; make-hash('extensa_ulp', 'reg_rd');
+my @extensa_ulp_instr_reg_wr; make-hash('extensa_ulp', 'reg_wr');
 
 grammar ExtensaULP is Assembler {
   token reg                         { <.ws>? <wb> <[rR]> ( <[0123]> ) [ '+' (\d+) ]?
@@ -3770,9 +3770,16 @@ debug "Register $reg";
 
 %instructionset<extensa_ulp> = ExtensaULP.new();
 
+# Z80
+
+my @z80_instr_inh;   make-hash('z80', 'inh');
+grammar Z80 is Assembler {
+}
+%instructionset<z80> = Z80.new();
+
 # Skeleton for new architectures
 
-#my @arch_instr_inh;   make_hash('arch', 'inh');
+#my @arch_instr_inh;   make-hash('arch', 'inh');
 #grammar Arch is Assembler {
 #}
 #%instructionset<arch> = Arch.new();
@@ -3783,9 +3790,6 @@ debug "Register $reg";
 
 my $input_line = sub { return Str; };
 my $line_number = 0;
-
-# Override the line input routine with a routine which reads the next line of
-# a file and restores the previous routine at end of file
 
 sub
 make-le-bytes($count, *@words) {
@@ -3798,6 +3802,9 @@ make-le-bytes($count, *@words) {
   }
   @bytes;
 }
+
+# Override the line input routine with a routine which reads the next line of
+# a file and restores the previous routine at end of file
 
 sub
 include_file(Str $filename) {

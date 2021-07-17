@@ -323,8 +323,9 @@ grammar Avr is Assembler {
                                          my  $reg = $/[0];
                                          #debug "Found avr_reg: ", $/;
 					 $reg += +$/[1] if $/[1].defined;
-                                         if ! (0 <= $reg <= 31) {
-                                           error_listing 'Registers must be in range r0 to r31';
+                                         my $lowreg = %param<lowreg> // 0;
+                                        if ! ($lowreg <= $reg <= 31) {
+                                           error_listing "Registers must be in range r{$lowreg} to r31";
                                            $reg = 0;
                                          }
                                          make $reg;
